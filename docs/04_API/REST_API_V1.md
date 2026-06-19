@@ -140,6 +140,8 @@ GET /admin/users
 
 GET /admin/prompts
 
+GET /admin/prompts/{promptId}
+
 POST /admin/prompts
 
 ---

@@ -32,3 +32,9 @@ zeroon:
     refresh-token-ttl-days: ${ZEROON_REFRESH_TOKEN_TTL_DAYS:30}
     local-verification-code: ${ZEROON_LOCAL_VERIFICATION_CODE:000000}
     verification-code-ttl-minutes: ${ZEROON_VERIFICATION_CODE_TTL_MINUTES:10}
+  ai:
+    provider: ${ZEROON_LLM_PROVIDER:openai-compatible}
+    base-url: ${LLM_BASE_URL:}
+    api-key: ${LLM_API_KEY:}
+    model: ${ZEROON_LLM_MODEL:gpt-4o-mini}
+    timeout-seconds: ${ZEROON_LLM_TIMEOUT_SECONDS:10}

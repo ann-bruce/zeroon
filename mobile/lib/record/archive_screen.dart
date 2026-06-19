@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../companion/ai_reflection_card.dart';
+import '../companion/companion_models.dart';
+import '../companion/companion_repository.dart';
 import 'record_controller.dart';
 import 'record_detail_screen.dart';
 import 'record_models.dart';
@@ -63,7 +66,7 @@ class _ArchiveList extends StatelessWidget {
 
     return ListView.separated(
       padding: const EdgeInsets.all(24),
-      itemCount: page.items.length + 1,
+      itemCount: page.items.length + 2,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         if (index == 0) {
@@ -76,7 +79,10 @@ class _ArchiveList extends StatelessWidget {
             ],
           );
         }
-        final record = page.items[index - 1];
+        if (index == 1) {
+          return _ArchiveObservationCard(page: page);
+        }
+        final record = page.items[index - 2];
         return Card(
           child: ListTile(
             title: Text(
@@ -97,3 +103,90 @@ class _ArchiveList extends StatelessWidget {
     );
   }
 }
+
+class _ArchiveObservationCard extends ConsumerStatefulWidget {
+  const _ArchiveObservationCard({required this.page});
+
+  final RecordPage page;
+
+  @override
+  ConsumerState<_ArchiveObservationCard> createState() =>
+      _ArchiveObservationCardState();
+}
+
+class _ArchiveObservationCardState
+    extends ConsumerState<_ArchiveObservationCard> {
+  String? _reply;
+  String? _error;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_loadObservation);
+  }
+
+  Future<void> _loadObservation() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final response = await ref.read(companionRepositoryProvider).sendMessage(
+            CompanionMessageRequest(
+              message: _observationPrompt(widget.page),
+            ),
+          );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _reply = response.reply;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = 'Archive 观察暂时不可用。';
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AiReflectionCard(
+      title: 'Archive 观察',
+      loading: _loading,
+      loadingText: '正在回看最近的归零记录...',
+      reply: _reply,
+      error: _error,
+      retryLabel: '重试观察',
+      onRetry: _loadObservation,
+    );
+  }
+}
+
+String _observationPrompt(RecordPage page) {
+  final recentRecords = page.items.take(3).map((record) {
+    final parts = <String>[
+      record.state,
+      if (_hasText(record.mood)) '感受：${record.mood!.trim()}',
+      if (_hasText(record.goal)) '小进展：${record.goal!.trim()}',
+      if (_hasText(record.content)) '记录：${record.content!.trim()}',
+    ];
+    return '- ${parts.join(' | ')}';
+  }).join('\n');
+
+  return [
+    '请基于我的 Archive 最近归零记录，给一段简短、非诊断性的陪伴式观察。',
+    '只指出可被用户自己确认的轻微趋势，不做人格判断，不给医疗、法律、财务或心理诊断建议。',
+    '累计记录：${page.totalElements}',
+    '最近记录：',
+    recentRecords,
+  ].join('\n');
+}
+
+bool _hasText(String? value) => value != null && value.trim().isNotEmpty;

@@ -5,11 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zeroon_mobile/auth/auth_models.dart';
 import 'package:zeroon_mobile/auth/login_screen.dart';
 import 'package:zeroon_mobile/auth/token_store.dart';
+import 'package:zeroon_mobile/companion/companion_models.dart';
+import 'package:zeroon_mobile/companion/companion_repository.dart';
 import 'package:zeroon_mobile/home/home_shell.dart';
 import 'package:zeroon_mobile/home/now_screen.dart';
 import 'package:zeroon_mobile/main.dart';
 import 'package:zeroon_mobile/record/record_models.dart';
 import 'package:zeroon_mobile/record/record_repository.dart';
+import 'package:zeroon_mobile/record/reset_screen.dart';
 import 'package:zeroon_mobile/state/state_controller.dart';
 import 'package:zeroon_mobile/state/state_models.dart';
 
@@ -85,6 +88,9 @@ void main() {
             () => _FakeCurrentStateController(),
           ),
           recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          companionRepositoryProvider.overrideWithValue(
+            _FakeCompanionRepository(),
+          ),
         ],
         child: const MaterialApp(home: HomeShell(session: _session)),
       ),
@@ -100,12 +106,103 @@ void main() {
     await tester.tap(find.text('Archive'));
     await tester.pumpAndSettle();
     expect(find.text('已缓存 1 条记录'), findsOneWidget);
+    expect(find.text('Archive 观察'), findsOneWidget);
+    expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
     expect(find.text('today I paused'), findsOneWidget);
 
     await tester.tap(find.text('today I paused'));
     await tester.pumpAndSettle();
     expect(find.text('记录详情'), findsOneWidget);
     expect(find.text('想记录的话'), findsOneWidget);
+  });
+
+  testWidgets('reset screen shows ZEROON echo after record is saved', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          companionRepositoryProvider.overrideWithValue(
+            _FakeCompanionRepository(),
+          ),
+        ],
+        child: const MaterialApp(home: ResetScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).at(2), 'today I paused');
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('保存归零记录'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('已保存到 Archive：#1'), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('ZEROON 回声'), findsOneWidget);
+    expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
+    expect(find.textContaining('不能替代'), findsOneWidget);
+  });
+
+  testWidgets('archive screen shows observation card for cached records', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          companionRepositoryProvider.overrideWithValue(
+            _FakeCompanionRepository(),
+          ),
+        ],
+        child: const MaterialApp(home: HomeShell(session: _session)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Archive'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('已缓存 1 条记录'), findsOneWidget);
+    expect(find.text('Archive 观察'), findsOneWidget);
+    expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
+  });
+
+  testWidgets('archive observation shows unavailable state and retry', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          companionRepositoryProvider.overrideWithValue(
+            _FlakyCompanionRepository(),
+          ),
+        ],
+        child: const MaterialApp(home: HomeShell(session: _session)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Archive'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Archive 观察暂时不可用。'), findsOneWidget);
+    await tester.tap(find.text('重试观察'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
   });
 }
 
@@ -181,6 +278,44 @@ class _FakeRecordRepository extends RecordRepository {
       page: page,
       size: size,
       totalElements: 1,
+    );
+  }
+}
+
+class _FakeCompanionRepository extends CompanionRepository {
+  _FakeCompanionRepository() : super(Dio());
+
+  @override
+  Future<CompanionMessageResponse> sendMessage(
+    CompanionMessageRequest request,
+  ) async {
+    return const CompanionMessageResponse(
+      conversationId: 1,
+      messageId: 2,
+      reply: '你已经把这一刻安放下来了。',
+      safetyNotice: 'ZEROON 不能替代医疗、法律、财务或心理咨询。',
+    );
+  }
+}
+
+class _FlakyCompanionRepository extends CompanionRepository {
+  _FlakyCompanionRepository() : super(Dio());
+
+  var _failedOnce = false;
+
+  @override
+  Future<CompanionMessageResponse> sendMessage(
+    CompanionMessageRequest request,
+  ) async {
+    if (!_failedOnce) {
+      _failedOnce = true;
+      throw DioException(requestOptions: RequestOptions(path: '/companion'));
+    }
+    return const CompanionMessageResponse(
+      conversationId: 1,
+      messageId: 2,
+      reply: '你已经把这一刻安放下来了。',
+      safetyNotice: 'ZEROON 不能替代医疗、法律、财务或心理咨询。',
     );
   }
 }
