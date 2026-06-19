@@ -1,5 +1,7 @@
 # Sprint 02 Plan V2
 
+Status: Review Ready
+
 ## Sprint Goal
 
 Deliver ZEROON AI Reflection MVP without expanding the primary navigation.
@@ -51,27 +53,27 @@ Not allowed:
 
 ## Backend Tasks
 
-| ID | Owner | Task | Estimate | Dependency |
-|---|---|---|---|---|
-| S2-BE-01 | Backend | LLM provider interface and default provider adapter | 1d | Sprint 01 |
-| S2-BE-02 | Backend | Companion message API with timeout and fallback | 2d | S2-BE-01 |
-| S2-BE-03 | Backend | Prompt template loading and version selection | 1d | S2-BE-01 |
-| S2-BE-04 | Backend | AI usage log without raw private content | 1d | S2-BE-02 |
-| S2-BE-05 | Backend | Safety boundary and refusal response tests | 1d | S2-BE-02 |
+| ID | Owner | Task | Estimate | Dependency | Status |
+|---|---|---|---|---|---|
+| S2-BE-01 | Backend | LLM provider interface and default provider adapter | 1d | Sprint 01 | Done |
+| S2-BE-02 | Backend | Companion message API with timeout and fallback | 2d | S2-BE-01 | Done |
+| S2-BE-03 | Backend | Prompt template loading and version selection | 1d | S2-BE-01 | Done |
+| S2-BE-04 | Backend | AI usage log without raw private content | 1d | S2-BE-02 | Done |
+| S2-BE-05 | Backend | Safety boundary and refusal response tests | 1d | S2-BE-02 | Done |
 
 ## Mobile Tasks
 
-| ID | Owner | Task | Estimate | Dependency |
-|---|---|---|---|---|
-| S2-MO-01 | Mobile | AI feedback state on record success | 1d | S2-BE-02 |
-| S2-MO-02 | Mobile | AI observation card in Archive | 1d | S2-BE-02 |
-| S2-MO-03 | Mobile | Loading, timeout, retry, and unavailable states | 1d | S2-BE-02 |
+| ID | Owner | Task | Estimate | Dependency | Status |
+|---|---|---|---|---|---|
+| S2-MO-01 | Mobile | AI feedback state on record success | 1d | S2-BE-02 | Done |
+| S2-MO-02 | Mobile | AI observation card in Archive | 1d | S2-BE-02 | Done |
+| S2-MO-03 | Mobile | Loading, timeout, retry, and unavailable states | 1d | S2-BE-02 | Done |
 
 ## Admin Tasks
 
-| ID | Owner | Task | Estimate | Dependency |
-|---|---|---|---|---|
-| S2-AD-01 | Admin | Prompt template list and read-only detail | 1d | S2-BE-03 |
+| ID | Owner | Task | Estimate | Dependency | Status |
+|---|---|---|---|---|---|
+| S2-AD-01 | Admin | Prompt template list and read-only detail | 1d | S2-BE-03 | Done |
 
 ---
 

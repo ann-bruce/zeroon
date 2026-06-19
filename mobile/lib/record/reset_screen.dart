@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../companion/ai_reflection_card.dart';
+import '../companion/companion_models.dart';
+import '../companion/companion_repository.dart';
 import 'record_controller.dart';
 import 'record_models.dart';
 
@@ -17,6 +20,10 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
   final _contentController = TextEditingController();
   String _state = recordStates.first;
   String? _message;
+  String? _reflection;
+  String? _reflectionNotice;
+  String? _reflectionError;
+  bool _reflecting = false;
   bool _saving = false;
 
   @override
@@ -79,6 +86,16 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
               const SizedBox(height: 16),
               Text(_message!, style: const TextStyle(color: Color(0xFF2F6F78))),
             ],
+            if (_reflecting || _reflection != null || _reflectionError != null)
+              AiReflectionCard(
+                title: 'ZEROON 回声',
+                loading: _reflecting,
+                loadingText: '正在生成一段轻反思...',
+                reply: _reflection,
+                notice: _reflectionNotice,
+                error: _reflectionError,
+                margin: const EdgeInsets.only(top: 16),
+              ),
           ],
         ),
       ),
@@ -100,6 +117,10 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
     setState(() {
       _saving = true;
       _message = null;
+      _reflection = null;
+      _reflectionNotice = null;
+      _reflectionError = null;
+      _reflecting = false;
     });
     try {
       final record =
@@ -107,13 +128,63 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
       _moodController.clear();
       _goalController.clear();
       _contentController.clear();
-      setState(() => _message = '已保存到 Archive：#${record.id}');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _saving = false;
+        _message = '已保存到 Archive：#${record.id}';
+        _reflecting = true;
+      });
+      await _loadReflection(request);
     } catch (error) {
-      setState(() => _message = '保存失败：$error');
-    } finally {
       if (mounted) {
-        setState(() => _saving = false);
+        setState(() {
+          _saving = false;
+          _reflecting = false;
+          _message = '保存失败：$error';
+        });
       }
     }
   }
+
+  Future<void> _loadReflection(CreateRecordRequest request) async {
+    try {
+      final response = await ref.read(companionRepositoryProvider).sendMessage(
+            CompanionMessageRequest(message: _reflectionPrompt(request)),
+          );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _reflection = response.reply;
+        _reflectionNotice = response.safetyNotice;
+        _reflectionError = null;
+        _reflecting = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _reflection = null;
+        _reflectionNotice = null;
+        _reflectionError = 'ZEROON 回声暂时不可用，记录已经保存。';
+        _reflecting = false;
+      });
+    }
+  }
+
+  String _reflectionPrompt(CreateRecordRequest request) {
+    final parts = <String>[
+      '我刚保存了一条归零记录，请给我一段简短、非诊断性的陪伴式回声。',
+      '状态：${request.state}',
+      if (_hasText(request.mood)) '此刻感受：${request.mood!.trim()}',
+      if (_hasText(request.goal)) '今天的小进展：${request.goal!.trim()}',
+      if (_hasText(request.content)) '想记录的话：${request.content!.trim()}',
+    ];
+    return parts.join('\n');
+  }
 }
+
+bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
