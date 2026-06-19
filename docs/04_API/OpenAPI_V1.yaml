@@ -1,0 +1,691 @@
+openapi: 3.0.3
+info:
+  title: ZEROON API
+  version: 1.0.0
+  description: Contract for the ZEROON MVP mobile app and admin system.
+  license:
+    name: Proprietary
+    url: https://zeroon.ai/legal/license
+servers:
+  - url: https://api.zeroon.ai/api/v1
+    description: Production
+tags:
+  - name: Auth
+    description: Login, token rotation, and session revocation.
+  - name: User
+    description: Current-user profile and lifecycle.
+  - name: State
+    description: Current state and state transitions.
+  - name: Record
+    description: Private zero records owned by the current user.
+  - name: Companion
+    description: AI companion conversations.
+  - name: Memory
+    description: Derived private memory entries.
+  - name: Growth
+    description: Long-term companion and personal growth metrics.
+  - name: Admin
+    description: Role-protected operational APIs.
+paths:
+  /auth/codes:
+    post:
+      tags: [Auth]
+      summary: Request an SMS verification code
+      operationId: requestLoginCode
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CodeRequest"
+      responses:
+        "202":
+          description: Code accepted for delivery
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login or register with a verification code
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Rotate a refresh token
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: Rotated tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke a refresh session
+      operationId: logout
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "204":
+          description: Logged out
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /users/me:
+    get:
+      tags: [User]
+      summary: Get the current user
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /users/me/deletion:
+    post:
+      tags: [User]
+      summary: Request account deletion
+      operationId: requestAccountDeletion
+      security:
+        - bearerAuth: []
+      responses:
+        "202":
+          description: Deletion scheduled
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /state/current:
+    get:
+      tags: [State]
+      summary: Get the current state
+      operationId: getCurrentState
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StateSnapshot"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /state/changes:
+    post:
+      tags: [State]
+      summary: Change the current state
+      operationId: changeState
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StateChangeRequest"
+      responses:
+        "201":
+          description: State changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StateSnapshot"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /records:
+    get:
+      tags: [Record]
+      summary: List the current user's records
+      operationId: listRecords
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Size"
+      responses:
+        "200":
+          description: Record page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Record]
+      summary: Create a zero record
+      operationId: createRecord
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRecordRequest"
+      responses:
+        "201":
+          description: Record created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZeroRecord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /records/{recordId}:
+    get:
+      tags: [Record]
+      summary: Get one record owned by the current user
+      operationId: getRecord
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Record detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZeroRecord"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /companion/messages:
+    post:
+      tags: [Companion]
+      summary: Send a message to ZEROON
+      operationId: sendCompanionMessage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: Companion response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+  /memory:
+    get:
+      tags: [Memory]
+      summary: List memory entries owned by the current user
+      operationId: listMemory
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Size"
+      responses:
+        "200":
+          description: Memory page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /growth/summary:
+    get:
+      tags: [Growth]
+      summary: Get companion growth metrics for the current user
+      description: Calendar calculations use the requested IANA timezone.
+      operationId: getGrowthSummary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: timezone
+          in: query
+          required: true
+          description: IANA timezone used for calendar-day calculations.
+          schema:
+            type: string
+            example: Asia/Shanghai
+      responses:
+        "200":
+          description: Growth summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GrowthSummary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: List users without exposing private record content
+      operationId: adminListUsers
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Size"
+      responses:
+        "200":
+          description: User page
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /admin/prompts:
+    get:
+      tags: [Admin]
+      summary: List prompt templates
+      operationId: listPrompts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Prompt templates
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Admin]
+      summary: Create a prompt template version
+      operationId: createPrompt
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromptRequest"
+      responses:
+        "201":
+          description: Prompt created
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Size:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthorized:
+      description: Authentication required or invalid
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Forbidden:
+      description: Insufficient permission
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unavailable:
+      description: Upstream service unavailable
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    CodeRequest:
+      type: object
+      required: [mobile]
+      properties:
+        mobile:
+          type: string
+          pattern: "^\\+[1-9][0-9]{7,14}$"
+          example: "+8613800000000"
+    LoginRequest:
+      type: object
+      required: [mobile, code, deviceId]
+      properties:
+        mobile:
+          type: string
+          pattern: "^\\+[1-9][0-9]{7,14}$"
+        code:
+          type: string
+          pattern: "^[0-9]{6}$"
+        deviceId:
+          type: string
+          minLength: 8
+          maxLength: 128
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          minLength: 32
+    AuthResponse:
+      type: object
+      required: [accessToken, refreshToken, expiresIn, user]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+          enum: [Bearer]
+        expiresIn:
+          type: integer
+          description: Access-token lifetime in seconds.
+        user:
+          $ref: "#/components/schemas/User"
+    User:
+      type: object
+      required: [uid, currentState, createdAt]
+      properties:
+        uid:
+          type: string
+        nickname:
+          type: string
+          maxLength: 50
+        avatar:
+          type: string
+          format: uri
+        currentState:
+          $ref: "#/components/schemas/State"
+        continuousDays:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+    State:
+      type: string
+      enum: [CALM, FOCUS, CREATE, TIRED, OVERLOAD, CONFUSED]
+    StateSnapshot:
+      type: object
+      required: [state, source, changedAt]
+      properties:
+        state:
+          $ref: "#/components/schemas/State"
+        source:
+          type: string
+          enum: [MANUAL, RECORD, AI, SYSTEM]
+        changedAt:
+          type: string
+          format: date-time
+    StateChangeRequest:
+      type: object
+      required: [state]
+      properties:
+        state:
+          $ref: "#/components/schemas/State"
+    CreateRecordRequest:
+      type: object
+      required: [state]
+      properties:
+        state:
+          $ref: "#/components/schemas/State"
+        mood:
+          type: string
+          maxLength: 200
+        goal:
+          type: string
+          maxLength: 1000
+        content:
+          type: string
+          maxLength: 5000
+    ZeroRecord:
+      allOf:
+        - $ref: "#/components/schemas/CreateRecordRequest"
+        - type: object
+          required: [id, createdAt]
+          properties:
+            id:
+              type: integer
+              format: int64
+            aiSummary:
+              type: string
+              maxLength: 1000
+            createdAt:
+              type: string
+              format: date-time
+    RecordPage:
+      type: object
+      required: [items, page, size, totalElements]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ZeroRecord"
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+    ChatRequest:
+      type: object
+      required: [message]
+      properties:
+        conversationId:
+          type: integer
+          format: int64
+        message:
+          type: string
+          minLength: 1
+          maxLength: 4000
+    ChatResponse:
+      type: object
+      required: [conversationId, messageId, reply]
+      properties:
+        conversationId:
+          type: integer
+          format: int64
+        messageId:
+          type: integer
+          format: int64
+        reply:
+          type: string
+        safetyNotice:
+          type: string
+          nullable: true
+    MemoryEntry:
+      type: object
+      required: [id, type, summary, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          type: string
+          enum: [ZERO_RECORD, STATE, CONVERSATION, GROWTH]
+        title:
+          type: string
+        summary:
+          type: string
+        importance:
+          type: integer
+          minimum: 1
+          maximum: 10
+        createdAt:
+          type: string
+          format: date-time
+    MemoryPage:
+      type: object
+      required: [items, page, size, totalElements]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemoryEntry"
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+    GrowthSummary:
+      type: object
+      required:
+        [continuousResetDays, cachedEntries, companionDays, timezone, calculatedAt]
+      properties:
+        continuousResetDays:
+          type: integer
+          minimum: 0
+          example: 7
+        cachedEntries:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 126
+        firstRecordDate:
+          type: string
+          format: date
+          nullable: true
+          example: 2025-06-11
+        companionDays:
+          type: integer
+          minimum: 1
+          example: 365
+        timezone:
+          type: string
+          example: Asia/Shanghai
+        calculatedAt:
+          type: string
+          format: date-time
+    PromptRequest:
+      type: object
+      required: [code, name, content]
+      properties:
+        code:
+          type: string
+          pattern: "^[A-Z0-9_]{3,100}$"
+        name:
+          type: string
+          maxLength: 100
+        content:
+          type: string
+          maxLength: 20000
+    Problem:
+      type: object
+      required: [type, title, status, traceId]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        traceId:
+          type: string
+        fieldErrors:
+          type: object
+          additionalProperties:
+            type: string

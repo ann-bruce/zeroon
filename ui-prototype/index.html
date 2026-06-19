@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f2430" />
+    <title>ZEROON Sprint 1 UI Prototype</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="workspace">
+      <aside class="review-panel">
+        <div class="brand-lockup">
+          <img src="./assets/logo-dark.png" alt="ZEROON" />
+          <span>UI REVIEW 02</span>
+        </div>
+
+        <div class="review-copy">
+          <p class="eyebrow">SPRINT 1 · MOBILE MVP</p>
+          <h1>先看见状态，<br />再安静地归零。</h1>
+          <p>
+            本原型用于评审登录、首页、归零、山海缓存与陪伴成长。视觉关键词：
+            克制、温度、长期陪伴。
+          </p>
+        </div>
+
+        <nav class="screen-list" aria-label="原型页面">
+          <button class="screen-link active" data-screen="login">
+            <span>01</span><strong>验证码登录</strong><small>身份入口</small>
+          </button>
+          <button class="screen-link" data-screen="home">
+            <span>02</span><strong>今日首页</strong><small>状态核心</small>
+          </button>
+          <button class="screen-link" data-screen="reset">
+            <span>03</span><strong>归零记录</strong><small>30 秒完成</small>
+          </button>
+          <button class="screen-link" data-screen="success">
+            <span>04</span><strong>归零完成</strong><small>温和反馈</small>
+          </button>
+          <button class="screen-link" data-screen="archive">
+            <span>05</span><strong>山海缓存</strong><small>私人时间线</small>
+          </button>
+          <button class="screen-link" data-screen="growth">
+            <span>06</span><strong>陪伴成长</strong><small>共同走过</small>
+          </button>
+          <button class="screen-link" data-screen="states">
+            <span>07</span><strong>异常状态</strong><small>离线与失败</small>
+          </button>
+        </nav>
+
+        <div class="review-meta">
+          <div><span>基准尺寸</span><strong>390 × 844</strong></div>
+          <div><span>评审版本</span><strong>V0.2</strong></div>
+          <div><span>日期</span><strong>2026.06.10</strong></div>
+        </div>
+      </aside>
+
+      <section class="stage">
+        <div class="ambient ambient-one"></div>
+        <div class="ambient ambient-two"></div>
+
+        <div class="phone-shell">
+          <div class="phone-hardware">
+            <span class="time">9:41</span>
+            <span class="island"></span>
+            <span class="system-icons">● ◒ ▰</span>
+          </div>
+
+          <div class="phone-screen" id="phone-screen">
+            <section class="screen active" data-view="login">
+              <div class="login-glow"></div>
+              <header class="mobile-header minimal">
+                <span class="wordmark">ZEROON</span>
+                <button class="icon-button" aria-label="帮助">?</button>
+              </header>
+              <div class="login-hero">
+                <img class="character character-login" src="./assets/zeroon-front.png" alt="ZEROON 角色" />
+                <div class="login-title">
+                  <span class="section-mark">归零 / ZEROON</span>
+                  <h2>欢迎回来。</h2>
+                  <p>这里没有需要证明的事。<br />先从此刻开始。</p>
+                </div>
+              </div>
+              <form class="login-form" id="login-form">
+                <label>
+                  <span>手机号</span>
+                  <div class="input-row">
+                    <b>+86</b>
+                    <input id="mobile-input" inputmode="numeric" value="138 0000 0000" aria-label="手机号" />
+                  </div>
+                </label>
+                <label>
+                  <span>验证码</span>
+                  <div class="input-row">
+                    <input id="code-input" inputmode="numeric" placeholder="输入 6 位验证码" aria-label="验证码" />
+                    <button type="button" class="text-button" id="code-button">获取验证码</button>
+                  </div>
+                </label>
+                <button class="primary-button" type="submit">进入 ZEROON <span>→</span></button>
+                <p class="legal">登录即代表同意《用户协议》与《隐私政策》</p>
+              </form>
+            </section>
+
+            <section class="screen" data-view="home">
+              <header class="mobile-header">
+                <div>
+                  <span class="section-mark">JUNE 07 · SUNDAY</span>
+                  <h3>晚上好，Bruce</h3>
+                </div>
+                <button class="avatar-button">B</button>
+              </header>
+              <div class="home-hero">
+                <p class="quiet-label">今天的 ZEROON</p>
+                <div class="state-core focus" aria-label="当前状态：专注">
+                  <span class="core-ring ring-one"></span>
+                  <span class="core-ring ring-two"></span>
+                  <span class="core-center"></span>
+                </div>
+                <h2>专注</h2>
+                <p>今天适合安静地完成一件重要的事。</p>
+              </div>
+              <button class="streak-card" data-go="growth" aria-label="查看陪伴成长">
+                <div><span>连续归零</span><strong>7 <small>天</small></strong></div>
+                <div class="week-dots" aria-label="本周归零情况">
+                  <i class="done">一</i><i class="done">二</i><i class="done">三</i>
+                  <i class="done">四</i><i class="done">五</i><i class="done">六</i><i class="today">日</i>
+                </div>
+                <b class="streak-arrow">›</b>
+              </button>
+              <button class="primary-button hero-action" data-go="reset">
+                开始一次归零 <span>→</span>
+              </button>
+              <button class="memory-peek" data-go="archive">
+                <span class="memory-icon">⌁</span>
+                <span><small>今日山海缓存</small><strong>“完成了架构设计。”</strong></span>
+                <b>›</b>
+              </button>
+              <nav class="bottom-nav">
+                <button class="active" data-go="home"><i>◉</i><span>此刻</span></button>
+                <button data-go="reset"><i>＋</i><span>归零</span></button>
+                <button data-go="archive"><i>⌁</i><span>缓存</span></button>
+              </nav>
+            </section>
+
+            <section class="screen" data-view="reset">
+              <header class="mobile-header">
+                <button class="back-button" data-go="home">‹</button>
+                <div class="center-title">
+                  <span class="section-mark">ZERO RECORD</span>
+                  <h3>归零</h3>
+                </div>
+                <span class="step">1 / 2</span>
+              </header>
+              <div class="form-intro">
+                <h2>此刻，你是什么状态？</h2>
+                <p>不需要准确，选择最接近的就好。</p>
+              </div>
+              <div class="state-grid" id="state-grid">
+                <button data-state="CALM" style="--state:#ededed"><i></i><span>平静</span><small>CALM</small></button>
+                <button class="selected" data-state="FOCUS" style="--state:#4aa8ff"><i></i><span>专注</span><small>FOCUS</small></button>
+                <button data-state="CREATE" style="--state:#ffd166"><i></i><span>创造</span><small>CREATE</small></button>
+                <button data-state="TIRED" style="--state:#8f8f93"><i></i><span>疲惫</span><small>TIRED</small></button>
+                <button data-state="CONFUSED" style="--state:#283f67"><i></i><span>混乱</span><small>CONFUSED</small></button>
+                <button data-state="OVERLOAD" style="--state:#ff4d4d"><i></i><span>高负荷</span><small>OVERLOAD</small></button>
+              </div>
+              <label class="field-block">
+                <span>留下一句话 <small>可选</small></span>
+                <textarea id="record-content" maxlength="5000" placeholder="今天发生了什么？">今天完成了 ZEROON 的研发基线。</textarea>
+                <b><em id="content-count">20</em> / 5000</b>
+              </label>
+              <label class="field-block compact">
+                <span>今天想完成什么 <small>可选</small></span>
+                <input value="完成核心 UI 评审" />
+              </label>
+              <button class="primary-button bottom-action" id="save-record">保存这次归零 <span>→</span></button>
+            </section>
+
+            <section class="screen" data-view="success">
+              <header class="mobile-header minimal">
+                <span class="wordmark">ZEROON</span>
+                <button class="icon-button" data-go="home">×</button>
+              </header>
+              <div class="success-content">
+                <div class="success-orbit">
+                  <div class="state-core focus small">
+                    <span class="core-ring ring-one"></span>
+                    <span class="core-ring ring-two"></span>
+                    <span class="core-center"></span>
+                  </div>
+                  <span class="orbit-copy">RECORDED · 22:18</span>
+                </div>
+                <span class="section-mark">本次状态 · 专注</span>
+                <h2>已经替你保存好了。</h2>
+                <p class="companion-quote">
+                  “基础已经稳稳落下。<br />今晚可以只向前走一小步。”
+                </p>
+                <div class="saved-summary">
+                  <span>今天的记录</span>
+                  <p>今天完成了 ZEROON 的研发基线。</p>
+                  <small>目标 · 完成核心 UI 评审</small>
+                </div>
+              </div>
+              <button class="primary-button bottom-action" data-go="home">回到此刻 <span>→</span></button>
+              <button class="secondary-link" data-go="archive">查看山海缓存</button>
+            </section>
+
+            <section class="screen" data-view="archive">
+              <header class="mobile-header">
+                <div>
+                  <span class="section-mark">ARCHIVE</span>
+                  <h3>山海缓存</h3>
+                </div>
+                <button class="filter-button">筛选</button>
+              </header>
+              <div class="archive-intro">
+                <p>属于你的记录，不公开，也不喧哗。</p>
+                <strong>12 <small>条沉淀</small></strong>
+              </div>
+              <div class="timeline">
+                <div class="date-label"><span>今天</span><small>06.07</small></div>
+                <article class="memory-card focus-card">
+                  <div class="memory-state"><i></i><span>专注</span><time>22:18</time></div>
+                  <p>今天完成了 ZEROON 的研发基线。</p>
+                  <small>目标 · 完成核心 UI 评审</small>
+                </article>
+                <article class="reflection-card">
+                  <span>ZEROON 观察</span>
+                  <p>你正在把模糊的想法，一点一点变成可以被验证的东西。</p>
+                </article>
+                <div class="date-label"><span>昨天</span><small>06.06</small></div>
+                <article class="memory-card calm-card">
+                  <div class="memory-state"><i></i><span>平静</span><time>23:02</time></div>
+                  <p>整理了今天的内容，也决定不再赶时间。</p>
+                </article>
+              </div>
+              <nav class="bottom-nav">
+                <button data-go="home"><i>◉</i><span>此刻</span></button>
+                <button data-go="reset"><i>＋</i><span>归零</span></button>
+                <button class="active" data-go="archive"><i>⌁</i><span>缓存</span></button>
+              </nav>
+            </section>
+
+            <section class="screen growth-screen" data-view="growth">
+              <header class="mobile-header">
+                <button class="back-button" data-go="home">‹</button>
+                <div class="center-title">
+                  <span class="section-mark">COMPANION GROWTH</span>
+                  <h3>陪伴成长</h3>
+                </div>
+                <button class="icon-button" aria-label="统计说明">i</button>
+              </header>
+              <div class="growth-hero">
+                <div class="growth-orbit" aria-hidden="true">
+                  <span class="growth-ring ring-a"></span>
+                  <span class="growth-ring ring-b"></span>
+                  <span class="growth-star star-a"></span>
+                  <span class="growth-star star-b"></span>
+                  <span class="growth-star star-c"></span>
+                  <div class="growth-core">
+                    <strong>365</strong>
+                    <small>天</small>
+                  </div>
+                </div>
+                <span class="section-mark">TOGETHER SINCE 2025.06.11</span>
+                <h2>我们已经一起走过一年。</h2>
+                <p>不是每一天都需要留下什么。<br />但你走过的路，正在这里慢慢发光。</p>
+              </div>
+              <div class="growth-metrics">
+                <article>
+                  <span>连续归零</span>
+                  <strong>7<small>天</small></strong>
+                  <p>最近一次连续记录</p>
+                </article>
+                <article>
+                  <span>累计缓存</span>
+                  <strong>126<small>条</small></strong>
+                  <p>可见的私人沉淀</p>
+                </article>
+                <article>
+                  <span>第一次记录</span>
+                  <strong class="date-value">2025.06.11</strong>
+                  <p>时间从这里开始</p>
+                </article>
+                <article>
+                  <span>陪伴天数</span>
+                  <strong>365<small>天</small></strong>
+                  <p>包含相遇的第一天</p>
+                </article>
+              </div>
+              <div class="growth-note">
+                <span>这一年的 ZEROON</span>
+                <p>你最常回到「专注」，也学会在疲惫时不再责怪自己。</p>
+              </div>
+              <button class="secondary-growth-action" data-go="archive">
+                回看这一年的山海缓存 <span>→</span>
+              </button>
+            </section>
+
+            <section class="screen" data-view="states">
+              <header class="mobile-header">
+                <button class="back-button" data-go="home">‹</button>
+                <div class="center-title">
+                  <span class="section-mark">SYSTEM STATES</span>
+                  <h3>异常状态</h3>
+                </div>
+                <span></span>
+              </header>
+              <div class="state-showcase">
+                <article>
+                  <div class="status-icon offline">⌁</div>
+                  <div><span>网络暂时离开了</span><p>记录已保存在本机，恢复网络后会自动重试。</p></div>
+                  <button>重新连接</button>
+                </article>
+                <article>
+                  <div class="status-icon saved">✓</div>
+                  <div><span>记录已保存</span><p>ZEROON 的反馈暂时没有回来，不影响本次归零。</p></div>
+                  <button>稍后重试</button>
+                </article>
+                <article>
+                  <div class="status-icon expired">↻</div>
+                  <div><span>需要重新登录</span><p>为了保护你的私人记录，会话已经安全结束。</p></div>
+                  <button data-go="login">返回登录</button>
+                </article>
+                <article class="empty-state">
+                  <div class="mini-core"></div>
+                  <div><span>这里还没有记录</span><p>第一次归零后，时间会从这里开始沉淀。</p></div>
+                  <button data-go="reset">开始归零</button>
+                </article>
+              </div>
+            </section>
+          </div>
+          <div class="home-indicator"></div>
+        </div>
+
+        <div class="flow-hint">
+          <span id="flow-index">01 / 07</span>
+          <p id="flow-description">手机号验证码登录，保持入口安静且可信。</p>
+        </div>
+      </section>
+    </main>
+    <script src="./prototype.js"></script>
+  </body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZEROON APP UI Overview</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        width: 1440px;
+        height: 1000px;
+        margin: 0;
+        overflow: hidden;
+        color: #f2eee6;
+        font-family: Inter, "PingFang SC", sans-serif;
+        background:
+          radial-gradient(circle at 75% 20%, rgba(108,183,200,.14), transparent 32%),
+          #131722;
+      }
+      main { padding: 58px 72px 44px; }
+      header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        margin-bottom: 34px;
+      }
+      .eyebrow {
+        color: #d7b46a;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .2em;
+      }
+      h1 {
+        margin: 10px 0 0;
+        font-family: "Songti SC", serif;
+        font-size: 38px;
+        font-weight: 500;
+      }
+      header p {
+        max-width: 420px;
+        margin: 0;
+        color: rgba(242,238,230,.5);
+        font-size: 13px;
+        line-height: 1.8;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+      }
+      article {
+        position: relative;
+        height: 348px;
+        overflow: hidden;
+        border: 1px solid rgba(242,238,230,.12);
+        border-radius: 22px;
+        background: #1f2430;
+      }
+      article img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 71% center;
+        transform: scale(1.55);
+      }
+      article::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, transparent 58%, rgba(10,12,18,.94));
+      }
+      .caption {
+        position: absolute;
+        z-index: 2;
+        left: 20px;
+        right: 20px;
+        bottom: 17px;
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+      }
+      .caption span {
+        color: #6cb7c8;
+        font-family: ui-monospace, monospace;
+        font-size: 10px;
+      }
+      .caption strong { display: block; margin-top: 5px; font-size: 16px; }
+      .caption small { color: rgba(242,238,230,.48); font-size: 10px; }
+      footer {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 24px;
+        color: rgba(242,238,230,.35);
+        font-size: 10px;
+        letter-spacing: .08em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <span class="eyebrow">ZEROON · MOBILE MVP</span>
+          <h1>先看见状态，再安静地归零。</h1>
+        </div>
+        <p>从身份入口、今日状态、归零记录到私人记忆与陪伴成长，构成 ZEROON 的长期体验闭环。</p>
+      </header>
+      <section class="grid">
+        <article><img src="./login.jpg" alt=""><div class="caption"><div><span>01</span><strong>验证码登录</strong></div><small>安静可信的入口</small></div></article>
+        <article><img src="./home.jpg" alt=""><div class="caption"><div><span>02</span><strong>今日状态</strong></div><small>发光核心</small></div></article>
+        <article><img src="./reset.jpg" alt=""><div class="caption"><div><span>03</span><strong>归零记录</strong></div><small>30 秒完成</small></div></article>
+        <article><img src="./success.jpg" alt=""><div class="caption"><div><span>04</span><strong>温和反馈</strong></div><small>记录优先保存</small></div></article>
+        <article><img src="./archive.jpg" alt=""><div class="caption"><div><span>05</span><strong>山海缓存</strong></div><small>私人时间线</small></div></article>
+        <article><img src="./growth.jpg" alt=""><div class="caption"><div><span>06</span><strong>陪伴成长</strong></div><small>共同走过</small></div></article>
+        <article><img src="./states.jpg" alt=""><div class="caption"><div><span>07</span><strong>异常状态</strong></div><small>始终可以恢复</small></div></article>
+      </section>
+      <footer><span>ZEROON / 归零</span><span>APP UI CONCEPT · 2026.06</span></footer>
+    </main>
+  </body>
+</html>

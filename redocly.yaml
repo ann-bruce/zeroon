@@ -1,0 +1,7 @@
+extends:
+  - recommended
+
+apis:
+  zeroon@v1:
+    root: docs/04_API/OpenAPI_V1.yaml
+
