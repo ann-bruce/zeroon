@@ -177,35 +177,59 @@ docs/
 
 # Development
 
+Current development path:
+
+```text
+/Users/bruceann/codexspace/zeroon/ZEROON_PROJECT/10_TECH/zeroon
+```
+
 Prerequisites:
 
-- Java 21 (the Gradle toolchain can provision it automatically)
-- Flutter stable with Dart 3.6+
-- Node.js 22 and npm 10+
-- Docker with Compose
+- Java 17+ for Spring Boot 3.4. Java 21 is preferred.
+- Flutter 3.44.2 or newer with Dart 3.12+.
+- Node.js 22 and npm 10+ for the admin app.
+- Docker with Compose for PostgreSQL and Redis.
 
-Copy `.env.example` to `.env` and replace all non-development secrets.
+Copy `.env.example` to `.env` for local infrastructure:
 
-Infrastructure
+```bash
+cp .env.example .env
+```
+
+Infrastructure:
 
 ```bash
 docker compose --env-file .env -f deployment/compose.yaml up -d
 ```
 
-Backend
+Backend:
 
 ```bash
 cd backend
-./gradlew bootRun
+JAVA_HOME=/Users/bruceann/Library/Java/JavaVirtualMachines/corretto-17.0.13/Contents/Home ./gradlew bootRun
 ```
 
-Mobile
+Backend without Docker, using an in-memory local database:
 
 ```bash
-flutter run
+cd backend
+JAVA_HOME=/Users/bruceann/Library/Java/JavaVirtualMachines/corretto-17.0.13/Contents/Home ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
-Admin
+The local login verification code defaults to `000000`.
+
+Mobile:
+
+```bash
+cd mobile
+flutter pub get
+flutter run --dart-define=ZEROON_API_BASE_URL=http://localhost:8080/api/v1
+```
+
+For Android emulator, use `http://10.0.2.2:8080/api/v1` instead of
+`http://localhost:8080/api/v1`.
+
+Admin:
 
 ```bash
 cd admin
@@ -213,14 +237,44 @@ npm install
 npm run dev
 ```
 
-Contract check
+Verification:
+
+```bash
+cd backend
+JAVA_HOME=/Users/bruceann/Library/Java/JavaVirtualMachines/corretto-17.0.13/Contents/Home ./gradlew test
+
+cd ../mobile
+flutter analyze
+flutter test
+
+cd ..
+git diff --check
+```
+
+Contract check:
 
 ```bash
 npx --yes @redocly/cli lint docs/04_API/OpenAPI_V1.yaml
 ```
 
-The CI workflow is the authoritative build environment until local Java 21,
-Gradle, and Flutter are installed.
+## Sprint 1 MVP Flow
+
+Sprint 1 delivers the secure private record loop:
+
+1. Request local verification code.
+2. Log in and persist the session.
+3. Read and change the current state on Now.
+4. Create a zero record on Reset.
+5. Browse records on Archive.
+6. Open record detail.
+
+Out of scope for Sprint 1:
+
+- AI companion and memory summarization.
+- Growth implementation.
+- Expression templates and export cards.
+- Custom model settings.
+- Gift, confession, couple, social, or hardware-led features.
 
 ---
 

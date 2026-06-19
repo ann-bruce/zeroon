@@ -25,3 +25,10 @@ management:
 server:
   shutdown: graceful
 
+zeroon:
+  auth:
+    access-token-secret: ${ZEROON_ACCESS_TOKEN_SECRET:dev-only-change-this-secret-with-at-least-32-chars}
+    access-token-ttl-minutes: ${ZEROON_ACCESS_TOKEN_TTL_MINUTES:30}
+    refresh-token-ttl-days: ${ZEROON_REFRESH_TOKEN_TTL_DAYS:30}
+    local-verification-code: ${ZEROON_LOCAL_VERIFICATION_CODE:000000}
+    verification-code-ttl-minutes: ${ZEROON_VERIFICATION_CODE_TTL_MINUTES:10}

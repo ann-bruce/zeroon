@@ -8,4 +8,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+  sql:
+    init:
+      mode: always
 
+zeroon:
+  auth:
+    access-token-secret: test-secret-with-at-least-32-characters
+    access-token-ttl-minutes: 30
+    refresh-token-ttl-days: 30
+    local-verification-code: "000000"
