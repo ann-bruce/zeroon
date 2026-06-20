@@ -7,6 +7,8 @@ import 'package:zeroon_mobile/auth/login_screen.dart';
 import 'package:zeroon_mobile/auth/token_store.dart';
 import 'package:zeroon_mobile/companion/companion_models.dart';
 import 'package:zeroon_mobile/companion/companion_repository.dart';
+import 'package:zeroon_mobile/growth/growth_models.dart';
+import 'package:zeroon_mobile/growth/growth_repository.dart';
 import 'package:zeroon_mobile/home/home_shell.dart';
 import 'package:zeroon_mobile/home/now_screen.dart';
 import 'package:zeroon_mobile/main.dart';
@@ -54,6 +56,7 @@ void main() {
           currentStateProvider.overrideWith(
             () => _FakeCurrentStateController(),
           ),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
         ],
         child: const MaterialApp(home: NowScreen(session: session)),
       ),
@@ -63,6 +66,9 @@ void main() {
     expect(find.text('先看见此刻的状态。'), findsOneWidget);
     expect(find.text('当前状态：CALM'), findsOneWidget);
     expect(find.text('用户：13800138000'), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('陪伴成长'), findsOneWidget);
   });
 
   testWidgets('login screen shows initial error', (tester) async {
@@ -91,6 +97,7 @@ void main() {
           companionRepositoryProvider.overrideWithValue(
             _FakeCompanionRepository(),
           ),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
         ],
         child: const MaterialApp(home: HomeShell(session: _session)),
       ),
@@ -98,6 +105,29 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('先看见此刻的状态。'), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('陪伴成长'), findsOneWidget);
+
+    await tester.tap(find.text('陪伴成长'));
+    await tester.pumpAndSettle();
+    expect(find.text('连续归零'), findsOneWidget);
+    expect(find.text('7天'), findsOneWidget);
+    expect(find.text('累计缓存'), findsOneWidget);
+    expect(find.text('126条'), findsOneWidget);
+    expect(find.text('第一次记录'), findsOneWidget);
+    expect(find.text('2026.06.01'), findsOneWidget);
+    expect(find.text('陪伴天数'), findsOneWidget);
+    expect(find.text('365天'), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('近期状态观察'), findsOneWidget);
+    expect(find.textContaining('不代表固定标签'), findsOneWidget);
+    expect(find.text('出现最多：FOCUS'), findsOneWidget);
+    expect(find.textContaining('state_history.current_state'), findsOneWidget);
+
+    Navigator.of(tester.element(find.text('陪伴成长'))).pop();
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Reset'));
     await tester.pumpAndSettle();
@@ -113,7 +143,13 @@ void main() {
     await tester.tap(find.text('today I paused'));
     await tester.pumpAndSettle();
     expect(find.text('记录详情'), findsOneWidget);
+    expect(find.text('Archive 记忆'), findsOneWidget);
+    expect(find.text('私密记录'), findsOneWidget);
+    expect(find.text('记录编号 #1'), findsOneWidget);
     expect(find.text('想记录的话'), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('不会公开'), findsOneWidget);
   });
 
   testWidgets('reset screen shows ZEROON echo after record is saved', (
@@ -258,6 +294,7 @@ class _FakeRecordRepository extends RecordRepository {
     mood: 'quiet',
     goal: 'first step',
     content: 'today I paused',
+    aiSummary: '你已经把这一刻安放下来了。',
     createdAt: DateTime.parse('2026-06-19T00:00:00Z'),
   );
 
@@ -278,6 +315,42 @@ class _FakeRecordRepository extends RecordRepository {
       page: page,
       size: size,
       totalElements: 1,
+    );
+  }
+}
+
+class _FakeGrowthRepository extends GrowthRepository {
+  _FakeGrowthRepository() : super(Dio());
+
+  @override
+  Future<GrowthSummary> getSummary({String timezone = 'Asia/Shanghai'}) async {
+    return GrowthSummary(
+      continuousResetDays: 7,
+      cachedEntries: 126,
+      firstRecordDate: DateTime.parse('2026-06-01'),
+      companionDays: 365,
+      timezone: timezone,
+      calculatedAt: DateTime.parse('2026-06-20T00:00:00Z'),
+    );
+  }
+
+  @override
+  Future<StatePatternSummary> getStatePattern({
+    String timezone = 'Asia/Shanghai',
+    int days = 14,
+  }) async {
+    return StatePatternSummary(
+      days: days,
+      sampleSize: 3,
+      dominantState: 'FOCUS',
+      distribution: const {'CALM': 1, 'FOCUS': 2},
+      observation: '最近 14 天，FOCUS 出现较多。这只是近期记录的分布，不代表固定标签。',
+      dataSources: const [
+        'state_history.current_state',
+        'state_history.created_at'
+      ],
+      timezone: timezone,
+      calculatedAt: DateTime.parse('2026-06-20T00:00:00Z'),
     );
   }
 }

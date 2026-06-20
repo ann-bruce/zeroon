@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_controller.dart';
 import '../auth/auth_models.dart';
+import '../growth/growth_screen.dart';
 import '../state/state_controller.dart';
 import '../state/state_models.dart';
 
@@ -63,6 +64,17 @@ class NowScreen extends ConsumerWidget {
                 onRetry: () => ref.invalidate(currentStateProvider),
               ),
               data: (snapshot) => _StatePanel(snapshot: snapshot),
+            ),
+            const SizedBox(height: 24),
+            Card(
+              child: ListTile(
+                title: const Text('陪伴成长'),
+                subtitle: const Text('查看连续归零、累计缓存和陪伴天数'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const GrowthScreen()),
+                ),
+              ),
             ),
           ],
         ),
