@@ -50,7 +50,12 @@ class AiReflectionCard extends StatelessWidget {
               Text(reply ?? ''),
               if (_hasText(notice)) ...[
                 const SizedBox(height: 12),
-                Text(notice!, style: Theme.of(context).textTheme.bodySmall),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+                Text(
+                  '边界说明：$notice',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ],
           ],

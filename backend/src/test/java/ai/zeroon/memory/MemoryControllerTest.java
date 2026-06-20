@@ -50,7 +50,7 @@ class MemoryControllerTest {
                 MemoryEntryType.ZERO_RECORD,
                 "第一次归零",
                 "今天第一次把状态放进 Archive。",
-                3,
+                (short) 3,
                 "ZERO_RECORD",
                 1L,
                 Instant.parse("2026-06-10T00:00:00Z")));
@@ -59,7 +59,7 @@ class MemoryControllerTest {
                 MemoryEntryType.GROWTH,
                 "他人的成长",
                 "这条记忆不应被当前用户看到。",
-                5,
+                (short) 5,
                 "GROWTH",
                 2L,
                 Instant.parse("2026-06-11T00:00:00Z")));
@@ -96,7 +96,7 @@ class MemoryControllerTest {
                 MemoryEntryType.GROWTH,
                 "他人的成长",
                 "不属于当前用户。",
-                5,
+                (short) 5,
                 "GROWTH",
                 2L,
                 Instant.parse("2026-06-11T00:00:00Z")));
@@ -118,7 +118,7 @@ class MemoryControllerTest {
                 MemoryEntryType.ZERO_RECORD,
                 "可见记忆",
                 "这条记忆仍然可见。",
-                3,
+                (short) 3,
                 "ZERO_RECORD",
                 1L,
                 Instant.parse("2026-06-10T00:00:00Z")));
@@ -127,7 +127,7 @@ class MemoryControllerTest {
                 MemoryEntryType.STATE,
                 "过期记忆",
                 "这条记忆已经不应展示。",
-                2,
+                (short) 2,
                 "STATE",
                 2L,
                 Instant.parse("2026-06-09T00:00:00Z"),

@@ -18,7 +18,7 @@
 
 ## Zero Record
 
-- State is required; mood, goal, and content are optional, but at least one
+- State is required; goal and content are optional, but at least one
   descriptive field must be provided.
 - Save is idempotent from the user's perspective and cannot create duplicates
   after repeated taps.
@@ -39,4 +39,3 @@
 - Explain the 7-day recovery period and affected data before confirmation.
 - Require fresh authentication.
 - Revoke all sessions immediately after confirmation.
-

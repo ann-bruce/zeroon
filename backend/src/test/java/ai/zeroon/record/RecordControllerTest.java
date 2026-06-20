@@ -29,8 +29,8 @@ class RecordControllerTest {
     void userCanCreateListAndReadOwnRecords() throws Exception {
         String accessToken = login("13500135000");
 
-        Long firstId = createRecord(accessToken, "CALM", "quiet", "first step", "today I paused");
-        Long secondId = createRecord(accessToken, "FOCUS", "clear", "next step", "I finished a small task");
+        Long firstId = createRecord(accessToken, "CALM", "first step", "today I paused");
+        Long secondId = createRecord(accessToken, "FOCUS", "next step", "I finished a small task");
 
         mockMvc.perform(get("/api/v1/records")
                         .header("Authorization", "Bearer " + accessToken))
@@ -45,7 +45,6 @@ class RecordControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(firstId))
                 .andExpect(jsonPath("$.state").value("CALM"))
-                .andExpect(jsonPath("$.mood").value("quiet"))
                 .andExpect(jsonPath("$.goal").value("first step"))
                 .andExpect(jsonPath("$.content").value("today I paused"))
                 .andExpect(jsonPath("$.createdAt", notNullValue()));
@@ -55,7 +54,7 @@ class RecordControllerTest {
     void userCannotReadAnotherUsersRecord() throws Exception {
         String ownerToken = login("13400134000");
         String otherToken = login("13300133000");
-        Long recordId = createRecord(ownerToken, "CREATE", "open", "write", "private content");
+        Long recordId = createRecord(ownerToken, "CREATE", "write", "private content");
 
         mockMvc.perform(get("/api/v1/records/{recordId}", recordId)
                         .header("Authorization", "Bearer " + otherToken))
@@ -66,8 +65,8 @@ class RecordControllerTest {
     void repeatedSaveTapsDoNotCreateDuplicateRecords() throws Exception {
         String accessToken = login("13200132000");
 
-        Long firstId = createRecord(accessToken, "TIRED", "low", "rest", "same content");
-        Long repeatedId = createRecord(accessToken, "TIRED", "low", "rest", "same content");
+        Long firstId = createRecord(accessToken, "TIRED", "rest", "same content");
+        Long repeatedId = createRecord(accessToken, "TIRED", "rest", "same content");
 
         mockMvc.perform(get("/api/v1/records")
                         .header("Authorization", "Bearer " + accessToken))
@@ -102,7 +101,6 @@ class RecordControllerTest {
     private Long createRecord(
             String accessToken,
             String state,
-            String mood,
             String goal,
             String content) throws Exception {
         String body = mockMvc.perform(post("/api/v1/records")
@@ -111,11 +109,10 @@ class RecordControllerTest {
                         .content("""
                                 {
                                   "state": "%s",
-                                  "mood": "%s",
                                   "goal": "%s",
                                   "content": "%s"
                                 }
-                                """.formatted(state, mood, goal, content)))
+                                """.formatted(state, goal, content)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()

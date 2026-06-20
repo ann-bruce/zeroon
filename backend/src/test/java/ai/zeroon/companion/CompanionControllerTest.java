@@ -73,7 +73,6 @@ class CompanionControllerTest {
                         .content("""
                                 {
                                   "state": "FOCUS",
-                                  "mood": "clear",
                                   "goal": "finish one thing",
                                   "content": "I completed one task."
                                 }

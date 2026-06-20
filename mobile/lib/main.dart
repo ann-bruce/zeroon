@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'auth/auth_controller.dart';
 import 'auth/login_screen.dart';
+import 'common/zeroon_design.dart';
 import 'home/home_shell.dart';
 
 void main() {
@@ -21,11 +22,80 @@ class ZeroonApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF55C7D9),
-          surface: const Color(0xFFF7F2E8),
+          seedColor: zeroonCyan,
+          surface: zeroonPaper,
           brightness: Brightness.light,
         ),
-        scaffoldBackgroundColor: const Color(0xFFF7F2E8),
+        scaffoldBackgroundColor: zeroonPaper,
+        textTheme: const TextTheme(
+          headlineMedium: TextStyle(
+            color: zeroonInk,
+            fontSize: 30,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.8,
+            height: 1.25,
+          ),
+          headlineSmall: TextStyle(
+            color: zeroonInk,
+            fontSize: 26,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.6,
+            height: 1.25,
+          ),
+          titleLarge: TextStyle(
+            color: zeroonInk,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+          titleMedium: TextStyle(
+            color: zeroonInk,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+          titleSmall: TextStyle(
+            color: zeroonInk,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+          bodyMedium: TextStyle(
+            color: Color(0xFF666970),
+            fontSize: 13,
+            height: 1.6,
+          ),
+          bodySmall: TextStyle(
+            color: zeroonMuted,
+            fontSize: 11,
+            height: 1.55,
+          ),
+          labelLarge: TextStyle(
+            color: zeroonInk,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2.8,
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white.withValues(alpha: 0.66),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: zeroonLine),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: zeroonLine),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: zeroonCyan),
+          ),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: zeroonPaper,
+          foregroundColor: zeroonInk,
+          elevation: 0,
+          centerTitle: true,
+        ),
         useMaterial3: true,
       ),
       home: sessionState.when(

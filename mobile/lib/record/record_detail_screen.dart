@@ -56,8 +56,6 @@ class RecordDetailScreen extends ConsumerWidget {
               const SizedBox(height: 4),
               Text('记录时间：${item.createdAt.toLocal()}'),
               const SizedBox(height: 24),
-              if (item.mood != null)
-                _DetailBlock(title: '此刻感受', content: item.mood!),
               if (item.goal != null)
                 _DetailBlock(title: '今天的小进展', content: item.goal!),
               if (item.content != null)

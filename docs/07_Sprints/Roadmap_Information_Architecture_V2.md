@@ -85,6 +85,12 @@ capability is validated.
 - Memory detail and recent pattern reflection
 - No social or gift-oriented features
 
+### Sprint 04
+
+- State lifecycle: Now starts the current state interval
+- Reset ends the active state and links it to a zero record
+- Archive and Growth can use state duration without diagnostic labels
+
 ### V1.1
 
 - My page
@@ -112,4 +118,3 @@ capability is validated.
 - Reflection cannot diagnose or define the user.
 - Export is for saving memory first, not social distribution.
 - Device link must not expose private content by default.
-

@@ -3,33 +3,29 @@ import '../state/state_models.dart';
 class CreateRecordRequest {
   const CreateRecordRequest({
     required this.state,
-    this.mood,
     this.goal,
     this.content,
   });
 
   final String state;
-  final String? mood;
   final String? goal;
   final String? content;
 
   Map<String, dynamic> toJson() {
     return {
       'state': state,
-      if (_hasText(mood)) 'mood': mood!.trim(),
       if (_hasText(goal)) 'goal': goal!.trim(),
       if (_hasText(content)) 'content': content!.trim(),
     };
   }
 
-  bool get hasContent => _hasText(mood) || _hasText(goal) || _hasText(content);
+  bool get hasContent => _hasText(goal) || _hasText(content);
 }
 
 class ZeroRecord {
   const ZeroRecord({
     required this.id,
     required this.state,
-    this.mood,
     this.goal,
     this.content,
     this.aiSummary,
@@ -38,7 +34,6 @@ class ZeroRecord {
 
   final int id;
   final String state;
-  final String? mood;
   final String? goal;
   final String? content;
   final String? aiSummary;
@@ -48,7 +43,6 @@ class ZeroRecord {
     return ZeroRecord(
       id: json['id'] as int,
       state: json['state'] as String,
-      mood: json['mood'] as String?,
       goal: json['goal'] as String?,
       content: json['content'] as String?,
       aiSummary: json['aiSummary'] as String?,
@@ -89,9 +83,6 @@ String recordPreview(ZeroRecord record) {
   }
   if (_hasText(record.goal)) {
     return record.goal!.trim();
-  }
-  if (_hasText(record.mood)) {
-    return record.mood!.trim();
   }
   return record.state;
 }

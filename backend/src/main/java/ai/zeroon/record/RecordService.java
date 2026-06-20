@@ -32,10 +32,9 @@ public class RecordService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         return zeroRecordRepository
-                .findFirstByUserIdAndStateAndMoodAndGoalAndContentOrderByCreatedAtDesc(
+                .findFirstByUserIdAndStateAndGoalAndContentOrderByCreatedAtDesc(
                         userId,
                         request.state(),
-                        normalize(request.mood()),
                         normalize(request.goal()),
                         normalize(request.content()))
                 .filter(this::isRecentDuplicate)
@@ -43,7 +42,6 @@ public class RecordService {
                 .orElseGet(() -> toDto(zeroRecordRepository.save(new ZeroRecordEntity(
                         user,
                         request.state(),
-                        normalize(request.mood()),
                         normalize(request.goal()),
                         normalize(request.content())))));
     }
@@ -76,7 +74,6 @@ public class RecordService {
         return new ZeroRecord(
                 record.getId(),
                 record.getState(),
-                record.getMood(),
                 record.getGoal(),
                 record.getContent(),
                 record.getAiSummary(),

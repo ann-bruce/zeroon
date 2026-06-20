@@ -14,20 +14,18 @@ public final class RecordDtos {
 
     public record CreateRecordRequest(
             @NotNull UserState state,
-            @Size(max = 200) String mood,
             @Size(max = 1000) String goal,
             @Size(max = 5000) String content) {
 
-        @AssertTrue(message = "At least one of mood, goal, or content is required")
+        @AssertTrue(message = "At least one of goal or content is required")
         public boolean hasRecordContent() {
-            return hasText(mood) || hasText(goal) || hasText(content);
+            return hasText(goal) || hasText(content);
         }
     }
 
     public record ZeroRecord(
             Long id,
             UserState state,
-            String mood,
             String goal,
             String content,
             String aiSummary,

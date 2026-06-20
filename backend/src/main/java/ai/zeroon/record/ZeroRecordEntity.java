@@ -31,9 +31,6 @@ public class ZeroRecordEntity {
     @Enumerated(EnumType.STRING)
     private UserState state;
 
-    @Column(length = 200)
-    private String mood;
-
     @Column(columnDefinition = "TEXT")
     private String goal;
 
@@ -52,10 +49,9 @@ public class ZeroRecordEntity {
     protected ZeroRecordEntity() {
     }
 
-    public ZeroRecordEntity(UserEntity user, UserState state, String mood, String goal, String content) {
+    public ZeroRecordEntity(UserEntity user, UserState state, String goal, String content) {
         this.user = user;
         this.state = state;
-        this.mood = mood;
         this.goal = goal;
         this.content = content;
     }
@@ -63,11 +59,10 @@ public class ZeroRecordEntity {
     public ZeroRecordEntity(
             UserEntity user,
             UserState state,
-            String mood,
             String goal,
             String content,
             Instant createdAt) {
-        this(user, state, mood, goal, content);
+        this(user, state, goal, content);
         this.createdAt = createdAt;
         this.updatedAt = createdAt;
     }
@@ -78,10 +73,6 @@ public class ZeroRecordEntity {
 
     public UserState getState() {
         return state;
-    }
-
-    public String getMood() {
-        return mood;
     }
 
     public String getGoal() {

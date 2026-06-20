@@ -31,7 +31,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ZEROON'), findsOneWidget);
-    expect(find.text('先进入此刻。'), findsOneWidget);
+    expect(find.text('欢迎回来。'), findsOneWidget);
     expect(find.text('获取验证码'), findsOneWidget);
   });
 
@@ -58,17 +58,19 @@ void main() {
           ),
           growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
         ],
-        child: const MaterialApp(home: NowScreen(session: session)),
+        child: MaterialApp(
+          home: NowScreen(session: session, onStartReset: () {}),
+        ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('先看见此刻的状态。'), findsOneWidget);
-    expect(find.text('当前状态：CALM'), findsOneWidget);
-    expect(find.text('用户：13800138000'), findsOneWidget);
+    expect(find.text('今天的 ZEROON'), findsOneWidget);
+    expect(find.text('平静'), findsWidgets);
+    expect(find.text('晚上好，8000'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('陪伴成长'), findsOneWidget);
+    expect(find.text('查看陪伴成长'), findsOneWidget);
   });
 
   testWidgets('login screen shows initial error', (tester) async {
@@ -81,6 +83,8 @@ void main() {
       ),
     );
 
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
     expect(find.text('session expired'), findsOneWidget);
   });
 
@@ -104,39 +108,55 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('先看见此刻的状态。'), findsOneWidget);
+    expect(find.text('今天的 ZEROON'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('陪伴成长'), findsOneWidget);
+    expect(find.text('查看陪伴成长'), findsOneWidget);
 
-    await tester.tap(find.text('陪伴成长'));
+    await tester.tap(find.text('查看陪伴成长'));
     await tester.pumpAndSettle();
     expect(find.text('连续归零'), findsOneWidget);
-    expect(find.text('7天'), findsOneWidget);
     expect(find.text('累计缓存'), findsOneWidget);
-    expect(find.text('126条'), findsOneWidget);
     expect(find.text('第一次记录'), findsOneWidget);
-    expect(find.text('2026.06.01'), findsOneWidget);
     expect(find.text('陪伴天数'), findsOneWidget);
-    expect(find.text('365天'), findsOneWidget);
+    expect(find.text('我们已经一起走过一年。'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.info_outline));
+    await tester.pumpAndSettle();
+    expect(find.text('陪伴成长说明'), findsOneWidget);
+    expect(find.textContaining('来自你的归零记录'), findsOneWidget);
+    expect(find.textContaining('ZEROON 不做诊断'), findsOneWidget);
+    Navigator.of(tester.element(find.text('陪伴成长说明'))).pop();
+    await tester.pumpAndSettle();
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('近期状态观察'), findsOneWidget);
-    expect(find.textContaining('不代表固定标签'), findsOneWidget);
-    expect(find.text('出现最多：FOCUS'), findsOneWidget);
-    expect(find.textContaining('state_history.current_state'), findsOneWidget);
+    expect(find.text('这一年的 ZEROON'), findsOneWidget);
+    expect(find.textContaining('你最常回到「专注」'), findsOneWidget);
+    expect(find.textContaining('数据来源'), findsNothing);
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    expect(find.text('回看这一年的山海缓存'), findsOneWidget);
+    await tester.tap(find.text('回看这一年的山海缓存'));
+    await tester.pumpAndSettle();
+    expect(find.text('山海缓存'), findsOneWidget);
+    expect(find.text('筛选'), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_left), findsNothing);
 
-    Navigator.of(tester.element(find.text('陪伴成长'))).pop();
+    Navigator.of(tester.element(find.text('山海缓存'))).pop();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Reset'));
+    Navigator.of(tester.element(find.byType(ListView))).pop();
     await tester.pumpAndSettle();
-    expect(find.text('把这一刻放下来。'), findsOneWidget);
 
-    await tester.tap(find.text('Archive'));
+    await tester.tap(find.text('归零'));
     await tester.pumpAndSettle();
-    expect(find.text('已缓存 1 条记录'), findsOneWidget);
-    expect(find.text('Archive 观察'), findsOneWidget);
+    expect(find.text('此刻，你是什么状态？'), findsOneWidget);
+
+    await tester.tap(find.text('缓存'));
+    await tester.pumpAndSettle();
+    expect(find.text('山海缓存'), findsOneWidget);
+    expect(find.text('筛选'), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_left), findsNothing);
+    expect(find.text('ZEROON 观察'), findsOneWidget);
     expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
     expect(find.text('today I paused'), findsOneWidget);
 
@@ -152,7 +172,7 @@ void main() {
     expect(find.textContaining('不会公开'), findsOneWidget);
   });
 
-  testWidgets('reset screen shows ZEROON echo after record is saved', (
+  testWidgets('reset screen opens completion after record is saved', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -171,23 +191,34 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField).at(2), 'today I paused');
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('保存归零记录'));
+    await tester.enterText(find.byType(TextField).first, 'today I paused');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('保存这次归零'));
     await tester.pumpAndSettle();
 
-    expect(find.text('已保存到 Archive：#1'), findsOneWidget);
-    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    expect(find.text('归零完成'), findsOneWidget);
+    expect(find.text('已经替你保存好了。'), findsOneWidget);
+    expect(find.text('回到此刻'), findsOneWidget);
+    expect(find.text('查看山海缓存'), findsOneWidget);
+    expect(find.text('ZEROON 回声'), findsNothing);
+    expect(find.text('“你已经把这一刻安放下来了。”'), findsOneWidget);
+    expect(find.text('today I paused'), findsOneWidget);
+    expect(find.text('再归零一次'), findsNothing);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -220));
     await tester.pumpAndSettle();
-    expect(find.text('ZEROON 回声'), findsOneWidget);
-    expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
-    expect(find.textContaining('不能替代'), findsOneWidget);
+    await tester.tap(find.text('查看山海缓存'));
+    await tester.pumpAndSettle();
+    expect(find.text('山海缓存'), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_left), findsNothing);
   });
 
   testWidgets('archive screen shows observation card for cached records', (
     tester,
   ) async {
+    final companionRepository = _FakeCompanionRepository();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -195,21 +226,23 @@ void main() {
             () => _FakeCurrentStateController(),
           ),
           recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
-          companionRepositoryProvider.overrideWithValue(
-            _FakeCompanionRepository(),
-          ),
+          companionRepositoryProvider.overrideWithValue(companionRepository),
         ],
         child: const MaterialApp(home: HomeShell(session: _session)),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Archive'));
+    await tester.tap(find.text('缓存'));
     await tester.pumpAndSettle();
 
-    expect(find.text('已缓存 1 条记录'), findsOneWidget);
-    expect(find.text('Archive 观察'), findsOneWidget);
+    expect(find.text('山海缓存'), findsOneWidget);
+    expect(find.text('ZEROON 观察'), findsOneWidget);
     expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
+    expect(companionRepository.lastMessage, isNotNull);
+    expect(companionRepository.lastMessage, isNot(contains('医疗')));
+    expect(companionRepository.lastMessage, isNot(contains('法律')));
+    expect(companionRepository.lastMessage, isNot(contains('心理诊断')));
   });
 
   testWidgets('archive observation shows unavailable state and retry', (
@@ -231,10 +264,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Archive'));
+    await tester.tap(find.text('缓存'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Archive 观察暂时不可用。'), findsOneWidget);
+    expect(find.text('ZEROON 观察暂时不可用。'), findsOneWidget);
     await tester.tap(find.text('重试观察'));
     await tester.pumpAndSettle();
 
@@ -291,7 +324,6 @@ class _FakeRecordRepository extends RecordRepository {
   final _record = ZeroRecord(
     id: 1,
     state: 'CALM',
-    mood: 'quiet',
     goal: 'first step',
     content: 'today I paused',
     aiSummary: '你已经把这一刻安放下来了。',
@@ -358,10 +390,13 @@ class _FakeGrowthRepository extends GrowthRepository {
 class _FakeCompanionRepository extends CompanionRepository {
   _FakeCompanionRepository() : super(Dio());
 
+  String? lastMessage;
+
   @override
   Future<CompanionMessageResponse> sendMessage(
     CompanionMessageRequest request,
   ) async {
+    lastMessage = request.message;
     return const CompanionMessageResponse(
       conversationId: 1,
       messageId: 2,

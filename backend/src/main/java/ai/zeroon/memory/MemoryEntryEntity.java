@@ -37,7 +37,7 @@ public class MemoryEntryEntity {
     private String summary;
 
     @Column(nullable = false)
-    private int importance = 1;
+    private short importance = 1;
 
     @Column(name = "source_type", length = 30)
     private String sourceType;
@@ -59,7 +59,7 @@ public class MemoryEntryEntity {
             MemoryEntryType type,
             String title,
             String summary,
-            int importance,
+            short importance,
             String sourceType,
             Long sourceId,
             Instant createdAt) {
@@ -71,7 +71,7 @@ public class MemoryEntryEntity {
             MemoryEntryType type,
             String title,
             String summary,
-            int importance,
+            short importance,
             String sourceType,
             Long sourceId,
             Instant expiresAt,
@@ -103,7 +103,7 @@ public class MemoryEntryEntity {
         return summary;
     }
 
-    public int getImportance() {
+    public short getImportance() {
         return importance;
     }
 

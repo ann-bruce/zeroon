@@ -46,7 +46,7 @@ class CompanionFallbackControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.conversationId").isNumber())
                 .andExpect(jsonPath("$.messageId").isNumber())
-                .andExpect(jsonPath("$.reply", containsString("AI 反思暂时不可用")))
+                .andExpect(jsonPath("$.reply", containsString("慢慢放进可以回看的地方")))
                 .andExpect(jsonPath("$.safetyNotice", not(blankOrNullString())));
 
         var logs = aiUsageLogRepository.findByUserIdOrderByCreatedAtDesc(1L);

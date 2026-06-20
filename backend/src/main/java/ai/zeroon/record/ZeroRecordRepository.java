@@ -19,10 +19,9 @@ public interface ZeroRecordRepository extends JpaRepository<ZeroRecordEntity, Lo
 
     Optional<ZeroRecordEntity> findByIdAndUserId(Long id, Long userId);
 
-    Optional<ZeroRecordEntity> findFirstByUserIdAndStateAndMoodAndGoalAndContentOrderByCreatedAtDesc(
+    Optional<ZeroRecordEntity> findFirstByUserIdAndStateAndGoalAndContentOrderByCreatedAtDesc(
             Long userId,
             UserState state,
-            String mood,
             String goal,
             String content);
 }

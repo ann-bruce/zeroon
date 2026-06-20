@@ -15,7 +15,6 @@ class CurrentStateController extends AsyncNotifier<StateSnapshot> {
   }
 
   Future<void> changeState(String nextState) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() {
       return ref.read(stateRepositoryProvider).changeState(nextState);
     });

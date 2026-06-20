@@ -59,21 +59,18 @@ class GrowthServiceTest {
         zeroRecordRepository.save(new ZeroRecordEntity(
                 user,
                 UserState.CALM,
-                "quiet",
                 "start",
                 "first",
                 Instant.parse("2025-06-10T16:30:00Z")));
         zeroRecordRepository.save(new ZeroRecordEntity(
                 user,
                 UserState.FOCUS,
-                null,
                 "yesterday",
                 null,
                 Instant.parse("2026-06-08T16:30:00Z")));
         zeroRecordRepository.save(new ZeroRecordEntity(
                 user,
                 UserState.CREATE,
-                null,
                 "today",
                 null,
                 Instant.parse("2026-06-09T16:30:00Z")));
@@ -249,7 +246,6 @@ class GrowthServiceTest {
         zeroRecordRepository.save(new ZeroRecordEntity(
                 user,
                 UserState.CALM,
-                null,
                 null,
                 "record",
                 Instant.parse(createdAt)));

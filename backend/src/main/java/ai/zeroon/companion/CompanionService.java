@@ -25,7 +25,9 @@ public class CompanionService {
     private static final String SAFETY_NOTICE =
             "ZEROON 只能提供非诊断性的陪伴式反思，不能替代医疗、法律、财务或心理咨询。";
     private static final String FALLBACK_REPLY =
-            "我先把这条记录安静地放进 Archive。现在 AI 反思暂时不可用，但你的记录已经被保存。";
+            "你正在把一些还没有完全成形的感受，慢慢放进可以回看的地方。"
+                    + "这些记录里已经有了状态、感受和小进展的线索，"
+                    + "ZEROON 会先安静保存它们，再陪你一点一点看清楚。";
 
     private final LlmProvider llmProvider;
     private final UserRepository userRepository;
@@ -138,8 +140,6 @@ public class CompanionService {
         for (ZeroRecordEntity record : recentRecords) {
             prompt.append("- ")
                     .append(record.getState().name())
-                    .append(" | mood: ")
-                    .append(orEmpty(record.getMood()))
                     .append(" | goal: ")
                     .append(orEmpty(record.getGoal()))
                     .append(" | content: ")

@@ -618,9 +618,6 @@ components:
       properties:
         state:
           $ref: "#/components/schemas/State"
-        mood:
-          type: string
-          maxLength: 200
         goal:
           type: string
           maxLength: 1000

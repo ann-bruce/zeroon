@@ -51,14 +51,13 @@ CREATE TABLE zero_records (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     state VARCHAR(20) NOT NULL,
-    mood VARCHAR(200),
     goal TEXT,
     content TEXT,
     ai_summary TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CHECK (state IN ('CALM', 'FOCUS', 'CREATE', 'TIRED', 'OVERLOAD', 'CONFUSED')),
-    CHECK (mood IS NOT NULL OR goal IS NOT NULL OR content IS NOT NULL)
+    CHECK (goal IS NOT NULL OR content IS NOT NULL)
 );
 
 CREATE TABLE conversations (
@@ -132,4 +131,3 @@ CREATE INDEX idx_conversations_user_time ON conversations(user_id, created_at DE
 CREATE INDEX idx_messages_conversation_time ON messages(conversation_id, created_at);
 CREATE INDEX idx_memory_entries_user_time ON memory_entries(user_id, created_at DESC);
 CREATE INDEX idx_audit_events_actor_time ON audit_events(actor_user_id, created_at DESC);
-
