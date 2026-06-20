@@ -46,6 +46,12 @@ public class UserEntity {
         this.mobile = mobile;
     }
 
+    public UserEntity(String uid, String mobile, Instant createdAt) {
+        this(uid, mobile);
+        this.createdAt = createdAt;
+        this.updatedAt = createdAt;
+    }
+
     public Long getId() {
         return id;
     }
@@ -64,6 +70,10 @@ public class UserEntity {
 
     public UserStatus getStatus() {
         return status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
     public void changeState(UserState state) {

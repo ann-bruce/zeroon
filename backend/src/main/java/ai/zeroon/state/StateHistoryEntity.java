@@ -56,6 +56,16 @@ public class StateHistoryEntity {
         this.source = source;
     }
 
+    public StateHistoryEntity(
+            UserEntity user,
+            UserState previousState,
+            UserState currentState,
+            StateSource source,
+            Instant createdAt) {
+        this(user, previousState, currentState, source);
+        this.createdAt = createdAt;
+    }
+
     public UserState getCurrentState() {
         return currentState;
     }

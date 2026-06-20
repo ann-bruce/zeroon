@@ -60,6 +60,18 @@ public class ZeroRecordEntity {
         this.content = content;
     }
 
+    public ZeroRecordEntity(
+            UserEntity user,
+            UserState state,
+            String mood,
+            String goal,
+            String content,
+            Instant createdAt) {
+        this(user, state, mood, goal, content);
+        this.createdAt = createdAt;
+        this.updatedAt = createdAt;
+    }
+
     public Long getId() {
         return id;
     }

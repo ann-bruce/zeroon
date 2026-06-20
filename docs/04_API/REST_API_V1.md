@@ -124,9 +124,15 @@ Response
 
 GET /memory
 
+GET /memory/{memoryId}
+
 ### Get Summary
 
 GET /memory/summary
+
+### Recent State Pattern
+
+GET /growth/state-pattern
 
 ---
 

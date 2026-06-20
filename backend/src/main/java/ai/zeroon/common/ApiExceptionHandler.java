@@ -38,6 +38,12 @@ public class ApiExceptionHandler {
         return Map.of("error", "bad_request", "message", "Invalid request body");
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    Map<String, String> illegalArgument(IllegalArgumentException ex) {
+        return Map.of("error", "bad_request", "message", ex.getMessage());
+    }
+
     @ExceptionHandler(EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     Map<String, String> notFound(EntityNotFoundException ex) {
