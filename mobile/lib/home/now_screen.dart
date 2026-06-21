@@ -1,10 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_controller.dart';
 import '../auth/auth_models.dart';
 import '../common/zeroon_design.dart';
-import '../growth/growth_screen.dart';
 import '../growth/growth_controller.dart';
 import '../record/record_controller.dart';
 import '../record/archive_screen.dart';
@@ -84,6 +85,7 @@ class _StateHero extends ConsumerWidget {
       data: (snapshot) => _StatePanel(
         snapshot: snapshot,
         continuousResetDays: growthSummary.valueOrNull?.continuousResetDays,
+        recordPage: records.valueOrNull,
         latestTodayRecord: _latestTodayRecord(records.valueOrNull),
         onStartReset: onStartReset,
       ),
@@ -95,12 +97,14 @@ class _StatePanel extends ConsumerWidget {
   const _StatePanel({
     required this.snapshot,
     required this.continuousResetDays,
+    required this.recordPage,
     required this.latestTodayRecord,
     required this.onStartReset,
   });
 
   final StateSnapshot snapshot;
   final int? continuousResetDays;
+  final RecordPage? recordPage;
   final ZeroRecord? latestTodayRecord;
   final VoidCallback onStartReset;
 
@@ -120,19 +124,26 @@ class _StatePanel extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 18),
-            StateCore(state: snapshot.state),
+            StateCore(
+                state: snapshot.hasActiveSession ? snapshot.state : 'IDLE'),
             const SizedBox(height: 18),
             Text(
               snapshot.hasActiveSession ? stateLabel(snapshot.state) : '选择此刻状态',
               style: zeroonSerif(context, size: 28),
             ),
             const SizedBox(height: 4),
-            Text(
-              snapshot.hasActiveSession
-                  ? '${_stateHint(snapshot.state)}\n${_durationText(snapshot.elapsedSeconds)}'
-                  : '先选择一个最接近的状态，ZEROON 会从这一刻开始记录。',
-              textAlign: TextAlign.center,
-            ),
+            if (snapshot.hasActiveSession)
+              Column(
+                children: [
+                  Text(_stateHint(snapshot.state), textAlign: TextAlign.center),
+                  _LiveDurationText(snapshot: snapshot),
+                ],
+              )
+            else
+              const Text(
+                '先选择一个最接近的状态，ZEROON 会从这一刻开始记录。',
+                textAlign: TextAlign.center,
+              ),
           ],
         ),
         const SizedBox(height: 22),
@@ -154,58 +165,9 @@ class _StatePanel extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 26),
-        ZeroonCard(
-          padding: const EdgeInsets.fromLTRB(17, 15, 14, 15),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const GrowthScreen()),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '连续归零',
-                      style: TextStyle(color: zeroonMuted, fontSize: 10),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(_continuousResetText(continuousResetDays),
-                        style: Theme.of(context).textTheme.titleMedium),
-                  ],
-                ),
-              ),
-              Row(
-                children: List.generate(
-                  7,
-                  (index) => Container(
-                    width: 24,
-                    height: 24,
-                    margin: const EdgeInsets.only(left: 6),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: index < 5
-                          ? zeroonNight
-                          : zeroonBlue.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                      border: index == 6
-                          ? Border.all(color: zeroonBlue)
-                          : Border.all(color: Colors.transparent),
-                    ),
-                    child: Text(
-                      ['一', '二', '三', '四', '五', '六', '日'][index],
-                      style: TextStyle(
-                        color: index < 5 ? zeroonIvory : zeroonInk,
-                        fontSize: 8,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: zeroonMuted),
-            ],
-          ),
+        _ResetTrackCard(
+          continuousResetDays: continuousResetDays,
+          records: recordPage?.items ?? const [],
         ),
         const SizedBox(height: 14),
         ZeroonPrimaryButton(
@@ -271,11 +233,190 @@ class _StatePanel extends ConsumerWidget {
   }
 }
 
+class _ResetTrackCard extends StatelessWidget {
+  const _ResetTrackCard({
+    required this.continuousResetDays,
+    required this.records,
+  });
+
+  final int? continuousResetDays;
+  final List<ZeroRecord> records;
+
+  @override
+  Widget build(BuildContext context) {
+    final days = _recentSevenDays();
+    final recordDates = {
+      for (final record in records) _dateOnly(record.createdAt.toLocal()),
+    };
+
+    return ZeroonCard(
+      padding: const EdgeInsets.fromLTRB(17, 15, 14, 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '连续归零',
+                      style: TextStyle(color: zeroonMuted, fontSize: 10),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _continuousResetText(continuousResetDays),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+              ),
+              const Text(
+                '点亮日期可回看',
+                style: TextStyle(color: zeroonMuted, fontSize: 10),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (final day in days)
+                _ResetTrackDay(
+                  date: day,
+                  active: recordDates.contains(day),
+                  onTap: recordDates.contains(day)
+                      ? () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ArchiveScreen(initialDate: day),
+                            ),
+                          )
+                      : null,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResetTrackDay extends StatelessWidget {
+  const _ResetTrackDay({
+    required this.date,
+    required this.active,
+    required this.onTap,
+  });
+
+  final DateTime date;
+  final bool active;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final today = _dateOnly(DateTime.now());
+    final isToday = date == today;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Column(
+        children: [
+          Container(
+            width: 29,
+            height: 29,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: active ? zeroonNight : zeroonBlue.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isToday ? zeroonBlue : Colors.transparent,
+              ),
+            ),
+            child: Text(
+              '${date.day}',
+              style: TextStyle(
+                color: active ? zeroonIvory : zeroonMuted,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _weekdayLabel(date),
+            style: const TextStyle(color: zeroonMuted, fontSize: 8),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiveDurationText extends StatefulWidget {
+  const _LiveDurationText({required this.snapshot});
+
+  final StateSnapshot snapshot;
+
+  @override
+  State<_LiveDurationText> createState() => _LiveDurationTextState();
+}
+
+class _LiveDurationTextState extends State<_LiveDurationText> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant _LiveDurationText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.snapshot.sessionId != widget.snapshot.sessionId ||
+        oldWidget.snapshot.startedAt != widget.snapshot.startedAt) {
+      _startTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(_durationText(_elapsedSeconds(widget.snapshot)));
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+}
+
+int _elapsedSeconds(StateSnapshot snapshot) {
+  final startedAt = snapshot.startedAt;
+  if (startedAt == null) {
+    return snapshot.elapsedSeconds;
+  }
+  final liveSeconds = DateTime.now().difference(startedAt.toLocal()).inSeconds;
+  return liveSeconds > snapshot.elapsedSeconds
+      ? liveSeconds
+      : snapshot.elapsedSeconds;
+}
+
 String _continuousResetText(int? days) {
   if (days == null) {
-    return ' -- 天';
+    return '-- 天';
   }
-  return ' $days 天';
+  return '$days 天';
 }
 
 String _todayArchiveText(ZeroRecord? record) {
@@ -299,6 +440,22 @@ ZeroRecord? _latestTodayRecord(RecordPage? page) {
     }
   }
   return null;
+}
+
+List<DateTime> _recentSevenDays() {
+  final today = _dateOnly(DateTime.now());
+  return [
+    for (var index = 6; index >= 0; index--)
+      today.subtract(Duration(days: index)),
+  ];
+}
+
+DateTime _dateOnly(DateTime value) {
+  return DateTime(value.year, value.month, value.day);
+}
+
+String _weekdayLabel(DateTime date) {
+  return ['一', '二', '三', '四', '五', '六', '日'][date.weekday - 1];
 }
 
 class _StateChoice extends StatelessWidget {

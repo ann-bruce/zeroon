@@ -251,7 +251,7 @@ class ZeroonCard extends StatelessWidget {
 }
 
 class StateCore extends StatelessWidget {
-  const StateCore({super.key, this.size = 168, this.state = 'FOCUS'});
+  const StateCore({super.key, this.size = 168, this.state = 'IDLE'});
 
   final double size;
   final String state;
@@ -294,6 +294,7 @@ class _StateCorePainter extends CustomPainter {
 
     final accent = stateColor(state);
     final deep = switch (state) {
+      'IDLE' => const Color(0xFF2D343D),
       'CALM' => const Color(0xFF39414B),
       'CREATE' => const Color(0xFF6B451A),
       'TIRED' => const Color(0xFF34353B),
@@ -340,6 +341,7 @@ class _StateCorePainter extends CustomPainter {
 
 Color stateColor(String state) {
   return switch (state) {
+    'IDLE' => zeroonCyan,
     'CALM' => const Color(0xFFEDEDED),
     'FOCUS' => zeroonBlue,
     'CREATE' => const Color(0xFFFFD166),
@@ -352,6 +354,7 @@ Color stateColor(String state) {
 
 String stateLabel(String state) {
   return switch (state) {
+    'IDLE' => '等待',
     'CALM' => '平静',
     'FOCUS' => '专注',
     'CREATE' => '创造',

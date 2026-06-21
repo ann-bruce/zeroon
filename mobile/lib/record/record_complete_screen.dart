@@ -39,8 +39,9 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
         children: [
           ZeroonHeader(
+            mark: 'ZEROON',
             title: '归零完成',
-            leading: const Wordmark(),
+            center: true,
             action: ZeroonIconButton(
               child: const Icon(Icons.close),
               onPressed: () => _returnHome(context),

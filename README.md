@@ -237,6 +237,15 @@ npm install
 npm run dev
 ```
 
+Unified local service scripts:
+
+```bash
+scripts/zeroon-service.sh start backend
+scripts/zeroon-service.sh start mobile
+scripts/zeroon-service.sh stop all
+scripts/zeroon-service.sh status all
+```
+
 Verification:
 
 ```bash

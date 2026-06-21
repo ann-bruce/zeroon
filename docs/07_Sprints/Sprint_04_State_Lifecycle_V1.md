@@ -29,6 +29,7 @@ Target implementation:
 - Reset shows only the active state icon.
 - Saving a zero record ends the active state session.
 - The zero record is linked to the ended state session.
+- Reset is opened from Now as a flow and is no longer a primary bottom tab.
 - Archive can show state duration next to the saved record.
 - Growth can aggregate state duration and reset patterns.
 
@@ -177,7 +178,7 @@ Fallback rule:
 
 - Show all six state icons as selectable.
 - Active state is visually highlighted.
-- Show elapsed duration, for example: `已停留 18 分钟`.
+- Show live elapsed duration, for example: `停留了约 18 分钟`.
 - `开始一次归零` opens Reset with the active state.
 
 ### Reset

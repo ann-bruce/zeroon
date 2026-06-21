@@ -8,11 +8,20 @@ import 'record_controller.dart';
 import 'record_detail_screen.dart';
 import 'record_models.dart';
 
-class ArchiveScreen extends ConsumerWidget {
-  const ArchiveScreen({super.key});
+class ArchiveScreen extends ConsumerStatefulWidget {
+  const ArchiveScreen({super.key, this.initialDate});
+
+  final DateTime? initialDate;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ArchiveScreen> createState() => _ArchiveScreenState();
+}
+
+class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
+  late DateTime? _selectedDate = _dateOnly(widget.initialDate);
+
+  @override
+  Widget build(BuildContext context) {
     final records = ref.watch(recordListProvider);
 
     return ZeroonScreen(
@@ -39,7 +48,11 @@ class ArchiveScreen extends ConsumerWidget {
               ),
             ],
           ),
-          data: (page) => _ArchiveList(page: page),
+          data: (page) => _ArchiveList(
+            page: page,
+            selectedDate: _selectedDate,
+            onClearDate: () => setState(() => _selectedDate = null),
+          ),
         ),
       ),
     );
@@ -47,21 +60,50 @@ class ArchiveScreen extends ConsumerWidget {
 }
 
 class _ArchiveList extends StatelessWidget {
-  const _ArchiveList({required this.page});
+  const _ArchiveList({
+    required this.page,
+    required this.selectedDate,
+    required this.onClearDate,
+  });
 
   final RecordPage page;
+  final DateTime? selectedDate;
+  final VoidCallback onClearDate;
 
   @override
   Widget build(BuildContext context) {
-    if (page.items.isEmpty) {
+    final visibleItems = selectedDate == null
+        ? page.items
+        : page.items.where((record) {
+            final day = _dateOnly(record.createdAt.toLocal());
+            return day == selectedDate;
+          }).toList();
+    final visiblePage = RecordPage(
+      items: visibleItems,
+      page: page.page,
+      size: page.size,
+      totalElements: visibleItems.length,
+    );
+
+    if (visibleItems.isEmpty) {
       return ListView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
         children: [
-          const _ArchiveHeader(),
+          _ArchiveHeader(
+            selectedDate: selectedDate,
+            onClearDate: onClearDate,
+          ),
           const SizedBox(height: 52),
-          Text('还没有归零记录。', style: zeroonSerif(context, size: 26)),
+          Text(
+            selectedDate == null ? '还没有归零记录。' : '这一天还没有山海缓存。',
+            style: zeroonSerif(context, size: 26),
+          ),
           const SizedBox(height: 8),
-          const Text('完成一次 Reset 后，这里会出现你的记录。'),
+          Text(
+            selectedDate == null
+                ? '完成一次 Reset 后，这里会出现你的记录。'
+                : '换一天看看，也许有别的东西被保存下来。',
+          ),
         ],
       );
     }
@@ -70,8 +112,18 @@ class _ArchiveList extends StatelessWidget {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _ArchiveHeader(),
+          _ArchiveHeader(
+            selectedDate: selectedDate,
+            onClearDate: onClearDate,
+          ),
           const SizedBox(height: 22),
+          if (selectedDate != null) ...[
+            _DateFilterChip(
+              date: selectedDate!,
+              onClear: onClearDate,
+            ),
+            const SizedBox(height: 14),
+          ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -79,7 +131,7 @@ class _ArchiveList extends StatelessWidget {
                 child: Text('属于你的记录，不公开，也不喧哗。'),
               ),
               Text(
-                '${page.totalElements}',
+                '${visibleItems.length}',
                 style: zeroonSerif(context, size: 28),
               ),
               const SizedBox(width: 4),
@@ -98,7 +150,7 @@ class _ArchiveList extends StatelessWidget {
 
     DateTime? currentDay;
     var insertedObservation = false;
-    for (final record in page.items) {
+    for (final record in visibleItems) {
       final day = DateTime(
         record.createdAt.toLocal().year,
         record.createdAt.toLocal().month,
@@ -106,7 +158,7 @@ class _ArchiveList extends StatelessWidget {
       );
       if (currentDay != day) {
         if (currentDay != null && !insertedObservation) {
-          children.add(_ArchiveObservationCard(page: page));
+          children.add(_ArchiveObservationCard(page: visiblePage));
           insertedObservation = true;
         }
         currentDay = day;
@@ -115,7 +167,7 @@ class _ArchiveList extends StatelessWidget {
       children.add(_RecordMemoryCard(record: record));
     }
     if (!insertedObservation) {
-      children.add(_ArchiveObservationCard(page: page));
+      children.add(_ArchiveObservationCard(page: visiblePage));
     }
 
     return ListView.separated(
@@ -128,7 +180,13 @@ class _ArchiveList extends StatelessWidget {
 }
 
 class _ArchiveHeader extends StatelessWidget {
-  const _ArchiveHeader();
+  const _ArchiveHeader({
+    required this.selectedDate,
+    required this.onClearDate,
+  });
+
+  final DateTime? selectedDate;
+  final VoidCallback onClearDate;
 
   @override
   Widget build(BuildContext context) {
@@ -138,11 +196,48 @@ class _ArchiveHeader extends StatelessWidget {
       leading: const SizedBox.shrink(),
       action: TextButton(
         onPressed: () {
+          if (selectedDate != null) {
+            onClearDate();
+            return;
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('筛选功能后续开放')),
           );
         },
-        child: const Text('筛选'),
+        child: Text(selectedDate == null ? '筛选' : '全部'),
+      ),
+    );
+  }
+}
+
+class _DateFilterChip extends StatelessWidget {
+  const _DateFilterChip({required this.date, required this.onClear});
+
+  final DateTime date;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: zeroonGold.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: zeroonGold.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '筛选：${_formatDate(date)}',
+            style: const TextStyle(color: zeroonInk, fontSize: 12),
+          ),
+          const Spacer(),
+          InkWell(
+            onTap: onClear,
+            borderRadius: BorderRadius.circular(12),
+            child: const Icon(Icons.close, size: 15, color: zeroonMuted),
+          ),
+        ],
       ),
     );
   }
@@ -381,6 +476,20 @@ String _observationPrompt(RecordPage page) {
 }
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
+
+DateTime? _dateOnly(DateTime? value) {
+  if (value == null) {
+    return null;
+  }
+  return DateTime(value.year, value.month, value.day);
+}
+
+String _formatDate(DateTime value) {
+  final year = value.year.toString().padLeft(4, '0');
+  final month = value.month.toString().padLeft(2, '0');
+  final day = value.day.toString().padLeft(2, '0');
+  return '$year.$month.$day';
+}
 
 String _formatTime(DateTime value) {
   final local = value.toLocal();

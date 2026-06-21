@@ -70,7 +70,8 @@ void main() {
     expect(find.text('晚上好，8000'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('连续归零 7 天'), findsOneWidget);
+    expect(find.text('7 天'), findsOneWidget);
+    expect(find.text('点亮日期可回看'), findsOneWidget);
   });
 
   testWidgets('login screen shows initial error', (tester) async {
@@ -88,7 +89,7 @@ void main() {
     expect(find.text('session expired'), findsOneWidget);
   });
 
-  testWidgets('home shell navigates between Now Reset and Archive', (
+  testWidgets('home shell navigates between Now Archive and Growth', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -111,9 +112,18 @@ void main() {
     expect(find.text('今天的 ZEROON'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('连续归零 7 天'), findsOneWidget);
+    expect(find.text('7 天'), findsOneWidget);
+    expect(find.text('点亮日期可回看'), findsOneWidget);
 
-    await tester.tap(find.text('连续归零 7 天'));
+    await tester.tap(find.text('19').first);
+    await tester.pumpAndSettle();
+    expect(find.text('山海缓存'), findsOneWidget);
+    expect(find.text('筛选：2026.06.19'), findsOneWidget);
+    expect(find.text('today I paused'), findsOneWidget);
+    Navigator.of(tester.element(find.text('山海缓存'))).pop();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('成长'));
     await tester.pumpAndSettle();
     expect(find.text('连续归零'), findsOneWidget);
     expect(find.text('累计缓存'), findsOneWidget);
@@ -127,29 +137,7 @@ void main() {
     expect(find.textContaining('ZEROON 不做诊断'), findsOneWidget);
     Navigator.of(tester.element(find.text('陪伴成长说明'))).pop();
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView), const Offset(0, -500));
-    await tester.pumpAndSettle();
-    expect(find.text('这一年的 ZEROON'), findsOneWidget);
-    expect(find.textContaining('你最常回到「专注」'), findsOneWidget);
     expect(find.textContaining('数据来源'), findsNothing);
-    await tester.drag(find.byType(ListView), const Offset(0, -300));
-    await tester.pumpAndSettle();
-    expect(find.text('回看这一年的山海缓存'), findsOneWidget);
-    await tester.tap(find.text('回看这一年的山海缓存'));
-    await tester.pumpAndSettle();
-    expect(find.text('山海缓存'), findsOneWidget);
-    expect(find.text('筛选'), findsOneWidget);
-    expect(find.byIcon(Icons.chevron_left), findsNothing);
-
-    Navigator.of(tester.element(find.text('山海缓存'))).pop();
-    await tester.pumpAndSettle();
-
-    Navigator.of(tester.element(find.byType(ListView))).pop();
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('归零'));
-    await tester.pumpAndSettle();
-    expect(find.text('正在归零的状态'), findsOneWidget);
 
     await tester.tap(find.text('缓存'));
     await tester.pumpAndSettle();

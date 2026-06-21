@@ -2,6 +2,7 @@
 .idea/
 .vscode/
 .env
+.run/
 *.iml
 
 backend/.gradle/
@@ -18,4 +19,3 @@ mobile/.flutter-plugins
 mobile/.flutter-plugins-dependencies
 mobile/build/
 mobile/coverage/
-

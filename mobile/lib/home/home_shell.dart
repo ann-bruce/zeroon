@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../auth/auth_models.dart';
 import '../common/zeroon_design.dart';
+import '../growth/growth_screen.dart';
 import '../record/archive_screen.dart';
 import '../record/reset_screen.dart';
 import 'now_screen.dart';
@@ -23,10 +24,10 @@ class _HomeShellState extends State<HomeShell> {
     final pages = [
       NowScreen(
         session: widget.session,
-        onStartReset: () => setState(() => _selectedIndex = 1),
+        onStartReset: _openResetFlow,
       ),
-      ResetScreen(onReturnHome: () => setState(() => _selectedIndex = 0)),
       const ArchiveScreen(),
+      const GrowthScreen(),
     ];
 
     return Scaffold(
@@ -49,18 +50,31 @@ class _HomeShellState extends State<HomeShell> {
               onTap: () => setState(() => _selectedIndex = 0),
             ),
             _NavItem(
-              icon: Icons.add_circle_outline,
-              label: '归零',
+              icon: Icons.inventory_2_outlined,
+              label: '缓存',
               selected: _selectedIndex == 1,
               onTap: () => setState(() => _selectedIndex = 1),
             ),
             _NavItem(
-              icon: Icons.inventory_2_outlined,
-              label: '缓存',
+              icon: Icons.auto_graph,
+              label: '成长',
               selected: _selectedIndex == 2,
               onTap: () => setState(() => _selectedIndex = 2),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _openResetFlow() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ResetScreen(
+          onReturnHome: () {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            setState(() => _selectedIndex = 0);
+          },
         ),
       ),
     );
