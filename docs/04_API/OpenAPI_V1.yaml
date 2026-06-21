@@ -178,6 +178,30 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /state/sessions:
+    post:
+      tags: [State]
+      summary: Start or switch the active state session
+      operationId: startStateSession
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartStateSessionRequest"
+      responses:
+        "201":
+          description: Active state session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StateSnapshot"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /records:
     get:
       tags: [Record]
@@ -606,7 +630,25 @@ components:
         changedAt:
           type: string
           format: date-time
+        sessionId:
+          type: integer
+          format: int64
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        elapsedSeconds:
+          type: integer
+          format: int64
+          minimum: 0
     StateChangeRequest:
+      type: object
+      required: [state]
+      properties:
+        state:
+          $ref: "#/components/schemas/State"
+    StartStateSessionRequest:
       type: object
       required: [state]
       properties:
@@ -614,10 +656,10 @@ components:
           $ref: "#/components/schemas/State"
     CreateRecordRequest:
       type: object
-      required: [state]
       properties:
         state:
           $ref: "#/components/schemas/State"
+          description: Deprecated compatibility field. New Sprint 04 clients derive state from the active state session.
         goal:
           type: string
           maxLength: 1000
@@ -636,6 +678,22 @@ components:
             aiSummary:
               type: string
               maxLength: 1000
+            stateSessionId:
+              type: integer
+              format: int64
+              nullable: true
+            stateStartedAt:
+              type: string
+              format: date-time
+              nullable: true
+            stateEndedAt:
+              type: string
+              format: date-time
+              nullable: true
+            stateDurationSeconds:
+              type: integer
+              format: int64
+              nullable: true
             createdAt:
               type: string
               format: date-time

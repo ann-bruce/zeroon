@@ -3,15 +3,20 @@ package ai.zeroon.record;
 import ai.zeroon.record.RecordDtos.CreateRecordRequest;
 import ai.zeroon.record.RecordDtos.RecordPage;
 import ai.zeroon.record.RecordDtos.ZeroRecord;
+import ai.zeroon.state.StateService;
+import ai.zeroon.state.StateSessionRepository;
 import ai.zeroon.user.UserEntity;
 import ai.zeroon.user.UserRepository;
+import ai.zeroon.user.UserState;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Duration;
 import java.time.Instant;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class RecordService {
@@ -20,30 +25,55 @@ public class RecordService {
 
     private final UserRepository userRepository;
     private final ZeroRecordRepository zeroRecordRepository;
+    private final StateSessionRepository stateSessionRepository;
+    private final StateService stateService;
 
-    public RecordService(UserRepository userRepository, ZeroRecordRepository zeroRecordRepository) {
+    public RecordService(
+            UserRepository userRepository,
+            ZeroRecordRepository zeroRecordRepository,
+            StateSessionRepository stateSessionRepository,
+            StateService stateService) {
         this.userRepository = userRepository;
         this.zeroRecordRepository = zeroRecordRepository;
+        this.stateSessionRepository = stateSessionRepository;
+        this.stateService = stateService;
     }
 
     @Transactional
     public ZeroRecord create(Long userId, CreateRecordRequest request) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        var activeSession = stateSessionRepository.findFirstByUserIdAndEndedAtIsNull(userId);
+        UserState recordState = activeSession
+                .map(session -> session.getState())
+                .orElse(request.state());
+        if (recordState == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Choose a current state before saving a zero record");
+        }
 
-        return zeroRecordRepository
+        var duplicatedRecord = zeroRecordRepository
                 .findFirstByUserIdAndStateAndGoalAndContentOrderByCreatedAtDesc(
                         userId,
-                        request.state(),
+                        recordState,
                         normalize(request.goal()),
                         normalize(request.content()))
-                .filter(this::isRecentDuplicate)
-                .map(this::toDto)
-                .orElseGet(() -> toDto(zeroRecordRepository.save(new ZeroRecordEntity(
-                        user,
-                        request.state(),
-                        normalize(request.goal()),
-                        normalize(request.content())))));
+                .filter(this::isRecentDuplicate);
+        if (duplicatedRecord.isPresent()) {
+            var record = duplicatedRecord.get();
+            activeSession.ifPresent(session -> stateService.endSessionWithRecord(session, record.getId()));
+            return toDto(record);
+        }
+
+        var record = zeroRecordRepository.save(new ZeroRecordEntity(
+                user,
+                recordState,
+                normalize(request.goal()),
+                normalize(request.content()),
+                activeSession.map(session -> session.getId()).orElse(null)));
+        activeSession.ifPresent(session -> stateService.endSessionWithRecord(session, record.getId()));
+        return toDto(record);
     }
 
     @Transactional(readOnly = true)
@@ -71,13 +101,42 @@ public class RecordService {
     }
 
     private ZeroRecord toDto(ZeroRecordEntity record) {
+        var stateSession = record.getStateSessionId() == null
+                ? OptionalStateSession.empty()
+                : stateSessionRepository.findById(record.getStateSessionId())
+                        .map(session -> new OptionalStateSession(
+                                session.getStartedAt(),
+                                session.getEndedAt(),
+                                stateDurationSeconds(session.getStartedAt(), session.getEndedAt())))
+                        .orElseGet(OptionalStateSession::empty);
         return new ZeroRecord(
                 record.getId(),
                 record.getState(),
                 record.getGoal(),
                 record.getContent(),
                 record.getAiSummary(),
+                record.getStateSessionId(),
+                stateSession.startedAt(),
+                stateSession.endedAt(),
+                stateSession.durationSeconds(),
                 record.getCreatedAt());
+    }
+
+    private Long stateDurationSeconds(Instant startedAt, Instant endedAt) {
+        if (startedAt == null || endedAt == null) {
+            return null;
+        }
+        return Duration.between(startedAt, endedAt).toSeconds();
+    }
+
+    private record OptionalStateSession(
+            Instant startedAt,
+            Instant endedAt,
+            Long durationSeconds) {
+
+        private static OptionalStateSession empty() {
+            return new OptionalStateSession(null, null, null);
+        }
     }
 
     private String normalize(String value) {

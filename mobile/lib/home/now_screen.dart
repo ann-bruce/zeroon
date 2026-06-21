@@ -5,7 +5,10 @@ import '../auth/auth_controller.dart';
 import '../auth/auth_models.dart';
 import '../common/zeroon_design.dart';
 import '../growth/growth_screen.dart';
+import '../growth/growth_controller.dart';
+import '../record/record_controller.dart';
 import '../record/archive_screen.dart';
+import '../record/record_models.dart';
 import '../state/state_controller.dart';
 import '../state/state_models.dart';
 
@@ -69,6 +72,8 @@ class _StateHero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentState = ref.watch(currentStateProvider);
+    final growthSummary = ref.watch(growthSummaryProvider);
+    final records = ref.watch(recordListProvider);
 
     return currentState.when(
       loading: () => const _StateLoading(),
@@ -78,6 +83,8 @@ class _StateHero extends ConsumerWidget {
       ),
       data: (snapshot) => _StatePanel(
         snapshot: snapshot,
+        continuousResetDays: growthSummary.valueOrNull?.continuousResetDays,
+        latestTodayRecord: _latestTodayRecord(records.valueOrNull),
         onStartReset: onStartReset,
       ),
     );
@@ -85,9 +92,16 @@ class _StateHero extends ConsumerWidget {
 }
 
 class _StatePanel extends ConsumerWidget {
-  const _StatePanel({required this.snapshot, required this.onStartReset});
+  const _StatePanel({
+    required this.snapshot,
+    required this.continuousResetDays,
+    required this.latestTodayRecord,
+    required this.onStartReset,
+  });
 
   final StateSnapshot snapshot;
+  final int? continuousResetDays;
+  final ZeroRecord? latestTodayRecord;
   final VoidCallback onStartReset;
 
   @override
@@ -109,11 +123,34 @@ class _StatePanel extends ConsumerWidget {
             StateCore(state: snapshot.state),
             const SizedBox(height: 18),
             Text(
-              stateLabel(snapshot.state),
+              snapshot.hasActiveSession ? stateLabel(snapshot.state) : '选择此刻状态',
               style: zeroonSerif(context, size: 28),
             ),
             const SizedBox(height: 4),
-            Text(_stateHint(snapshot.state), textAlign: TextAlign.center),
+            Text(
+              snapshot.hasActiveSession
+                  ? '${_stateHint(snapshot.state)}\n${_durationText(snapshot.elapsedSeconds)}'
+                  : '先选择一个最接近的状态，ZEROON 会从这一刻开始记录。',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        const SizedBox(height: 22),
+        GridView.count(
+          crossAxisCount: 3,
+          mainAxisSpacing: 9,
+          crossAxisSpacing: 9,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: 1.08,
+          children: [
+            for (final state in zeroonStates)
+              _StateChoice(
+                state: state,
+                selected: snapshot.hasActiveSession && snapshot.state == state,
+                onTap: () =>
+                    ref.read(currentStateProvider.notifier).changeState(state),
+              ),
           ],
         ),
         const SizedBox(height: 26),
@@ -133,7 +170,7 @@ class _StatePanel extends ConsumerWidget {
                       style: TextStyle(color: zeroonMuted, fontSize: 10),
                     ),
                     const SizedBox(height: 4),
-                    Text('查看陪伴成长',
+                    Text(_continuousResetText(continuousResetDays),
                         style: Theme.of(context).textTheme.titleMedium),
                   ],
                 ),
@@ -172,8 +209,8 @@ class _StatePanel extends ConsumerWidget {
         ),
         const SizedBox(height: 14),
         ZeroonPrimaryButton(
-          label: '开始一次归零',
-          onPressed: onStartReset,
+          label: snapshot.hasActiveSession ? '开始一次归零' : '先选择此刻状态',
+          onPressed: snapshot.hasActiveSession ? onStartReset : null,
         ),
         const SizedBox(height: 10),
         ZeroonCard(
@@ -185,8 +222,8 @@ class _StatePanel extends ConsumerWidget {
             ),
           ),
           child: Row(
-            children: const [
-              CircleAvatar(
+            children: [
+              const CircleAvatar(
                 radius: 17,
                 backgroundColor: Color(0x20D7B46A),
                 child: Icon(
@@ -195,42 +232,28 @@ class _StatePanel extends ConsumerWidget {
                   size: 16,
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('今日山海缓存',
-                        style:
-                            TextStyle(color: Color(0xFF9A8D75), fontSize: 10)),
-                    SizedBox(height: 3),
-                    Text('“完成了一次真实环境验证。”',
-                        style: TextStyle(color: zeroonInk, fontSize: 12)),
+                    const Text(
+                      '今日山海缓存',
+                      style: TextStyle(color: Color(0xFF9A8D75), fontSize: 10),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _todayArchiveText(latestTodayRecord),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: zeroonInk, fontSize: 12),
+                    ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: zeroonMuted),
+              const Icon(Icons.chevron_right, color: zeroonMuted),
             ],
           ),
-        ),
-        const SizedBox(height: 22),
-        Text('切换状态', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final state in zeroonStates)
-              ChoiceChip(
-                label: Text(stateLabel(state)),
-                selected: snapshot.state == state,
-                onSelected: snapshot.state == state
-                    ? null
-                    : (_) => ref
-                        .read(currentStateProvider.notifier)
-                        .changeState(state),
-              ),
-          ],
         ),
       ],
     );
@@ -246,6 +269,109 @@ class _StatePanel extends ConsumerWidget {
       _ => '这里没有需要证明的事，先看见此刻。',
     };
   }
+}
+
+String _continuousResetText(int? days) {
+  if (days == null) {
+    return ' -- 天';
+  }
+  return ' $days 天';
+}
+
+String _todayArchiveText(ZeroRecord? record) {
+  if (record == null) {
+    return '今天还没有新的山海缓存。';
+  }
+  return '“${recordPreview(record)}”';
+}
+
+ZeroRecord? _latestTodayRecord(RecordPage? page) {
+  if (page == null) {
+    return null;
+  }
+  final now = DateTime.now();
+  for (final record in page.items) {
+    final local = record.createdAt.toLocal();
+    if (local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day) {
+      return record;
+    }
+  }
+  return null;
+}
+
+class _StateChoice extends StatelessWidget {
+  const _StateChoice({
+    required this.state,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String state;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? zeroonNight : Colors.white.withValues(alpha: 0.62),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: selected ? zeroonNight : zeroonLine),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 19,
+              height: 19,
+              decoration: BoxDecoration(
+                color: stateColor(state),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: stateColor(state).withValues(alpha: 0.45),
+                    blurRadius: 13,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              stateLabel(state),
+              style: TextStyle(
+                color: selected ? zeroonIvory : zeroonInk,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _durationText(int seconds) {
+  if (seconds < 60) {
+    return '刚刚开始停留';
+  }
+  final minutes = seconds ~/ 60;
+  if (minutes < 60) {
+    return '停留了约 $minutes 分钟';
+  }
+  final hours = minutes ~/ 60;
+  final restMinutes = minutes % 60;
+  if (restMinutes == 0) {
+    return '停留了约 $hours 小时';
+  }
+  return '停留了约 $hours 小时 $restMinutes 分钟';
 }
 
 class _StateLoading extends StatelessWidget {

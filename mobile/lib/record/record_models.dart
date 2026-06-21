@@ -2,18 +2,18 @@ import '../state/state_models.dart';
 
 class CreateRecordRequest {
   const CreateRecordRequest({
-    required this.state,
+    this.state,
     this.goal,
     this.content,
   });
 
-  final String state;
+  final String? state;
   final String? goal;
   final String? content;
 
   Map<String, dynamic> toJson() {
     return {
-      'state': state,
+      if (_hasText(state)) 'state': state!.trim(),
       if (_hasText(goal)) 'goal': goal!.trim(),
       if (_hasText(content)) 'content': content!.trim(),
     };
@@ -29,6 +29,10 @@ class ZeroRecord {
     this.goal,
     this.content,
     this.aiSummary,
+    this.stateSessionId,
+    this.stateStartedAt,
+    this.stateEndedAt,
+    this.stateDurationSeconds,
     required this.createdAt,
   });
 
@@ -37,6 +41,10 @@ class ZeroRecord {
   final String? goal;
   final String? content;
   final String? aiSummary;
+  final int? stateSessionId;
+  final DateTime? stateStartedAt;
+  final DateTime? stateEndedAt;
+  final int? stateDurationSeconds;
   final DateTime createdAt;
 
   factory ZeroRecord.fromJson(Map<String, dynamic> json) {
@@ -46,6 +54,10 @@ class ZeroRecord {
       goal: json['goal'] as String?,
       content: json['content'] as String?,
       aiSummary: json['aiSummary'] as String?,
+      stateSessionId: json['stateSessionId'] as int?,
+      stateStartedAt: _parseDateTime(json['stateStartedAt']),
+      stateEndedAt: _parseDateTime(json['stateEndedAt']),
+      stateDurationSeconds: json['stateDurationSeconds'] as int?,
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
@@ -90,3 +102,10 @@ String recordPreview(ZeroRecord record) {
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 
 const recordStates = zeroonStates;
+
+DateTime? _parseDateTime(Object? value) {
+  if (value is! String) {
+    return null;
+  }
+  return DateTime.parse(value);
+}

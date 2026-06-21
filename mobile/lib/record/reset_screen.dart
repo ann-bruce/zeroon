@@ -5,6 +5,8 @@ import '../common/zeroon_design.dart';
 import 'record_controller.dart';
 import 'record_complete_screen.dart';
 import 'record_models.dart';
+import '../state/state_controller.dart';
+import '../state/state_models.dart';
 
 class ResetScreen extends ConsumerStatefulWidget {
   const ResetScreen({super.key, this.onReturnHome});
@@ -18,7 +20,6 @@ class ResetScreen extends ConsumerStatefulWidget {
 class _ResetScreenState extends ConsumerState<ResetScreen> {
   final _goalController = TextEditingController();
   final _contentController = TextEditingController();
-  String _state = recordStates.first;
   String? _message;
   bool _saving = false;
 
@@ -31,31 +32,17 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentState = ref.watch(currentStateProvider);
     return ZeroonScreen(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
         children: [
           const ZeroonHeader(mark: 'ZERO RECORD', title: '归零', center: true),
           const SizedBox(height: 28),
-          Text('此刻，你是什么状态？', style: zeroonSerif(context, size: 26)),
-          const SizedBox(height: 6),
-          const Text('不需要准确，选择最接近的就好。'),
-          const SizedBox(height: 18),
-          GridView.count(
-            crossAxisCount: 3,
-            mainAxisSpacing: 9,
-            crossAxisSpacing: 9,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 1.08,
-            children: [
-              for (final state in recordStates)
-                _StateTile(
-                  state: state,
-                  selected: _state == state,
-                  onTap: _saving ? null : () => setState(() => _state = state),
-                ),
-            ],
+          currentState.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stackTrace) => Text('状态读取失败：$error'),
+            data: (snapshot) => _LockedStateCard(snapshot: snapshot),
           ),
           const SizedBox(height: 22),
           TextField(
@@ -93,8 +80,12 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
   }
 
   Future<void> _save() async {
+    final snapshot = ref.read(currentStateProvider).valueOrNull;
+    if (snapshot == null || !snapshot.hasActiveSession) {
+      setState(() => _message = '请先回到此刻，选择一个当前状态。');
+      return;
+    }
     final request = CreateRecordRequest(
-      state: _state,
       goal: _goalController.text,
       content: _contentController.text,
     );
@@ -110,6 +101,7 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
     try {
       final record =
           await ref.read(recordListProvider.notifier).create(request);
+      ref.invalidate(currentStateProvider);
       _goalController.clear();
       _contentController.clear();
       if (!mounted) {
@@ -137,79 +129,57 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
   }
 }
 
-class _StateTile extends StatelessWidget {
-  const _StateTile({
-    required this.state,
-    required this.selected,
-    required this.onTap,
-  });
+class _LockedStateCard extends StatelessWidget {
+  const _LockedStateCard({required this.snapshot});
 
-  final String state;
-  final bool selected;
-  final VoidCallback? onTap;
+  final StateSnapshot snapshot;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(15),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected ? zeroonNight : Colors.white.withValues(alpha: 0.62),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: selected ? zeroonNight : zeroonLine),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: zeroonNight.withValues(alpha: 0.14),
-                    blurRadius: 20,
-                    offset: const Offset(0, 9),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 19,
-              height: 19,
-              decoration: BoxDecoration(
-                color: stateColor(state),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: stateColor(state).withValues(alpha: 0.5),
-                    blurRadius: 13,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 7),
-            Text(
-              stateLabel(state),
-              style: TextStyle(
-                color: selected ? zeroonIvory : zeroonInk,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              state,
-              style: TextStyle(
-                color: selected
-                    ? zeroonIvory.withValues(alpha: 0.55)
-                    : const Color(0xFFA3A29F),
-                fontSize: 7,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ],
-        ),
+    final active = snapshot.hasActiveSession;
+    return ZeroonCard(
+      color: active
+          ? Colors.white.withValues(alpha: 0.62)
+          : zeroonGold.withValues(alpha: 0.10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            active ? '正在归零的状态' : '还没有选择此刻状态',
+            style: const TextStyle(color: zeroonMuted, fontSize: 10),
+          ),
+          const SizedBox(height: 14),
+          StateCore(size: 118, state: snapshot.state),
+          const SizedBox(height: 14),
+          Text(
+            active ? stateLabel(snapshot.state) : '请先回到此刻选择状态',
+            style: zeroonSerif(context, size: 24),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            active
+                ? _durationText(snapshot.elapsedSeconds)
+                : 'ZEROON 会从选择状态开始记录持续时间。',
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
+}
+
+String _durationText(int seconds) {
+  if (seconds < 60) {
+    return '刚刚开始停留';
+  }
+  final minutes = seconds ~/ 60;
+  if (minutes < 60) {
+    return '停留了约 $minutes 分钟';
+  }
+  final hours = minutes ~/ 60;
+  final restMinutes = minutes % 60;
+  if (restMinutes == 0) {
+    return '停留了约 $hours 小时';
+  }
+  return '停留了约 $hours 小时 $restMinutes 分钟';
 }

@@ -32,6 +32,21 @@ Target implementation:
 - Archive can show state duration next to the saved record.
 - Growth can aggregate state duration and reset patterns.
 
+### Confirmed Rules
+
+- After a zero record is saved, the active state session is ended and Now
+  returns to a neutral "choose current state" state.
+- ZEROON does not auto-start the next state after reset completion.
+- If the user changes state on Now, the previous active session is ended
+  automatically and a new session starts.
+- State duration is displayed softly on user-facing screens, for example
+  `停留了约 18 分钟`.
+- Exact duration remains available for backend calculation.
+- Sessions shorter than 30 seconds are merged into the next session when the
+  state changes without a zero record.
+- Sessions shorter than 30 seconds are still saved when they end through a zero
+  record, because the user intentionally created a memory.
+
 ---
 
 ## User Flow
@@ -126,6 +141,8 @@ Behavior:
 - If active session has the same state, return it idempotently.
 - If active session has a different state, end the old session and start a new
   one.
+- If the old session is shorter than 30 seconds and was not ended by a zero
+  record, merge it away instead of preserving it as a meaningful interval.
 
 ### Save Zero Record
 
@@ -145,6 +162,7 @@ Behavior:
 - Ends active session.
 - Links `zero_records.state_session_id` and
   `state_sessions.ended_by_record_id`.
+- Leaves the user with no active state session after completion.
 
 Fallback rule:
 
@@ -202,24 +220,24 @@ Do not add rankings, scores, or pressure-based streak language.
 
 | ID | Owner | Task | Status |
 |---|---|---|
-| S4-BE-01 | Backend | Add `state_sessions` migration and entity | Draft |
-| S4-BE-02 | Backend | Add one-active-session-per-user constraint | Draft |
-| S4-BE-03 | Backend | Add start/get active state session APIs | Draft |
-| S4-BE-04 | Backend | Update record creation to derive state from active session | Draft |
-| S4-BE-05 | Backend | Link zero record and ended state session | Draft |
-| S4-BE-06 | Backend | Update growth/state pattern calculations for duration | Draft |
-| S4-BE-07 | Backend | Update OpenAPI and tests | Draft |
+| S4-BE-01 | Backend | Add `state_sessions` migration and entity | Done |
+| S4-BE-02 | Backend | Add one-active-session-per-user constraint | Done |
+| S4-BE-03 | Backend | Add start/get active state session APIs | Done |
+| S4-BE-04 | Backend | Update record creation to derive state from active session | Done |
+| S4-BE-05 | Backend | Link zero record and ended state session | Done |
+| S4-BE-06 | Backend | Update growth/state pattern calculations for duration | Pending |
+| S4-BE-07 | Backend | Update OpenAPI and tests | Done |
 
 ## Mobile Tasks
 
 | ID | Owner | Task | Status |
 |---|---|---|
-| S4-MO-01 | Mobile | Move six state choices to Now | Draft |
-| S4-MO-02 | Mobile | Show active state duration on Now | Draft |
-| S4-MO-03 | Mobile | Simplify Reset to one active state icon | Draft |
-| S4-MO-04 | Mobile | Save record through active state session | Draft |
-| S4-MO-05 | Mobile | Show duration on completion and Archive cards | Draft |
-| S4-MO-06 | Mobile | Update widget tests | Draft |
+| S4-MO-01 | Mobile | Move six state choices to Now | Done |
+| S4-MO-02 | Mobile | Show active state duration on Now | Done |
+| S4-MO-03 | Mobile | Simplify Reset to one active state icon | Done |
+| S4-MO-04 | Mobile | Save record through active state session | Done |
+| S4-MO-05 | Mobile | Show duration on completion and Archive cards | Pending |
+| S4-MO-06 | Mobile | Update widget tests | Done |
 
 ---
 
@@ -230,22 +248,39 @@ Do not add rankings, scores, or pressure-based streak language.
 - Now displays the active state and elapsed duration.
 - Reset does not allow choosing a different state.
 - Saving a zero record ends the active session.
+- After saving a zero record, Now asks the user to choose a current state again.
 - Zero record is linked to the ended state session.
 - Archive can show the state duration for a saved record.
 - Growth can still calculate existing Sprint 03 metrics.
+- State sessions under 30 seconds are merged unless they ended with a zero
+  record.
 - No diagnostic, ranking, or pressure language is introduced.
 
 ---
 
-## Open Questions
+## Decisions From Open Questions
 
-- After saving a zero record, should the user return to no active state, or
-  should ZEROON ask the user to choose the next state?
-- Should changing state on Now automatically end the previous session, or ask
-  for confirmation when the previous session lasted long enough?
-- Should state duration be shown exactly (`18 分钟`) or softly (`停留了一会儿`)?
-- Should a very short state session under 30 seconds be saved, merged, or
-  ignored?
+| Question | Decision |
+|---|---|
+| What happens after saving a zero record? | End the active session and return Now to "choose current state". |
+| What happens when user chooses another state on Now? | End the old session automatically and start the new one. |
+| Should duration be exact or soft? | User-facing UI uses soft wording; backend keeps exact seconds. |
+| What about sessions under 30 seconds? | Merge when caused by quick state changes; keep when ended by zero record. |
+
+---
+
+## Development Sequence
+
+1. Backend migration and `state_sessions` entity.
+2. Backend active session service and API.
+3. Backend record creation update.
+4. OpenAPI and backend tests.
+5. Mobile state session repository/controller.
+6. Now page state selector and duration display.
+7. Reset page locked active state.
+8. Completion and Archive duration display.
+9. Growth calculation compatibility check.
+10. Full local validation.
 
 ---
 

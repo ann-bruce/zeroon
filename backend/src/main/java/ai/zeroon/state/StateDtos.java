@@ -1,7 +1,6 @@
 package ai.zeroon.state;
 
 import ai.zeroon.user.UserState;
-import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 
 public final class StateDtos {
@@ -12,10 +11,17 @@ public final class StateDtos {
     public record StateSnapshot(
             UserState state,
             StateSource source,
-            Instant changedAt) {
+            Instant changedAt,
+            Long sessionId,
+            Instant startedAt,
+            long elapsedSeconds) {
     }
 
     public record StateChangeRequest(
-            @NotNull UserState state) {
+            UserState state) {
+    }
+
+    public record StartStateSessionRequest(
+            UserState state) {
     }
 }

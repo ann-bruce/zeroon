@@ -70,7 +70,7 @@ void main() {
     expect(find.text('晚上好，8000'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('查看陪伴成长'), findsOneWidget);
+    expect(find.text('连续归零 7 天'), findsOneWidget);
   });
 
   testWidgets('login screen shows initial error', (tester) async {
@@ -111,9 +111,9 @@ void main() {
     expect(find.text('今天的 ZEROON'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('查看陪伴成长'), findsOneWidget);
+    expect(find.text('连续归零 7 天'), findsOneWidget);
 
-    await tester.tap(find.text('查看陪伴成长'));
+    await tester.tap(find.text('连续归零 7 天'));
     await tester.pumpAndSettle();
     expect(find.text('连续归零'), findsOneWidget);
     expect(find.text('累计缓存'), findsOneWidget);
@@ -149,7 +149,7 @@ void main() {
 
     await tester.tap(find.text('归零'));
     await tester.pumpAndSettle();
-    expect(find.text('此刻，你是什么状态？'), findsOneWidget);
+    expect(find.text('正在归零的状态'), findsOneWidget);
 
     await tester.tap(find.text('缓存'));
     await tester.pumpAndSettle();
@@ -166,10 +166,11 @@ void main() {
     expect(find.text('Archive 记忆'), findsOneWidget);
     expect(find.text('私密记录'), findsOneWidget);
     expect(find.text('记录编号 #1'), findsOneWidget);
+    expect(find.text('归零状态：平静'), findsOneWidget);
     expect(find.text('想记录的话'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.textContaining('不会公开'), findsOneWidget);
+    expect(find.textContaining('数据来源'), findsNothing);
   });
 
   testWidgets('reset screen opens completion after record is saved', (
@@ -293,6 +294,9 @@ class _FakeCurrentStateController extends CurrentStateController {
       state: 'CALM',
       source: 'SYSTEM',
       changedAt: DateTime.parse('2026-06-19T00:00:00Z'),
+      sessionId: 1,
+      startedAt: DateTime.parse('2026-06-19T00:00:00Z'),
+      elapsedSeconds: 600,
     );
   }
 }

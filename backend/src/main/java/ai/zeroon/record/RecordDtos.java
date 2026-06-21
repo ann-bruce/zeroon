@@ -2,7 +2,6 @@ package ai.zeroon.record;
 
 import ai.zeroon.user.UserState;
 import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
@@ -13,7 +12,7 @@ public final class RecordDtos {
     }
 
     public record CreateRecordRequest(
-            @NotNull UserState state,
+            UserState state,
             @Size(max = 1000) String goal,
             @Size(max = 5000) String content) {
 
@@ -29,6 +28,10 @@ public final class RecordDtos {
             String goal,
             String content,
             String aiSummary,
+            Long stateSessionId,
+            Instant stateStartedAt,
+            Instant stateEndedAt,
+            Long stateDurationSeconds,
             Instant createdAt) {
     }
 

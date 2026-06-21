@@ -40,6 +40,9 @@ public class ZeroRecordEntity {
     @Column(name = "ai_summary", columnDefinition = "TEXT")
     private String aiSummary;
 
+    @Column(name = "state_session_id")
+    private Long stateSessionId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -49,11 +52,16 @@ public class ZeroRecordEntity {
     protected ZeroRecordEntity() {
     }
 
-    public ZeroRecordEntity(UserEntity user, UserState state, String goal, String content) {
+    public ZeroRecordEntity(UserEntity user, UserState state, String goal, String content, Long stateSessionId) {
         this.user = user;
         this.state = state;
         this.goal = goal;
         this.content = content;
+        this.stateSessionId = stateSessionId;
+    }
+
+    public ZeroRecordEntity(UserEntity user, UserState state, String goal, String content) {
+        this(user, state, goal, content, (Long) null);
     }
 
     public ZeroRecordEntity(
@@ -85,6 +93,10 @@ public class ZeroRecordEntity {
 
     public String getAiSummary() {
         return aiSummary;
+    }
+
+    public Long getStateSessionId() {
+        return stateSessionId;
     }
 
     public Instant getCreatedAt() {

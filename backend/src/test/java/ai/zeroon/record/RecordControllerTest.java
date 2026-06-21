@@ -98,6 +98,17 @@ class RecordControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void recordWithoutActiveSessionOrCompatibilityStateReturnsConflict() throws Exception {
+        String accessToken = login("13100131001");
+
+        mockMvc.perform(post("/api/v1/records")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"private\"}"))
+                .andExpect(status().isConflict());
+    }
+
     private Long createRecord(
             String accessToken,
             String state,

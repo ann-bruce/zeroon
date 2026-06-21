@@ -1,6 +1,7 @@
 package ai.zeroon.state;
 
 import ai.zeroon.security.UserPrincipal;
+import ai.zeroon.state.StateDtos.StartStateSessionRequest;
 import ai.zeroon.state.StateDtos.StateChangeRequest;
 import ai.zeroon.state.StateDtos.StateSnapshot;
 import jakarta.validation.Valid;
@@ -34,5 +35,13 @@ public class StateController {
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody StateChangeRequest request) {
         return stateService.changeState(principal.userId(), request.state());
+    }
+
+    @PostMapping("/sessions")
+    @ResponseStatus(HttpStatus.CREATED)
+    StateSnapshot startStateSession(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody StartStateSessionRequest request) {
+        return stateService.startSession(principal.userId(), request.state());
     }
 }

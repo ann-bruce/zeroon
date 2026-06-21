@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../common/zeroon_design.dart';
 import 'record_controller.dart';
 import 'record_models.dart';
 
@@ -52,9 +53,9 @@ class RecordDetailScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               Text('记录编号 #${item.id}'),
               const SizedBox(height: 4),
-              Text('归零状态：${item.state}'),
+              Text('归零状态：${stateLabel(item.state)}'),
               const SizedBox(height: 4),
-              Text('记录时间：${item.createdAt.toLocal()}'),
+              Text('记录时间：${_formatRecordTimeRange(item)}'),
               const SizedBox(height: 24),
               if (item.goal != null)
                 _DetailBlock(title: '今天的小进展', content: item.goal!),
@@ -62,17 +63,27 @@ class RecordDetailScreen extends ConsumerWidget {
                 _DetailBlock(title: '想记录的话', content: item.content!),
               if (item.aiSummary != null)
                 _DetailBlock(title: 'ZEROON 回声', content: item.aiSummary!),
-              const SizedBox(height: 8),
-              Text(
-                '数据来源：你的 Archive 归零记录。ZEROON 不会公开这条内容。',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+String _formatRecordTimeRange(ZeroRecord record) {
+  final startedAt = record.stateStartedAt?.toLocal();
+  final endedAt = record.stateEndedAt?.toLocal();
+  if (startedAt != null && endedAt != null) {
+    return '${_formatTime(startedAt)} - ${_formatTime(endedAt)}';
+  }
+  return _formatTime(record.createdAt.toLocal());
+}
+
+String _formatTime(DateTime value) {
+  final hour = value.hour.toString().padLeft(2, '0');
+  final minute = value.minute.toString().padLeft(2, '0');
+  return '$hour:$minute';
 }
 
 class _DetailBlock extends StatelessWidget {

@@ -20,7 +20,7 @@ class StateRepository {
 
   Future<StateSnapshot> changeState(String state) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/state/changes',
+      '/state/sessions',
       data: {'state': state},
     );
     return StateSnapshot.fromJson(response.data!);
