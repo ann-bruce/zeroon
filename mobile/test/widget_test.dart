@@ -12,6 +12,8 @@ import 'package:zeroon_mobile/growth/growth_repository.dart';
 import 'package:zeroon_mobile/home/home_shell.dart';
 import 'package:zeroon_mobile/home/now_screen.dart';
 import 'package:zeroon_mobile/main.dart';
+import 'package:zeroon_mobile/profile/profile_models.dart';
+import 'package:zeroon_mobile/profile/profile_repository.dart';
 import 'package:zeroon_mobile/record/record_models.dart';
 import 'package:zeroon_mobile/record/record_repository.dart';
 import 'package:zeroon_mobile/record/reset_screen.dart';
@@ -102,6 +104,7 @@ void main() {
           companionRepositoryProvider.overrideWithValue(
             _FakeCompanionRepository(),
           ),
+          profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
           growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
         ],
         child: const MaterialApp(home: HomeShell(session: _session)),
@@ -166,6 +169,43 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.textContaining('数据来源'), findsNothing);
+  });
+
+  testWidgets('profile screen opens from Now and saves user context', (
+    tester,
+  ) async {
+    final profileRepository = _FakeProfileRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          profileRepositoryProvider.overrideWithValue(profileRepository),
+        ],
+        child: const MaterialApp(home: HomeShell(session: _session)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.text('我与 ZEROON'), findsOneWidget);
+    expect(find.textContaining('这里不是公开主页'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, 'Bruce');
+    await tester.drag(find.byType(ListView).last, const Offset(0, -700));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('保存我的信息'));
+    await tester.pumpAndSettle();
+
+    expect(profileRepository.saved?.nickname, 'Bruce');
+    expect(profileRepository.saved?.aiProfileContextEnabled, isTrue);
+    expect(find.text('已经保存。'), findsOneWidget);
   });
 
   testWidgets('reset screen opens completion after record is saved', (
@@ -383,6 +423,34 @@ class _FakeGrowthRepository extends GrowthRepository {
       timezone: timezone,
       calculatedAt: DateTime.parse('2026-06-20T00:00:00Z'),
     );
+  }
+}
+
+class _FakeProfileRepository extends ProfileRepository {
+  _FakeProfileRepository() : super(Dio());
+
+  UserProfile _profile = const UserProfile(aiProfileContextEnabled: false);
+  UpdateUserProfileRequest? saved;
+
+  @override
+  Future<UserProfile> get() async {
+    return _profile;
+  }
+
+  @override
+  Future<UserProfile> update(UpdateUserProfileRequest request) async {
+    saved = request;
+    _profile = UserProfile(
+      nickname: request.nickname,
+      avatarPreset: request.avatarPreset,
+      ageRange: request.ageRange,
+      occupation: request.occupation,
+      selfDescription: request.selfDescription,
+      aiProfileContextEnabled: request.aiProfileContextEnabled,
+      createdAt: DateTime.parse('2026-06-24T00:00:00Z'),
+      updatedAt: DateTime.parse('2026-06-24T00:00:00Z'),
+    );
+    return _profile;
   }
 }
 

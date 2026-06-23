@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../auth/auth_controller.dart';
 import '../auth/auth_models.dart';
 import '../common/zeroon_design.dart';
 import '../growth/growth_controller.dart';
+import '../profile/profile_screen.dart';
 import '../record/record_controller.dart';
 import '../record/archive_screen.dart';
 import '../record/record_models.dart';
@@ -43,9 +43,10 @@ class NowScreen extends ConsumerWidget {
               const Spacer(),
               ZeroonIconButton(
                 dark: true,
-                onPressed: () =>
-                    ref.read(authControllerProvider.notifier).logout(),
-                child: const Icon(Icons.logout),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                ),
+                child: const Icon(Icons.person_outline),
               ),
             ],
           ),
