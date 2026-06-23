@@ -24,6 +24,8 @@ Confirmed scope:
 - Let the user decide whether AI can use profile context.
 - Keep all fields optional.
 - Keep profile content private by default.
+- Use profile context only as user-provided context, not as an inferred
+  personality model.
 
 Do not add:
 
@@ -37,17 +39,63 @@ Do not add:
 
 ## Profile Fields
 
-| Field | Required | Notes |
-|---|---|---|
-| `nickname` | no | Used in local greeting and AI tone personalization |
-| `avatar` | no | Sprint 05 can use default or preset avatars first |
-| `age_range` | no | Prefer ranges over exact age |
-| `occupation` | no | Free text, such as student, designer, founder |
-| `self_description` | no | One short sentence about how the user wants ZEROON to understand them |
-| `ai_profile_context_enabled` | yes | Explicit switch for whether AI can use profile context |
+| Field | Required | Type | Validation | Notes |
+|---|---|---|---|---|
+| `nickname` | no | string | 1-30 chars after trim | Used in local greeting and AI tone personalization |
+| `avatar_preset` | no | string | enum or null | Sprint 05 uses default or preset avatars first |
+| `age_range` | no | string | enum or null | Prefer ranges over exact age |
+| `occupation` | no | string | 1-40 chars after trim | Free text, such as student, designer, founder |
+| `self_description` | no | string | 1-120 chars after trim | One short sentence about how the user wants ZEROON to understand them |
+| `ai_profile_context_enabled` | yes | boolean | default false | Explicit switch for whether AI can use profile context |
 
 Avatar upload is recommended as a later enhancement unless storage, access
 control, compression, and default fallback are all ready in this sprint.
+
+Recommended `age_range` values:
+
+- `UNDER_18`
+- `18_24`
+- `25_34`
+- `35_44`
+- `45_54`
+- `55_PLUS`
+- `PREFER_NOT_TO_SAY`
+
+Recommended `avatar_preset` values:
+
+- `ZEROON_DEFAULT`
+- `MOON`
+- `MOUNTAIN`
+- `SEA`
+- `LIGHT`
+- `SEED`
+
+---
+
+## Information Architecture
+
+Sprint 05 adds a My / Settings surface without turning it into a public profile.
+
+Recommended navigation:
+
+- Bottom tab candidate: `我的`
+- Page title: `我与 ZEROON`
+- Secondary section: `我的信息`
+- Secondary section: `ZEROON 如何理解我`
+- Secondary section: `隐私与数据`
+
+MVP page structure:
+
+```text
+My / Settings
+  -> Profile summary card
+  -> My information editor
+  -> AI profile context permission
+  -> Privacy note
+```
+
+The page should feel like a private settings and self-introduction space, not a
+social identity page.
 
 ---
 
@@ -64,16 +112,173 @@ control, compression, and default fallback are all ready in this sprint.
 
 ---
 
+## Backend Design
+
+### Data Model
+
+Recommended table: `user_profiles`
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `id` | BIGSERIAL | yes | Primary key |
+| `user_id` | BIGINT | yes | Unique owner |
+| `nickname` | VARCHAR(30) | no | Trimmed |
+| `avatar_preset` | VARCHAR(30) | no | Preset enum |
+| `age_range` | VARCHAR(20) | no | Age range enum |
+| `occupation` | VARCHAR(40) | no | Trimmed free text |
+| `self_description` | VARCHAR(120) | no | User-provided sentence |
+| `ai_profile_context_enabled` | BOOLEAN | yes | Default false |
+| `created_at` | TIMESTAMPTZ | yes | Audit timestamp |
+| `updated_at` | TIMESTAMPTZ | yes | Audit timestamp |
+
+Constraints:
+
+- One profile per user.
+- Profile is owner-scoped.
+- Empty strings are stored as null.
+- `ai_profile_context_enabled` defaults to false.
+
+### API Draft
+
+`GET /api/v1/me/profile`
+
+Returns the current user's profile. If none exists, return default values with
+`aiProfileContextEnabled=false`.
+
+`PUT /api/v1/me/profile`
+
+Request:
+
+- `nickname`
+- `avatarPreset`
+- `ageRange`
+- `occupation`
+- `selfDescription`
+- `aiProfileContextEnabled`
+
+Behavior:
+
+- Create profile if it does not exist.
+- Update only the current user's profile.
+- Trim text fields.
+- Convert blank strings to null.
+- Validate field length and enum values.
+
+Response:
+
+- Return the saved profile.
+
+Error behavior:
+
+- `400` for invalid enum or field length.
+- `401` for unauthenticated access.
+
+### OpenAPI
+
+Update `docs/04_API/OpenAPI_V1.yaml` with:
+
+- `UserProfileResponse`
+- `UpdateUserProfileRequest`
+- `GET /api/v1/me/profile`
+- `PUT /api/v1/me/profile`
+
+---
+
+## AI Profile Context Rules
+
+Profile context can be included in AI prompts only when:
+
+- The user is authenticated.
+- A profile exists or default profile response is available.
+- `ai_profile_context_enabled=true`.
+- The target AI feature benefits from self-provided context.
+
+Allowed use:
+
+- Tone personalization.
+- Better understanding of user-provided records.
+- Gentle reference to self-description when relevant.
+- More contextual archive and growth observations.
+
+Disallowed use:
+
+- Hidden psychological profile.
+- Fixed labels such as "you are an anxious person".
+- Medical, legal, financial, or psychological diagnosis.
+- Inferring sensitive traits from records.
+- Using profile context when the permission switch is off.
+
+Prompt context should be explicit and bounded:
+
+```text
+User-provided profile context, included because the user enabled it:
+- Nickname: ...
+- Age range: ...
+- Occupation or identity: ...
+- Self-description: ...
+
+Use this only as context for wording and continuity.
+Do not diagnose, label, or infer fixed traits.
+```
+
+---
+
+## Mobile Design
+
+### My / Settings Entry
+
+Sprint 05 should add a My / Settings entry without disturbing the current
+state lifecycle.
+
+Recommended MVP navigation:
+
+- Bottom tabs can become:
+  - `此刻`
+  - `缓存`
+  - `成长`
+  - `我的`
+
+If four tabs feel crowded in the current mobile layout, My / Settings can first
+enter from the top-right action on Now. The final decision should be based on
+visual review before implementation.
+
+### Profile Screen
+
+Screen copy principles:
+
+- Use private, calm language.
+- Explain value before asking for data.
+- Make skipping feel normal.
+- Avoid social profile wording.
+
+Recommended copy:
+
+- Page title: `我与 ZEROON`
+- Explanation: `这些信息只用于帮助 ZEROON 更好理解你留下的记录。你可以随时修改，也可以留空。`
+- AI permission title: `允许 ZEROON 使用我的信息`
+- AI permission note: `开启后，ZEROON 会在生成观察和回应时参考这些自我介绍。关闭后不会使用。`
+
+Required states:
+
+- Loading
+- Save success
+- Validation error
+- Save failure with retry
+- Empty optional fields
+
+---
+
 ## Backend Tasks
 
 | ID | Owner | Task | Status |
 |---|---|---|
-| S5-BE-01 | Backend | Add user profile table or profile fields linked to user | Pending |
+| S5-BE-01 | Backend | Add `user_profiles` migration and entity | Pending |
 | S5-BE-02 | Backend | Add profile read/update API | Pending |
 | S5-BE-03 | Backend | Add `ai_profile_context_enabled` permission flag | Pending |
 | S5-BE-04 | Backend | Include profile context in AI prompts only when enabled | Pending |
 | S5-BE-05 | Backend | Add ownership, validation, and privacy tests | Pending |
 | S5-BE-06 | Backend | Update OpenAPI documentation | Pending |
+| S5-BE-07 | Backend | Add default profile response when profile does not exist | Pending |
 
 ## Mobile Tasks
 
@@ -85,6 +290,20 @@ control, compression, and default fallback are all ready in this sprint.
 | S5-MO-04 | Mobile | Add default or preset avatar display | Pending |
 | S5-MO-05 | Mobile | Add clear empty and saved states | Pending |
 | S5-MO-06 | Mobile | Add widget tests | Pending |
+| S5-MO-07 | Mobile | Review whether My is a bottom tab or Now entry | Pending |
+
+## Development Sequence
+
+1. Confirm My / Settings entry placement with UI review.
+2. Add backend migration, entity, repository, and service.
+3. Add profile controller and request validation.
+4. Update OpenAPI.
+5. Add backend tests for ownership, validation, defaults, and update behavior.
+6. Add mobile profile model, repository, and controller/provider.
+7. Add My / Settings UI and profile form.
+8. Add AI permission switch and saved/empty states.
+9. Wire profile context into AI prompt building only when enabled.
+10. Run backend, mobile, OpenAPI, and local service validation.
 
 ---
 
@@ -98,6 +317,12 @@ control, compression, and default fallback are all ready in this sprint.
 - Profile context improves wording and relevance but does not create fixed user labels.
 - Profile data is private and owner-scoped.
 - Avatar upload is not required for Sprint 05 completion.
+- Blank strings are saved as null.
+- Invalid enum values and over-length fields return clear validation errors.
+- A user cannot read or write another user's profile.
+- Turning off AI profile context immediately prevents profile context from
+  being included in AI prompts.
+- My / Settings does not introduce social sharing or public identity behavior.
 
 ---
 
