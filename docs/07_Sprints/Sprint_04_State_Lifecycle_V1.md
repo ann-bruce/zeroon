@@ -1,6 +1,6 @@
 # Sprint 04 Plan V1
 
-Status: Draft
+Status: Closed for MVP
 
 ## Sprint Goal
 
@@ -9,6 +9,24 @@ Move ZEROON from "state as a record label" to "state as a lived interval".
 The Now page starts and displays the user's current state. The Reset page
 records what helped the user leave or settle that state. Archive and Growth can
 then show how long each state lasted and what was saved with it.
+
+## Closure Summary
+
+Sprint 04 is closed for the MVP state lifecycle.
+
+The core product loop is complete:
+
+```text
+Now selects current state
+  -> state session starts
+  -> Reset records the active state
+  -> record save ends the session
+  -> Now returns to neutral
+  -> Archive and Growth can reflect saved records
+```
+
+The remaining duration-based aggregation and extra duration display points are
+kept as future enhancements because they do not block the MVP user flow.
 
 ---
 
@@ -30,8 +48,10 @@ Target implementation:
 - Saving a zero record ends the active state session.
 - The zero record is linked to the ended state session.
 - Reset is opened from Now as a flow and is no longer a primary bottom tab.
-- Archive can show state duration next to the saved record.
-- Growth can aggregate state duration and reset patterns.
+- Record detail can show the state time range for a saved record.
+- Archive and Growth remain compatible with state session data.
+- Archive card duration display and Growth duration aggregation are deferred
+  enhancements.
 
 ### Confirmed Rules
 
@@ -195,20 +215,23 @@ Fallback rule:
 
 - Show:
   - `本次状态 · 专注`
-  - `持续 18 分钟`
   - ZEROON quote
   - Today record summary
+- Duration display on this page is deferred until the post-MVP duration display
+  pass.
 
 ### Archive
 
-- Record card can show:
+- Record card shows:
   - state label
   - saved time
-  - state duration
+- Duration display on Archive cards is deferred. Record detail can show the
+  state time range when backend data is available.
 
 ### Growth
 
-- Add future-ready metrics:
+- Keep Sprint 03 Growth compatible with state lifecycle data.
+- Future duration-based metrics:
   - most common active state by duration
   - average time before reset
   - states most often ended by a zero record
@@ -226,7 +249,7 @@ Do not add rankings, scores, or pressure-based streak language.
 | S4-BE-03 | Backend | Add start/get active state session APIs | Done |
 | S4-BE-04 | Backend | Update record creation to derive state from active session | Done |
 | S4-BE-05 | Backend | Link zero record and ended state session | Done |
-| S4-BE-06 | Backend | Update growth/state pattern calculations for duration | Pending |
+| S4-BE-06 | Backend | Update growth/state pattern calculations for duration | Future Enhancement |
 | S4-BE-07 | Backend | Update OpenAPI and tests | Done |
 
 ## Mobile Tasks
@@ -237,8 +260,17 @@ Do not add rankings, scores, or pressure-based streak language.
 | S4-MO-02 | Mobile | Show active state duration on Now | Done |
 | S4-MO-03 | Mobile | Simplify Reset to one active state icon | Done |
 | S4-MO-04 | Mobile | Save record through active state session | Done |
-| S4-MO-05 | Mobile | Show duration on completion and Archive cards | Pending |
+| S4-MO-05 | Mobile | Show duration on completion and Archive cards | Future Enhancement |
 | S4-MO-06 | Mobile | Update widget tests | Done |
+
+## Accepted UX Fixes
+
+- Now page layout was tightened for MVP readability.
+- Archive date filtering is available from both Now track entry and Archive's
+  own filter action.
+- Growth page removed the redundant "回看这一年的山海缓存" entry.
+- Reset page now uses the active session `startedAt` to keep duration display
+  consistent with Now.
 
 ---
 
@@ -251,7 +283,7 @@ Do not add rankings, scores, or pressure-based streak language.
 - Saving a zero record ends the active session.
 - After saving a zero record, Now asks the user to choose a current state again.
 - Zero record is linked to the ended state session.
-- Archive can show the state duration for a saved record.
+- Record detail can show the state time range for a saved record.
 - Growth can still calculate existing Sprint 03 metrics.
 - State sessions under 30 seconds are merged unless they ended with a zero
   record.
@@ -279,9 +311,14 @@ Do not add rankings, scores, or pressure-based streak language.
 5. Mobile state session repository/controller.
 6. Now page state selector and duration display.
 7. Reset page locked active state.
-8. Completion and Archive duration display.
+8. Record detail duration compatibility.
 9. Growth calculation compatibility check.
 10. Full local validation.
+
+Post-MVP:
+
+- Completion and Archive card duration display.
+- Growth duration aggregation.
 
 ---
 
