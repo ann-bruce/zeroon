@@ -96,6 +96,8 @@ capability is validated.
 - My page
 - Growth entry
 - Data and privacy settings
+- User profile settings for optional self-introduction
+- AI permission to use profile context
 
 ### V1.2
 
@@ -115,6 +117,7 @@ capability is validated.
 - User data is private by default.
 - AI can recommend, but the user confirms any state change.
 - User insights must be visible, deletable, and disableable.
+- Profile fields must be optional and user-controlled.
 - Reflection cannot diagnose or define the user.
 - Export is for saving memory first, not social distribution.
 - Device link must not expose private content by default.
