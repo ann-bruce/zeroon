@@ -27,7 +27,7 @@ class NowScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ZeroonScreen(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
         children: [
           Row(
             children: [
@@ -35,7 +35,7 @@ class NowScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SectionMark('TODAY · ZEROON'),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
                   Text('晚上好，${_displayName(session)}',
                       style: Theme.of(context).textTheme.titleLarge),
                 ],
@@ -49,7 +49,7 @@ class NowScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
           _StateHero(onStartReset: onStartReset),
         ],
       ),
@@ -123,15 +123,15 @@ class _StatePanel extends ConsumerWidget {
                 letterSpacing: 1.4,
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             StateCore(
                 state: snapshot.hasActiveSession ? snapshot.state : 'IDLE'),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             Text(
               snapshot.hasActiveSession ? stateLabel(snapshot.state) : '选择此刻状态',
-              style: zeroonSerif(context, size: 28),
+              style: zeroonSerif(context, size: 26),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             if (snapshot.hasActiveSession)
               Column(
                 children: [
@@ -146,14 +146,14 @@ class _StatePanel extends ConsumerWidget {
               ),
           ],
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 16),
         GridView.count(
           crossAxisCount: 3,
-          mainAxisSpacing: 9,
-          crossAxisSpacing: 9,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 1.08,
+          childAspectRatio: 1.22,
           children: [
             for (final state in zeroonStates)
               _StateChoice(
@@ -164,20 +164,20 @@ class _StatePanel extends ConsumerWidget {
               ),
           ],
         ),
-        const SizedBox(height: 26),
+        const SizedBox(height: 18),
         _ResetTrackCard(
           continuousResetDays: continuousResetDays,
           records: recordPage?.items ?? const [],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         ZeroonPrimaryButton(
           label: snapshot.hasActiveSession ? '开始一次归零' : '先选择此刻状态',
           onPressed: snapshot.hasActiveSession ? onStartReset : null,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 9),
         ZeroonCard(
           color: zeroonGold.withValues(alpha: 0.12),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => const ArchiveScreen(),
@@ -250,7 +250,7 @@ class _ResetTrackCard extends StatelessWidget {
     };
 
     return ZeroonCard(
-      padding: const EdgeInsets.fromLTRB(17, 15, 14, 15),
+      padding: const EdgeInsets.fromLTRB(16, 13, 13, 13),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -264,7 +264,7 @@ class _ResetTrackCard extends StatelessWidget {
                       '连续归零',
                       style: TextStyle(color: zeroonMuted, fontSize: 10),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       _continuousResetText(continuousResetDays),
                       style: Theme.of(context).textTheme.titleMedium,
@@ -278,7 +278,7 @@ class _ResetTrackCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -323,8 +323,8 @@ class _ResetTrackDay extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: 29,
-            height: 29,
+            width: 27,
+            height: 27,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: active ? zeroonNight : zeroonBlue.withValues(alpha: 0.10),
@@ -342,7 +342,7 @@ class _ResetTrackDay extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             _weekdayLabel(date),
             style: const TextStyle(color: zeroonMuted, fontSize: 8),
@@ -486,8 +486,8 @@ class _StateChoice extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 19,
-              height: 19,
+              width: 17,
+              height: 17,
               decoration: BoxDecoration(
                 color: stateColor(state),
                 shape: BoxShape.circle,
@@ -499,7 +499,7 @@ class _StateChoice extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 7),
+            const SizedBox(height: 5),
             Text(
               stateLabel(state),
               style: TextStyle(

@@ -147,6 +147,13 @@ void main() {
     expect(find.text('ZEROON 观察'), findsOneWidget);
     expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
     expect(find.text('today I paused'), findsOneWidget);
+    await tester.tap(find.text('筛选'));
+    await tester.pumpAndSettle();
+    expect(find.text('选择一天回看'), findsOneWidget);
+    await tester.tap(find.text('2026.06.19'));
+    await tester.pumpAndSettle();
+    expect(find.text('筛选：2026.06.19'), findsOneWidget);
+    expect(find.text('筛选功能后续开放'), findsNothing);
 
     await tester.tap(find.text('today I paused'));
     await tester.pumpAndSettle();

@@ -52,6 +52,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
             page: page,
             selectedDate: _selectedDate,
             onClearDate: () => setState(() => _selectedDate = null),
+            onSelectDate: (date) => setState(() => _selectedDate = date),
           ),
         ),
       ),
@@ -64,11 +65,13 @@ class _ArchiveList extends StatelessWidget {
     required this.page,
     required this.selectedDate,
     required this.onClearDate,
+    required this.onSelectDate,
   });
 
   final RecordPage page;
   final DateTime? selectedDate;
   final VoidCallback onClearDate;
+  final ValueChanged<DateTime> onSelectDate;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +95,8 @@ class _ArchiveList extends StatelessWidget {
           _ArchiveHeader(
             selectedDate: selectedDate,
             onClearDate: onClearDate,
+            availableDates: _availableDates(page.items),
+            onSelectDate: onSelectDate,
           ),
           const SizedBox(height: 52),
           Text(
@@ -115,6 +120,8 @@ class _ArchiveList extends StatelessWidget {
           _ArchiveHeader(
             selectedDate: selectedDate,
             onClearDate: onClearDate,
+            availableDates: _availableDates(page.items),
+            onSelectDate: onSelectDate,
           ),
           const SizedBox(height: 22),
           if (selectedDate != null) ...[
@@ -183,10 +190,14 @@ class _ArchiveHeader extends StatelessWidget {
   const _ArchiveHeader({
     required this.selectedDate,
     required this.onClearDate,
+    required this.availableDates,
+    required this.onSelectDate,
   });
 
   final DateTime? selectedDate;
   final VoidCallback onClearDate;
+  final List<DateTime> availableDates;
+  final ValueChanged<DateTime> onSelectDate;
 
   @override
   Widget build(BuildContext context) {
@@ -200,14 +211,59 @@ class _ArchiveHeader extends StatelessWidget {
             onClearDate();
             return;
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('筛选功能后续开放')),
+          if (availableDates.isEmpty) {
+            return;
+          }
+          _showDateFilterSheet(
+            context: context,
+            dates: availableDates,
+            onSelectDate: onSelectDate,
           );
         },
         child: Text(selectedDate == null ? '筛选' : '全部'),
       ),
     );
   }
+}
+
+void _showDateFilterSheet({
+  required BuildContext context,
+  required List<DateTime> dates,
+  required ValueChanged<DateTime> onSelectDate,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: zeroonPaper,
+    showDragHandle: true,
+    builder: (sheetContext) {
+      return SafeArea(
+        top: false,
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+          children: [
+            const SectionMark('ARCHIVE FILTER'),
+            const SizedBox(height: 10),
+            Text(
+              '选择一天回看',
+              style: Theme.of(sheetContext).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            for (final date in dates)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(_formatDate(date)),
+                trailing: const Icon(Icons.chevron_right, size: 18),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  onSelectDate(date);
+                },
+              ),
+          ],
+        ),
+      );
+    },
+  );
 }
 
 class _DateFilterChip extends StatelessWidget {
@@ -476,6 +532,14 @@ String _observationPrompt(RecordPage page) {
 }
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
+
+List<DateTime> _availableDates(List<ZeroRecord> records) {
+  final dates = {
+    for (final record in records) _dateOnly(record.createdAt.toLocal())!,
+  }.toList()
+    ..sort((a, b) => b.compareTo(a));
+  return dates;
+}
 
 DateTime? _dateOnly(DateTime? value) {
   if (value == null) {

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../common/zeroon_design.dart';
-import '../record/archive_screen.dart';
 import 'growth_controller.dart';
 import 'growth_models.dart';
 
@@ -45,7 +44,7 @@ class _GrowthContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 30),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
       children: [
         ZeroonHeader(
           mark: 'COMPANION GROWTH',
@@ -60,29 +59,29 @@ class _GrowthContent extends StatelessWidget {
             onPressed: () => _showGrowthInfo(context),
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         _GrowthOrbit(days: summary.companionDays),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         SectionMark('TOGETHER SINCE ${_formatDate(summary.firstRecordDate)}'),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Text(
           _growthTitle(summary.companionDays),
           textAlign: TextAlign.center,
-          style: zeroonSerif(context, size: 24),
+          style: zeroonSerif(context, size: 23),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         const Text(
           '不是每一天都需要留下什么。\n但你走过的路，正在这里慢慢发光。',
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 16),
         GridView.count(
           crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 1.16,
+          childAspectRatio: 1.24,
           children: [
             _GrowthMetricCard(
               title: '连续归零',
@@ -114,30 +113,6 @@ class _GrowthContent extends StatelessWidget {
         _StatePatternCard(
           statePattern: statePattern,
           onRetry: onRetryPattern,
-        ),
-        const SizedBox(height: 14),
-        OutlinedButton(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const ArchiveScreen(),
-            ),
-          ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: zeroonNight,
-            side: BorderSide(color: zeroonNight.withValues(alpha: 0.18)),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            minimumSize: const Size.fromHeight(48),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('回看这一年的山海缓存'),
-              SizedBox(width: 8),
-              Icon(Icons.arrow_forward, size: 16),
-            ],
-          ),
         ),
       ],
     );
@@ -328,45 +303,45 @@ class _GrowthOrbit extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SizedBox(
-        width: 188,
-        height: 188,
+        width: 164,
+        height: 164,
         child: Stack(
           alignment: Alignment.center,
           children: [
             Container(
-              width: 176,
-              height: 176,
+              width: 152,
+              height: 152,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: zeroonLine),
               ),
             ),
             Container(
-              width: 140,
-              height: 140,
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: zeroonGold.withValues(alpha: 0.22)),
               ),
             ),
             const Positioned(
-              top: 24,
-              right: 42,
+              top: 22,
+              right: 36,
               child: _OrbitStar(size: 8),
             ),
             const Positioned(
-              left: 28,
-              bottom: 52,
+              left: 24,
+              bottom: 44,
               child: _OrbitStar(size: 6),
             ),
             const Positioned(
-              right: 28,
-              bottom: 34,
+              right: 24,
+              bottom: 30,
               child: _OrbitStar(size: 5),
             ),
             Container(
-              width: 104,
-              height: 104,
+              width: 94,
+              height: 94,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: zeroonNight,
@@ -383,7 +358,7 @@ class _GrowthOrbit extends StatelessWidget {
                 children: [
                   Text(
                     '$days',
-                    style: zeroonSerif(context, size: 30, color: zeroonIvory),
+                    style: zeroonSerif(context, size: 28, color: zeroonIvory),
                   ),
                   const SizedBox(height: 2),
                   const Text(

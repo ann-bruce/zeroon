@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -129,13 +131,42 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
   }
 }
 
-class _LockedStateCard extends StatelessWidget {
+class _LockedStateCard extends StatefulWidget {
   const _LockedStateCard({required this.snapshot});
 
   final StateSnapshot snapshot;
 
   @override
+  State<_LockedStateCard> createState() => _LockedStateCardState();
+}
+
+class _LockedStateCardState extends State<_LockedStateCard> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant _LockedStateCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.snapshot.sessionId != widget.snapshot.sessionId ||
+        oldWidget.snapshot.startedAt != widget.snapshot.startedAt) {
+      _startTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final snapshot = widget.snapshot;
     final active = snapshot.hasActiveSession;
     return ZeroonCard(
       color: active
@@ -158,7 +189,7 @@ class _LockedStateCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             active
-                ? _durationText(snapshot.elapsedSeconds)
+                ? _durationText(_elapsedSeconds(snapshot))
                 : 'ZEROON 会从选择状态开始记录持续时间。',
             textAlign: TextAlign.center,
           ),
@@ -166,6 +197,29 @@ class _LockedStateCard extends StatelessWidget {
       ),
     );
   }
+
+  void _startTimer() {
+    _timer?.cancel();
+    if (!widget.snapshot.hasActiveSession) {
+      return;
+    }
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+}
+
+int _elapsedSeconds(StateSnapshot snapshot) {
+  final startedAt = snapshot.startedAt;
+  if (startedAt == null) {
+    return snapshot.elapsedSeconds;
+  }
+  final liveSeconds = DateTime.now().difference(startedAt.toLocal()).inSeconds;
+  return liveSeconds > snapshot.elapsedSeconds
+      ? liveSeconds
+      : snapshot.elapsedSeconds;
 }
 
 String _durationText(int seconds) {
