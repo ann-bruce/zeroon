@@ -230,17 +230,23 @@ Do not diagnose, label, or infer fixed traits.
 Sprint 05 should add a My / Settings entry without disturbing the current
 state lifecycle.
 
-Recommended MVP navigation:
+MVP navigation decision:
 
-- Bottom tabs can become:
+- Do not add a fourth bottom tab in Sprint 05.
+- Keep bottom tabs as:
   - `此刻`
   - `缓存`
   - `成长`
-  - `我的`
+- Add the My / Settings entry from the top-right action on Now.
+- The entry can use a small avatar or settings-like icon, but it should feel
+  private and calm rather than like a social profile shortcut.
 
-If four tabs feel crowded in the current mobile layout, My / Settings can first
-enter from the top-right action on Now. The final decision should be based on
-visual review before implementation.
+Future review:
+
+- If Settings grows into a broader My surface after Sprint 05, evaluate whether
+  it should become a fourth bottom tab.
+- Do not make that navigation change until the page has enough recurring user
+  value to justify primary navigation weight.
 
 ### Profile Screen
 
@@ -290,11 +296,11 @@ Required states:
 | S5-MO-04 | Mobile | Add default or preset avatar display | Pending |
 | S5-MO-05 | Mobile | Add clear empty and saved states | Pending |
 | S5-MO-06 | Mobile | Add widget tests | Pending |
-| S5-MO-07 | Mobile | Review whether My is a bottom tab or Now entry | Pending |
+| S5-MO-07 | Mobile | Decide My entry placement for MVP | Done |
 
 ## Development Sequence
 
-1. Confirm My / Settings entry placement with UI review.
+1. Use Now top-right as the My / Settings entry for Sprint 05 MVP.
 2. Add backend migration, entity, repository, and service.
 3. Add profile controller and request validation.
 4. Update OpenAPI.
