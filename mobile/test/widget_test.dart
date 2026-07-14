@@ -424,15 +424,24 @@ void main() {
     expect(find.text('ZEROON 记住的'), findsOneWidget);
     expect(find.text('这条记忆来自一段真实记录。'), findsOneWidget);
     expect(find.text('来源 · 一次 Zero Record'), findsOneWidget);
-    expect(find.text('回应参考权限 · 未允许'), findsOneWidget);
-    expect(find.textContaining('当前不会进入 ZEROON 的回应'), findsOneWidget);
-    expect(find.byType(Switch), findsOneWidget);
+    expect(find.text('允许用于回应参考'), findsOneWidget);
+    expect(find.textContaining('默认关闭。开启后才会进入 ZEROON 的回应'), findsOneWidget);
+    expect(find.byType(Switch), findsNWidgets(2));
 
     await tester.tap(find.text('查看来源'));
     await tester.pumpAndSettle();
     expect(find.text('记录详情'), findsOneWidget);
     expect(find.text('记录编号 #1'), findsOneWidget);
     await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('允许用于回应参考'));
+    await tester.pump();
+    expect(memoryRepository.lastAiContextEnabled, isTrue);
+    expect(find.text('已允许用于回应参考。'), findsOneWidget);
+    expect(find.textContaining('开启后，这条记忆可在下一次回应中作为上下文使用'), findsOneWidget);
+    ScaffoldMessenger.of(tester.element(find.text('ZEROON 记住的')))
+        .hideCurrentSnackBar();
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('保留在连续记忆中'));
@@ -452,7 +461,7 @@ void main() {
     await tester.tap(find.text('删除这条记忆'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('确认删除'));
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(memoryRepository.deleted, isTrue);
     expect(find.text('这里还很安静。'), findsOneWidget);
     expect(find.text('这条记忆已经删除。'), findsOneWidget);
@@ -558,6 +567,7 @@ class _FakeMemoryRepository extends MemoryRepository {
     updatedAt: DateTime.parse('2026-07-14T08:00:00Z'),
   );
   bool? lastEnabled;
+  bool? lastAiContextEnabled;
   bool deleted = false;
 
   @override
@@ -577,6 +587,7 @@ class _FakeMemoryRepository extends MemoryRepository {
   ) async {
     final current = _entry!;
     lastEnabled = request.enabled;
+    lastAiContextEnabled = request.aiContextEnabled;
     _entry = MemoryEntry(
       id: current.id,
       type: current.type,

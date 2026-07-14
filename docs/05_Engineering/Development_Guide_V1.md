@@ -220,8 +220,14 @@ mutation. A disabled entry is ineligible for AI context regardless of its
 stored per-entry AI preference.
 The mobile Memory management page is entered from Archive. It uses local card
 feedback for mutations, preserves the source Zero Record on Memory deletion,
-and must not expose an editable AI-use switch until context assembly consumes
-the permission in the same release.
+and exposes an editable AI-use switch only because companion context assembly
+consumes that permission.
+Companion AI requests assemble Memory through `MemoryAiContextAssembler`:
+owned, enabled, AI-permitted, unexpired entries only; newest first; capped by
+entry count and character length; source class and source id included;
+no personality labels, diagnoses, or scores. Profile AI context consent remains
+an independent gate for profile fields. Memory titles and summaries must not
+appear in logs, AI usage metadata, or exception messages.
 
 ---
 

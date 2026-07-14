@@ -8,6 +8,7 @@ import ai.zeroon.ai.AiUsageLogService;
 import ai.zeroon.companion.CompanionDtos.ChatResponse;
 import ai.zeroon.prompt.PromptTemplateSelection;
 import ai.zeroon.prompt.PromptTemplateService;
+import ai.zeroon.memory.MemoryAiContextAssembler;
 import ai.zeroon.profile.ProfileAiContextAssembler;
 import ai.zeroon.record.ZeroRecordEntity;
 import ai.zeroon.record.ZeroRecordRepository;
@@ -39,6 +40,7 @@ public class CompanionService {
     private final AiUsageLogService aiUsageLogService;
     private final SafetyBoundaryService safetyBoundaryService;
     private final ProfileAiContextAssembler profileAiContextAssembler;
+    private final MemoryAiContextAssembler memoryAiContextAssembler;
 
     public CompanionService(
             LlmProvider llmProvider,
@@ -49,7 +51,8 @@ public class CompanionService {
             PromptTemplateService promptTemplateService,
             AiUsageLogService aiUsageLogService,
             SafetyBoundaryService safetyBoundaryService,
-            ProfileAiContextAssembler profileAiContextAssembler) {
+            ProfileAiContextAssembler profileAiContextAssembler,
+            MemoryAiContextAssembler memoryAiContextAssembler) {
         this.llmProvider = llmProvider;
         this.userRepository = userRepository;
         this.zeroRecordRepository = zeroRecordRepository;
@@ -59,6 +62,7 @@ public class CompanionService {
         this.aiUsageLogService = aiUsageLogService;
         this.safetyBoundaryService = safetyBoundaryService;
         this.profileAiContextAssembler = profileAiContextAssembler;
+        this.memoryAiContextAssembler = memoryAiContextAssembler;
     }
 
     @Transactional
@@ -140,6 +144,8 @@ public class CompanionService {
         StringBuilder prompt = new StringBuilder();
         profileAiContextAssembler.assemble(user.getId())
                 .ifPresent(profileContext -> prompt.append(profileContext).append("\n\n"));
+        memoryAiContextAssembler.assemble(user.getId())
+                .ifPresent(memoryContext -> prompt.append(memoryContext).append("\n\n"));
         prompt.append("Current state: ").append(user.getCurrentState().name()).append('\n');
         prompt.append("User message: ").append(message).append('\n');
         prompt.append("Recent records:\n");

@@ -57,10 +57,22 @@ the API does not reveal ownership.
 S9-04 adds a mobile Memory management surface reached from Archive. It shows
 the source, supports reversible activation, and confirms hard deletion while
 explaining that the original Zero Record remains. The per-entry AI permission
-is displayed read-only until S9-05 actually consumes allowed Memory; exposing
-an editable switch before provider behavior exists would create a false
-control. S9-05 must update the copy and enable that control in the same change
-that makes its on/off behavior testable.
+was displayed read-only until S9-05 actually consumed allowed Memory.
+
+S9-05 implements consent-aware Memory context assembly for companion AI
+requests. An entry is eligible only when it belongs to the current user,
+`enabled = true`, `ai_context_enabled = true`, and it is unexpired. Profile AI
+context consent remains a separate account-level gate for profile fields and
+continues to be evaluated on every request; closing either gate class excludes
+its corresponding private content. Eligible Memory is ordered newest-first and
+capped by entry count and total character length. Assembled items include
+source class, source id, and user-authored title/summary text only. The
+assembler must not invent personality labels, diagnoses, or scores. Titles,
+summaries, and other private Memory body text must not appear in operational
+logs, AI usage metadata, or exception messages. Mobile exposes an editable
+`aiContextEnabled` control with local success and failure feedback in the same
+release that makes inclusion and exclusion testable with a capturing fake
+provider.
 
 ## Invariants
 
@@ -74,6 +86,8 @@ that makes its on/off behavior testable.
    and memory type.
 6. Source text, memory summaries, and titles are prohibited from operational
    logs and analytics properties.
+7. Memory AI context assembly is bounded; overflow entries are omitted rather
+   than truncated into unlabeled fragments beyond the configured limits.
 
 ## Consequences
 

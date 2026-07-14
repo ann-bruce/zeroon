@@ -13,7 +13,7 @@ This file is the short handoff for new Codex threads. Read it before scanning lo
 ## Current Branch
 
 ```text
-agent/zeroon-validation-foundation
+feature/s9-05-consent-aware-memory-context
 ```
 
 ## Current Focus
@@ -107,9 +107,16 @@ Key product guardrails:
 - Sprint 09 S9-04 mobile Memory management is complete. Archive now has a
   restrained Memory entry; users can inspect source records, pause/re-enable a
   Memory with local feedback, and confirm hard deletion while keeping the
-  source Zero Record. AI permission is shown read-only with honest inactive
-  copy until S9-05 connects and tests context consumption; no inert switch is
-  exposed. S9-05 consent-aware Memory context assembly is next.
+  source Zero Record.
+- Sprint 09 S9-05 consent-aware Memory context assembly is complete. Companion
+  prompts include only owned, enabled, AI-permitted, unexpired Memory within
+  count and character bounds, with source class and source id and without
+  personality labels, diagnoses, or scores. Profile AI consent remains a
+  separate gate for profile fields. Capturing fake-provider tests cover
+  default-off, allow, pause, revoke, expiry, cross-user isolation, and bounds.
+  Private Memory text is excluded from usage metadata. Mobile now exposes an
+  editable `aiContextEnabled` switch with local success and failure feedback.
+  S9-06 provider transaction and observability is next.
 
 ## Recent Completed Work
 

@@ -164,7 +164,21 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
               onChanged: _busy ? null : _setEnabled,
             ),
           ),
-          _AiPermissionState(entry: entry),
+          Material(
+            color: Colors.transparent,
+            child: SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('允许用于回应参考'),
+              subtitle: Text(
+                entry.aiContextEnabled
+                    ? '开启后，这条记忆可在下一次回应中作为上下文使用。'
+                    : '默认关闭。开启后才会进入 ZEROON 的回应。',
+                style: const TextStyle(color: zeroonMuted, fontSize: 11),
+              ),
+              value: entry.aiContextEnabled,
+              onChanged: _busy ? null : _setAiContextEnabled,
+            ),
+          ),
           if (_error != null) ...[
             const SizedBox(height: 10),
             Text(
@@ -202,6 +216,36 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
     } catch (_) {
       if (mounted) {
         setState(() => _error = '暂时没有改动。请稍后再试。');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  Future<void> _setAiContextEnabled(bool aiContextEnabled) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(memoryListProvider.notifier).setAiContextEnabled(
+            widget.entry.id,
+            aiContextEnabled,
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              aiContextEnabled ? '已允许用于回应参考。' : '已关闭回应参考权限。',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = '暂时没有改动权限。请稍后再试。');
       }
     } finally {
       if (mounted) {
@@ -286,48 +330,6 @@ class _SourceRow extends StatelessWidget {
     return const Text(
       '来源暂时不可查看',
       style: TextStyle(color: zeroonMuted, fontSize: 11),
-    );
-  }
-}
-
-class _AiPermissionState extends StatelessWidget {
-  const _AiPermissionState({required this.entry});
-
-  final MemoryEntry entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final permission = entry.aiContextEnabled ? '已允许' : '未允许';
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: zeroonIvory.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(13),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.lock_outline, size: 17, color: zeroonMuted),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '回应参考权限 · $permission',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 3),
-                const Text(
-                  '这条 Memory 当前不会进入 ZEROON 的回应。',
-                  style: TextStyle(color: zeroonMuted, fontSize: 10),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

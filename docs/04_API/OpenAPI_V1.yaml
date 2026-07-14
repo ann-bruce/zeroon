@@ -402,6 +402,15 @@ paths:
     post:
       tags: [Companion]
       summary: Send a message to ZEROON
+      description: >-
+        Assembles AI context from current consent only. Profile fields enter the
+        provider request only when aiProfileContextEnabled is true. Memory
+        entries enter only when they belong to the current user, enabled is true,
+        aiContextEnabled is true, and the entry is unexpired. Memory context is
+        bounded by entry count and character length, includes source class and
+        source id, and never invents personality labels, diagnoses, or scores.
+        Titles, summaries, and other private Memory text are excluded from usage
+        logs and error metadata.
       operationId: sendCompanionMessage
       security:
         - bearerAuth: []
@@ -476,6 +485,9 @@ paths:
       description: >-
         Updates only supplied controls. A disabled entry cannot participate in
         continuity or AI context even when aiContextEnabled remains true.
+        Changing enabled or aiContextEnabled takes effect on the next companion
+        request. Profile AI context consent remains a separate gate for profile
+        fields and does not replace per-entry Memory AI permission.
       operationId: updateMemoryControls
       security:
         - bearerAuth: []
@@ -1401,10 +1413,18 @@ components:
           nullable: true
         enabled:
           type: boolean
-          description: Whether the entry participates in continuity features.
+          description: >-
+            Whether the entry participates in continuity features. When false,
+            the entry is excluded from AI context immediately even if
+            aiContextEnabled remains true.
         aiContextEnabled:
           type: boolean
-          description: Per-entry AI-use permission; ineffective while enabled is false.
+          description: >-
+            Per-entry AI-use permission. Defaults to false. Companion requests
+            include the entry only when this is true, enabled is true, the entry
+            is unexpired and owned by the caller, and assembly stays within the
+            configured count and character bounds. Source class and source id
+            may be sent; no personality label, diagnosis, or score is generated.
         createdAt:
           type: string
           format: date-time
@@ -1417,8 +1437,12 @@ components:
       properties:
         enabled:
           type: boolean
+          description: Reversible activation control for continuity and AI eligibility.
         aiContextEnabled:
           type: boolean
+          description: >-
+            Explicit permission for this Memory to enter AI context. Closing this
+            permission excludes the entry from the next companion request.
     MemoryPage:
       type: object
       required: [items, page, size, totalElements]
