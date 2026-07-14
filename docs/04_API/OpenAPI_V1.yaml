@@ -106,6 +106,9 @@ paths:
     post:
       tags: [Auth]
       summary: Revoke a refresh session
+      description: >-
+        Revokes the supplied refresh session when it belongs to the current
+        user. Repeating the same logout is idempotent.
       operationId: logout
       security:
         - bearerAuth: []
@@ -120,7 +123,9 @@ paths:
           description: Logged out
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /users/me:
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /me:
     get:
       tags: [User]
       summary: Get the current user
@@ -133,19 +138,48 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/CurrentUser"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /users/me/deletion:
-    post:
+  /me/export:
+    get:
       tags: [User]
-      summary: Request account deletion
-      operationId: requestAccountDeletion
+      summary: Export the current user's ZEROON data
+      description: >-
+        Returns the Beta JSON data copy described by UserDataExport. Credential
+        hashes and raw refresh tokens are never included.
+      operationId: exportCurrentUserData
       security:
         - bearerAuth: []
       responses:
-        "202":
-          description: Deletion scheduled
+        "200":
+          description: Current user's JSON data copy
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDataExport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /me/deletion:
+    delete:
+      tags: [User]
+      summary: Permanently delete the current account and private content
+      description: >-
+        Completes synchronous hard deletion before returning. Repeated calls
+        are idempotent. User-owned profiles, sessions, state data, records,
+        conversations, messages, memory, and companion data are deleted.
+        Content-free AI usage and audit metadata may remain only after user and
+        conversation references are set to null.
+      operationId: deleteCurrentAccount
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Account content deleted, or already deleted
         "401":
           $ref: "#/components/responses/Unauthorized"
   /me/profile:
@@ -716,24 +750,328 @@ components:
           type: integer
           description: Access-token lifetime in seconds.
         user:
-          $ref: "#/components/schemas/User"
-    User:
+          $ref: "#/components/schemas/AuthUser"
+    AuthUser:
       type: object
-      required: [uid, currentState, createdAt]
+      required: [id, uid, currentState]
+      properties:
+        id:
+          type: integer
+          format: int64
+        uid:
+          type: string
+        mobile:
+          type: string
+          nullable: true
+        currentState:
+          $ref: "#/components/schemas/State"
+    CurrentUser:
+      type: object
+      required: [uid, currentState, status, roles, createdAt]
       properties:
         uid:
           type: string
-        nickname:
+        mobile:
           type: string
-          maxLength: 50
-        avatar:
-          type: string
-          format: uri
+          nullable: true
         currentState:
           $ref: "#/components/schemas/State"
-        continuousDays:
+        status:
+          type: string
+          enum: [ACTIVE, SUSPENDED, DELETION_PENDING, DELETED]
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [USER, ADMIN]
+        createdAt:
+          type: string
+          format: date-time
+    UserDataExport:
+      type: object
+      required:
+        - schemaVersion
+        - exportedAt
+        - account
+        - sessions
+        - stateHistory
+        - stateSessions
+        - records
+        - conversations
+        - memoryEntries
+        - aiUsage
+      properties:
+        schemaVersion:
+          type: string
+          enum: [zeroon-beta-export-v1]
+        exportedAt:
+          type: string
+          format: date-time
+        account:
+          $ref: "#/components/schemas/CurrentUser"
+        profile:
+          $ref: "#/components/schemas/UserDataProfile"
+          nullable: true
+        zeroonCompanion:
+          $ref: "#/components/schemas/UserDataZeroonCompanion"
+          nullable: true
+        sessions:
+          type: array
+          description: Session metadata only; refresh tokens and token hashes are excluded.
+          items:
+            $ref: "#/components/schemas/UserDataSession"
+        stateHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDataStateChange"
+        stateSessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDataStateSession"
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDataRecord"
+        conversations:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDataConversation"
+        memoryEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDataMemoryEntry"
+        aiUsage:
+          type: array
+          description: Content-free provider and outcome metadata; no prompt text.
+          items:
+            $ref: "#/components/schemas/UserDataAiUsage"
+    UserDataProfile:
+      type: object
+      required: [aiProfileContextEnabled, createdAt, updatedAt]
+      properties:
+        nickname:
+          type: string
+          nullable: true
+        avatarPreset:
+          $ref: "#/components/schemas/AvatarPreset"
+          nullable: true
+        ageRange:
+          $ref: "#/components/schemas/AgeRange"
+          nullable: true
+        occupation:
+          type: string
+          nullable: true
+        selfDescription:
+          type: string
+          nullable: true
+        aiProfileContextEnabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UserDataZeroonCompanion:
+      type: object
+      required: [companionKey, nameplateSerial, metAt]
+      properties:
+        companionKey:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        nameplateSerial:
+          type: string
+        metAt:
+          type: string
+          format: date-time
+    UserDataSession:
+      type: object
+      required: [deviceId, expiresAt, createdAt]
+      properties:
+        deviceId:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    UserDataStateChange:
+      type: object
+      required: [currentState, source, createdAt]
+      properties:
+        previousState:
+          $ref: "#/components/schemas/State"
+          nullable: true
+        currentState:
+          $ref: "#/components/schemas/State"
+        source:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    UserDataStateSession:
+      type: object
+      required: [id, state, source, startedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        state:
+          $ref: "#/components/schemas/State"
+        source:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+        endedByRecordId:
+          type: integer
+          format: int64
+          nullable: true
+    UserDataRecord:
+      type: object
+      required: [id, state, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        state:
+          $ref: "#/components/schemas/State"
+        goal:
+          type: string
+          nullable: true
+        content:
+          type: string
+          nullable: true
+        aiSummary:
+          type: string
+          nullable: true
+        stateSessionId:
+          type: integer
+          format: int64
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UserDataConversation:
+      type: object
+      required: [id, createdAt, updatedAt, messages]
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDataMessage"
+    UserDataMessage:
+      type: object
+      required: [id, role, content, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        role:
+          type: string
+          enum: [USER, ASSISTANT, SYSTEM]
+        content:
+          type: string
+        safetyLabel:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    UserDataMemoryEntry:
+      type: object
+      required: [id, type, summary, importance, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          type: string
+          enum: [ZERO_RECORD, STATE, CONVERSATION, GROWTH]
+        title:
+          type: string
+          nullable: true
+        summary:
+          type: string
+        importance:
+          type: integer
+          minimum: 1
+          maximum: 10
+        sourceType:
+          type: string
+          nullable: true
+        sourceId:
+          type: integer
+          format: int64
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    UserDataAiUsage:
+      type: object
+      required:
+        [provider, operation, outcome, fallbackUsed, durationMs, inputChars, outputChars, createdAt]
+      properties:
+        provider:
+          type: string
+        model:
+          type: string
+          nullable: true
+        operation:
+          type: string
+        outcome:
+          type: string
+          enum: [SUCCESS, FALLBACK, REFUSAL, ERROR]
+        fallbackUsed:
+          type: boolean
+        durationMs:
           type: integer
           minimum: 0
+        promptTemplateCode:
+          type: string
+          nullable: true
+        promptTemplateVersion:
+          type: integer
+          nullable: true
+        inputChars:
+          type: integer
+          minimum: 0
+        outputChars:
+          type: integer
+          minimum: 0
+        errorCode:
+          type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time

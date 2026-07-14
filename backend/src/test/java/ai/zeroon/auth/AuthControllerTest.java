@@ -82,10 +82,33 @@ class AuthControllerTest {
                         .content("{\"refreshToken\":\"" + rotatedRefreshToken + "\"}"))
                 .andExpect(status().isNoContent());
 
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + rotatedRefreshToken + "\"}"))
+                .andExpect(status().isNoContent());
+
         mockMvc.perform(post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"refreshToken\":\"" + rotatedRefreshToken + "\"}"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logoutDoesNotRevokeAnotherUsersSession() throws Exception {
+        JsonNode owner = createSession("13800138011", "owner-device");
+        JsonNode other = createSession("13800138012", "other-device");
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .header("Authorization", "Bearer " + owner.path("accessToken").asText())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + other.path("refreshToken").asText() + "\"}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + other.path("refreshToken").asText() + "\"}"))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -157,5 +180,18 @@ class AuthControllerTest {
                           "deviceId": "%s"
                         }
                         """.formatted(mobile, code, deviceId)));
+    }
+
+    private JsonNode createSession(String mobile, String deviceId) throws Exception {
+        mockMvc.perform(post("/api/v1/auth/codes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"mobile\":\"" + mobile + "\"}"))
+                .andExpect(status().isAccepted());
+        String body = login(mobile, "000000", deviceId)
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return objectMapper.readTree(body);
     }
 }

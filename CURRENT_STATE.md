@@ -77,7 +77,16 @@ Key product guardrails:
   occupation or identity, and self-description when enabled. Avatar presets,
   inferred traits, and personality labels are excluded. Capturing-provider
   tests prove off/on/off behavior and immediate disable without logging prompt
-  content. S8-05 data-control and contract alignment is next.
+  content.
+- Sprint 08 S8-05 data-control and contract alignment is complete. Implemented
+  endpoints are `GET /api/v1/me`, `GET /api/v1/me/export`, and idempotent
+  `DELETE /api/v1/me/deletion`; the obsolete planned `/users/me` and `202`
+  deletion claim were removed. The mobile settings page now exposes JSON data
+  copy, remote-backed logout, and confirmed account deletion. Hard deletion
+  removes private content and sessions before returning while only explicitly
+  documented deidentified AI/audit metadata may remain. Sprint 08 engineering
+  scope is complete; compliance readiness and SMS-provider onboarding remain
+  release blockers.
 
 ## Recent Completed Work
 

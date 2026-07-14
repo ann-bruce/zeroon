@@ -28,4 +28,11 @@ class AuthRepository {
     );
     return AuthSession.fromJson(response.data!);
   }
+
+  Future<void> logout(String refreshToken) async {
+    await _dio.post<void>(
+      '/auth/logout',
+      data: {'refreshToken': refreshToken},
+    );
+  }
 }

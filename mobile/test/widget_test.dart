@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zeroon_mobile/auth/auth_models.dart';
@@ -7,6 +8,7 @@ import 'package:zeroon_mobile/auth/login_screen.dart';
 import 'package:zeroon_mobile/auth/token_store.dart';
 import 'package:zeroon_mobile/companion/companion_models.dart';
 import 'package:zeroon_mobile/companion/companion_repository.dart';
+import 'package:zeroon_mobile/data_control/data_control_repository.dart';
 import 'package:zeroon_mobile/growth/growth_models.dart';
 import 'package:zeroon_mobile/growth/growth_repository.dart';
 import 'package:zeroon_mobile/home/home_shell.dart';
@@ -210,7 +212,14 @@ void main() {
   testWidgets('profile screen opens from Now and saves user context', (
     tester,
   ) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async => null);
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null),
+    );
     final profileRepository = _FakeProfileRepository();
+    final dataControlRepository = _FakeDataControlRepository();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -220,6 +229,12 @@ void main() {
           recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
           growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
           profileRepositoryProvider.overrideWithValue(profileRepository),
+          dataControlRepositoryProvider.overrideWithValue(
+            dataControlRepository,
+          ),
+          tokenStoreProvider.overrideWithValue(
+            _FakeTokenStore(session: _session),
+          ),
           myZeroonRepositoryProvider.overrideWithValue(
             _FakeMyZeroonRepository(initialMet: true),
           ),
@@ -249,6 +264,30 @@ void main() {
     expect(profileRepository.saved?.nickname, 'Bruce');
     expect(profileRepository.saved?.aiProfileContextEnabled, isTrue);
     expect(find.text('已经保存。'), findsOneWidget);
+
+    await tester.drag(find.byType(ListView).last, const Offset(0, -600));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('复制我的数据副本'));
+    await tester.tap(find.text('复制我的数据副本'));
+    await tester.pumpAndSettle();
+    expect(dataControlRepository.exportCalls, 1);
+    expect(find.text('你的数据副本已复制为 JSON。'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('删除账户与数据'));
+    await tester.tap(find.text('删除账户与数据'));
+    await tester.pumpAndSettle();
+    expect(find.text('删除账户与全部数据？'), findsOneWidget);
+    expect(find.textContaining('无法恢复'), findsOneWidget);
+    await tester.tap(find.text('先保留'));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(ListView).last, const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('删除账户与数据'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('确认删除'));
+    await tester.pumpAndSettle();
+    expect(dataControlRepository.deleted, isTrue);
   });
 
   testWidgets('reset screen opens completion after record is saved', (
@@ -497,6 +536,29 @@ class _FakeProfileRepository extends ProfileRepository {
       updatedAt: DateTime.parse('2026-06-24T00:00:00Z'),
     );
     return _profile;
+  }
+}
+
+class _FakeDataControlRepository extends DataControlRepository {
+  _FakeDataControlRepository() : super(Dio());
+
+  int exportCalls = 0;
+  bool deleted = false;
+
+  @override
+  Future<Map<String, dynamic>> exportData() async {
+    exportCalls += 1;
+    return {
+      'schemaVersion': 'zeroon-beta-export-v1',
+      'records': [
+        {'content': 'today I paused'},
+      ],
+    };
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    deleted = true;
   }
 }
 

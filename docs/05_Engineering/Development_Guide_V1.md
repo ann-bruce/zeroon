@@ -199,6 +199,12 @@ must accept an authenticated JSON `POST` containing `mobile` and `code`, and
 return a 2xx response. Token values and verification codes must not be logged
 by production infrastructure.
 
+## Data Control
+
+The implemented Beta export, deletion, retention, and logout semantics are
+defined in `docs/05_Engineering/Data_Control_Lifecycle_V1.md`. OpenAPI must not
+describe planned asynchronous deletion as an implemented response.
+
 ---
 
 ## MVP Principle

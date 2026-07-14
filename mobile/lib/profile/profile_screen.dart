@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_controller.dart';
 import '../common/zeroon_design.dart';
+import '../data_control/data_control_repository.dart';
 import '../my_zeroon/my_zeroon_controller.dart';
 import '../my_zeroon/my_zeroon_models.dart';
 import 'profile_controller.dart';
@@ -42,6 +46,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String? _ageRange;
   bool _aiProfileContextEnabled = false;
   bool _initialized = false;
+  bool _exporting = false;
+  bool _deleting = false;
   String? _message;
 
   @override
@@ -91,14 +97,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             aiProfileContextEnabled: _aiProfileContextEnabled,
             message: _message,
             saving: profileState.isLoading,
+            exporting: _exporting,
+            deleting: _deleting,
             onAvatarChanged: (value) => setState(() => _avatarPreset = value),
             onAgeRangeChanged: (value) => setState(() => _ageRange = value),
             onAiContextChanged: (value) =>
                 setState(() => _aiProfileContextEnabled = value),
             onSave: _save,
-            onLogout: () {
-              _logout();
-            },
+            onExport: _exportData,
+            onDelete: _confirmDelete,
+            onLogout: _logout,
           );
         },
       ),
@@ -138,6 +146,75 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
+
+  Future<void> _exportData() async {
+    setState(() {
+      _exporting = true;
+      _message = null;
+    });
+    try {
+      final data = await ref.read(dataControlRepositoryProvider).exportData();
+      await Clipboard.setData(
+        ClipboardData(text: const JsonEncoder.withIndent('  ').convert(data)),
+      );
+      if (mounted) {
+        setState(() => _message = '你的数据副本已复制为 JSON。');
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _message = '暂时无法准备数据副本，请稍后再试。');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _exporting = false);
+      }
+    }
+  }
+
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('删除账户与全部数据？'),
+        content: const Text(
+          '你的资料、记录、对话、Memory 和登录会话会立即删除，无法恢复。'
+          '去标识化的运行统计可能按隐私说明保留。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('先保留'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('确认删除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _deleting = true;
+      _message = null;
+    });
+    try {
+      await ref.read(authControllerProvider.notifier).deleteAccount();
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _message = '删除没有完成，你的数据仍然保留。请稍后再试。');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _deleting = false);
+      }
+    }
+  }
 }
 
 class _ProfileForm extends StatelessWidget {
@@ -152,10 +229,14 @@ class _ProfileForm extends StatelessWidget {
     required this.aiProfileContextEnabled,
     required this.message,
     required this.saving,
+    required this.exporting,
+    required this.deleting,
     required this.onAvatarChanged,
     required this.onAgeRangeChanged,
     required this.onAiContextChanged,
     required this.onSave,
+    required this.onExport,
+    required this.onDelete,
     required this.onLogout,
   });
 
@@ -169,10 +250,14 @@ class _ProfileForm extends StatelessWidget {
   final bool aiProfileContextEnabled;
   final String? message;
   final bool saving;
+  final bool exporting;
+  final bool deleting;
   final ValueChanged<String?> onAvatarChanged;
   final ValueChanged<String?> onAgeRangeChanged;
   final ValueChanged<bool> onAiContextChanged;
   final VoidCallback onSave;
+  final VoidCallback onExport;
+  final VoidCallback onDelete;
   final VoidCallback onLogout;
 
   @override
@@ -187,10 +272,6 @@ class _ProfileForm extends StatelessWidget {
           leading: ZeroonIconButton(
             child: const Icon(Icons.chevron_left),
             onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          action: ZeroonIconButton(
-            onPressed: onLogout,
-            child: const Icon(Icons.logout),
           ),
         ),
         const SizedBox(height: 20),
@@ -280,6 +361,71 @@ class _ProfileForm extends StatelessWidget {
           const SizedBox(height: 12),
           Text(message!, style: const TextStyle(color: Color(0xFF2F6F78))),
         ],
+        const SizedBox(height: 28),
+        _DataControlSection(
+          exporting: exporting,
+          deleting: deleting,
+          onExport: onExport,
+          onDelete: onDelete,
+          onLogout: onLogout,
+        ),
+      ],
+    );
+  }
+}
+
+class _DataControlSection extends StatelessWidget {
+  const _DataControlSection({
+    required this.exporting,
+    required this.deleting,
+    required this.onExport,
+    required this.onDelete,
+    required this.onLogout,
+  });
+
+  final bool exporting;
+  final bool deleting;
+  final VoidCallback onExport;
+  final VoidCallback onDelete;
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionMark('DATA & PRIVACY'),
+        const SizedBox(height: 7),
+        const Text(
+          '你可以带走自己的数据，也可以随时离开。',
+          style: TextStyle(color: zeroonMuted, height: 1.45),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: exporting || deleting ? null : onExport,
+            icon: const Icon(Icons.content_copy_outlined, size: 18),
+            label: Text(exporting ? '正在准备数据副本...' : '复制我的数据副本'),
+          ),
+        ),
+        Align(
+          alignment: Alignment.center,
+          child: TextButton(
+            onPressed: deleting ? null : onLogout,
+            child: const Text('退出登录'),
+          ),
+        ),
+        Align(
+          alignment: Alignment.center,
+          child: TextButton(
+            onPressed: exporting || deleting ? null : onDelete,
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF9A4D4D),
+            ),
+            child: Text(deleting ? '正在删除...' : '删除账户与数据'),
+          ),
+        ),
       ],
     );
   }

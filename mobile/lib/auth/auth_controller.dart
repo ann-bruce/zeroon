@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_models.dart';
 import 'auth_repository.dart';
 import 'token_store.dart';
+import '../data_control/data_control_repository.dart';
 
 final authControllerProvider =
     AsyncNotifierProvider<AuthController, AuthSession?>(AuthController.new);
@@ -33,6 +34,22 @@ class AuthController extends AsyncNotifier<AuthSession?> {
   }
 
   Future<void> logout() async {
+    final tokenStore = ref.read(tokenStoreProvider);
+    final session = state.valueOrNull ?? await tokenStore.read();
+    try {
+      if (session != null) {
+        await ref.read(authRepositoryProvider).logout(session.refreshToken);
+      }
+    } catch (_) {
+      // Local exit must remain available when remote session revocation fails.
+    } finally {
+      await tokenStore.clear();
+      state = const AsyncData(null);
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    await ref.read(dataControlRepositoryProvider).deleteAccount();
     await ref.read(tokenStoreProvider).clear();
     state = const AsyncData(null);
   }

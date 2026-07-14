@@ -56,11 +56,17 @@ public class AuthService {
 
     @Transactional
     public void logout(UserPrincipal principal, String refreshToken) {
-        RefreshSessionEntity session = findValidSession(refreshToken);
+        String tokenHash = tokenService.hashRefreshToken(refreshToken);
+        RefreshSessionEntity session = refreshSessionRepository.findByTokenHash(tokenHash).orElse(null);
+        if (session == null) {
+            return;
+        }
         if (!session.getUser().getId().equals(principal.userId())) {
             throw new AccessDeniedException("Refresh token does not belong to current user");
         }
-        session.revoke();
+        if (session.getRevokedAt() == null) {
+            session.revoke();
+        }
     }
 
     private RefreshSessionEntity findValidSession(String refreshToken) {

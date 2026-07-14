@@ -30,7 +30,7 @@ final dioProvider = Provider<Dio>((ref) {
       },
       onError: (error, handler) async {
         if (error.response?.statusCode == 401 &&
-            !_isRefreshRequest(error.requestOptions)) {
+            !_isSessionMutationRequest(error.requestOptions)) {
           final refreshed = await _tryRefresh(ref);
           if (refreshed != null) {
             final retry = await dio.fetch<dynamic>(
@@ -49,8 +49,10 @@ final dioProvider = Provider<Dio>((ref) {
   return dio;
 });
 
-bool _isRefreshRequest(RequestOptions options) =>
-    options.path.endsWith('/auth/refresh');
+bool _isSessionMutationRequest(RequestOptions options) =>
+    options.path.endsWith('/auth/refresh') ||
+    options.path.endsWith('/auth/logout') ||
+    options.path.endsWith('/me/deletion');
 
 Future<AuthSession?> _tryRefresh(Ref ref) async {
   final tokenStore = ref.read(tokenStoreProvider);
