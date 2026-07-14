@@ -99,7 +99,11 @@ Key product guardrails:
   private source-linked Memory from bounded user-authored text, with AI use
   still off. Duplicate saves are idempotent and repair a missing entry, while
   simulated Memory failures leave the record response and persistence intact.
-  S9-03 owner-only Memory control and hard-delete APIs are next.
+- Sprint 09 S9-03 Memory management API is complete. Owner-only PATCH changes
+  explicitly supplied activation and AI-use preferences; disable preserves the
+  preference but makes it ineffective. DELETE hard-deletes Memory content.
+  Empty updates return 400 and missing, expired, or cross-user resources return
+  404. S9-04 mobile Memory controls are next.
 
 ## Recent Completed Work
 

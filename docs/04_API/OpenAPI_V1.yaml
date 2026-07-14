@@ -470,6 +470,62 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Memory]
+      summary: Update controls for one owned memory entry
+      description: >-
+        Updates only supplied controls. A disabled entry cannot participate in
+        continuity or AI context even when aiContextEnabled remains true.
+      operationId: updateMemoryControls
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: memoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMemoryControlsRequest"
+      responses:
+        "200":
+          description: Updated memory entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryEntry"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Memory]
+      summary: Permanently delete one owned memory entry
+      description: Immediately hard-deletes the Memory title and summary.
+      operationId: deleteMemory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: memoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Memory entry deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /growth/summary:
     get:
       tags: [Growth]
@@ -1355,6 +1411,14 @@ components:
         updatedAt:
           type: string
           format: date-time
+    UpdateMemoryControlsRequest:
+      type: object
+      minProperties: 1
+      properties:
+        enabled:
+          type: boolean
+        aiContextEnabled:
+          type: boolean
     MemoryPage:
       type: object
       required: [items, page, size, totalElements]

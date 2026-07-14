@@ -47,6 +47,13 @@ submission of the same recent record runs the idempotent ensure operation again
 and can restore a missing entry; the database source index remains the final
 concurrency boundary.
 
+S9-03 implements owner-only control mutation and hard deletion. PATCH changes
+only explicitly supplied fields. Disabling an entry preserves its stored AI
+preference but makes that preference ineffective; later context assembly must
+require both flags. DELETE immediately removes the Memory row, including title
+and summary. Missing, expired, and cross-user entries all return not found so
+the API does not reveal ownership.
+
 ## Invariants
 
 1. A user cannot read, mutate, or delete another user's memory.

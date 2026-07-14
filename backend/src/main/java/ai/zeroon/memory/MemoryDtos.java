@@ -1,5 +1,7 @@
 package ai.zeroon.memory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.AssertTrue;
 import java.time.Instant;
 import java.util.List;
 
@@ -44,5 +46,16 @@ public final class MemoryDtos {
             int page,
             int size,
             long totalElements) {
+    }
+
+    public record UpdateMemoryControlsRequest(
+            Boolean enabled,
+            Boolean aiContextEnabled) {
+
+        @AssertTrue(message = "At least one memory control is required")
+        @JsonIgnore
+        public boolean isControlChangePresent() {
+            return enabled != null || aiContextEnabled != null;
+        }
     }
 }

@@ -144,4 +144,19 @@ public class MemoryEntryEntity {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+    public void updateControls(Boolean enabled, Boolean aiContextEnabled, Instant updatedAt) {
+        boolean changed = false;
+        if (enabled != null && this.enabled != enabled) {
+            this.enabled = enabled;
+            changed = true;
+        }
+        if (aiContextEnabled != null && this.aiContextEnabled != aiContextEnabled) {
+            this.aiContextEnabled = aiContextEnabled;
+            changed = true;
+        }
+        if (changed) {
+            this.updatedAt = updatedAt;
+        }
+    }
 }

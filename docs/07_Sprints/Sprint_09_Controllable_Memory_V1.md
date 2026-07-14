@@ -39,7 +39,7 @@ than preceding it.
 |---|---|---|
 | S9-01 Memory ADR and data foundation | Completed | ADR accepted; migration, entity, export, and OpenAPI expose enabled and AI-use controls with privacy-safe defaults; focused and full gates plus PostgreSQL v9 migration pass |
 | S9-02 Record-to-memory production | Completed | Post-commit event creates one deterministic, owned and source-linked memory in an independent transaction; repeat save is idempotent and repairs a missing entry; failures do not alter record success |
-| S9-03 Memory management API | Pending | Owner can enable, disable, change AI permission, and hard-delete; cross-user requests return 404 |
+| S9-03 Memory management API | Completed | Owner-only PATCH updates supplied activation/AI-use controls and DELETE hard-deletes content; empty input is 400 and missing, expired, or cross-user entries are 404 |
 | S9-04 Mobile Memory controls | Pending | User can inspect source and control or delete memory with calm feedback and confirmation |
 | S9-05 Consent-aware context assembly | Pending | Only active, unexpired, explicitly allowed entries enter provider context with bounded size and source class |
 | S9-06 Provider transaction and observability | Pending | External calls do not hold long DB transactions; success/fallback/refusal, latency, version, and cost metadata are verified without private text logs |

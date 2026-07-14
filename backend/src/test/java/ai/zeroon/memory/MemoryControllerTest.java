@@ -1,7 +1,10 @@
 package ai.zeroon.memory;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,6 +35,12 @@ class MemoryControllerTest {
     @Test
     void memoryEndpointsRequireAuthentication() throws Exception {
         mockMvc.perform(get("/api/v1/memory"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(patch("/api/v1/memory/{memoryId}", 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":false}"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(delete("/api/v1/memory/{memoryId}", 1))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -147,6 +156,115 @@ class MemoryControllerTest {
                 .andExpect(jsonPath("$.totalElements").value(1));
 
         mockMvc.perform(get("/api/v1/memory/{memoryId}", expired.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(patch("/api/v1/memory/{memoryId}", expired.getId())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":false}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(delete("/api/v1/memory/{memoryId}", expired.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void ownerCanUpdateMemoryControlsWithoutSilentlyChangingAiPreference() throws Exception {
+        UserEntity owner = userRepository.save(new UserEntity(
+                "memory_control_owner",
+                "13900000018",
+                Instant.parse("2026-06-01T00:00:00Z")));
+        MemoryEntryEntity memory = memoryEntryRepository.save(new MemoryEntryEntity(
+                owner,
+                MemoryEntryType.ZERO_RECORD,
+                "可控记忆",
+                "这条记忆由用户决定如何使用。",
+                (short) 1,
+                "ZERO_RECORD",
+                18L,
+                Instant.parse("2026-06-10T00:00:00Z")));
+        String token = login(owner.getMobile());
+
+        mockMvc.perform(patch("/api/v1/memory/{memoryId}", memory.getId())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"aiContextEnabled\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.aiContextEnabled").value(true));
+
+        mockMvc.perform(patch("/api/v1/memory/{memoryId}", memory.getId())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(false))
+                .andExpect(jsonPath("$.aiContextEnabled").value(true))
+                .andExpect(jsonPath("$.updatedAt").isNotEmpty());
+
+        mockMvc.perform(patch("/api/v1/memory/{memoryId}", memory.getId())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void crossUserCannotUpdateOrDeleteMemory() throws Exception {
+        UserEntity owner = userRepository.save(new UserEntity(
+                "memory_mutation_owner",
+                "13900000019",
+                Instant.parse("2026-06-01T00:00:00Z")));
+        UserEntity other = userRepository.save(new UserEntity(
+                "memory_mutation_other",
+                "13900000020",
+                Instant.parse("2026-06-01T00:00:00Z")));
+        MemoryEntryEntity memory = memoryEntryRepository.save(new MemoryEntryEntity(
+                owner,
+                MemoryEntryType.ZERO_RECORD,
+                "仅属于所有者",
+                "另一位用户不能控制它。",
+                (short) 1,
+                "ZERO_RECORD",
+                19L,
+                Instant.parse("2026-06-10T00:00:00Z")));
+        String otherToken = login(other.getMobile());
+
+        mockMvc.perform(patch("/api/v1/memory/{memoryId}", memory.getId())
+                        .header("Authorization", "Bearer " + otherToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":false}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(delete("/api/v1/memory/{memoryId}", memory.getId())
+                        .header("Authorization", "Bearer " + otherToken))
+                .andExpect(status().isNotFound());
+
+        assertThat(memoryEntryRepository.findById(memory.getId())).isPresent();
+    }
+
+    @Test
+    void ownerHardDeleteRemovesMemoryContent() throws Exception {
+        UserEntity owner = userRepository.save(new UserEntity(
+                "memory_delete_owner",
+                "13900000021",
+                Instant.parse("2026-06-01T00:00:00Z")));
+        MemoryEntryEntity memory = memoryEntryRepository.save(new MemoryEntryEntity(
+                owner,
+                MemoryEntryType.ZERO_RECORD,
+                "准备删除",
+                "删除后这段正文不应保留。",
+                (short) 1,
+                "ZERO_RECORD",
+                21L,
+                Instant.parse("2026-06-10T00:00:00Z")));
+        String token = login(owner.getMobile());
+
+        mockMvc.perform(delete("/api/v1/memory/{memoryId}", memory.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        assertThat(memoryEntryRepository.findById(memory.getId())).isEmpty();
+        mockMvc.perform(get("/api/v1/memory/{memoryId}", memory.getId())
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
     }

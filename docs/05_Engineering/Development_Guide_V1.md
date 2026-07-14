@@ -214,6 +214,10 @@ does not itself grant permission to send derived memory to an AI provider.
 The S9-02 writer runs after record commit in an independent transaction and
 uses bounded user-authored text only; it must not add an external provider call
 to the record transaction.
+Memory control changes use `PATCH /api/v1/memory/{memoryId}` and hard deletion
+uses `DELETE /api/v1/memory/{memoryId}`. Both resolve the current owner before
+mutation. A disabled entry is ineligible for AI context regardless of its
+stored per-entry AI preference.
 
 ---
 
