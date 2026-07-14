@@ -1,14 +1,20 @@
 package ai.zeroon.user;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -31,6 +37,12 @@ public class UserEntity {
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private UserStatus status = UserStatus.ACTIVE;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    private Set<UserRole> roles = new HashSet<>(Set.of(UserRole.USER));
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
@@ -70,6 +82,15 @@ public class UserEntity {
 
     public UserStatus getStatus() {
         return status;
+    }
+
+    public Set<UserRole> getRoles() {
+        return Set.copyOf(roles);
+    }
+
+    public void grantRole(UserRole role) {
+        roles.add(role);
+        updatedAt = Instant.now();
     }
 
     public Instant getCreatedAt() {

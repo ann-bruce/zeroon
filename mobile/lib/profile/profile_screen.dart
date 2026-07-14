@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_controller.dart';
 import '../common/zeroon_design.dart';
+import '../my_zeroon/my_zeroon_controller.dart';
+import '../my_zeroon/my_zeroon_models.dart';
 import 'profile_controller.dart';
 import 'profile_models.dart';
 
@@ -53,6 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileProvider);
+    final myZeroonState = ref.watch(myZeroonProvider);
 
     ref.listen(profileProvider, (previous, next) {
       next.whenOrNull(
@@ -78,6 +81,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         data: (profile) {
           _syncFromProfile(profile);
           return _ProfileForm(
+            myZeroonState: myZeroonState,
+            onRetryMyZeroon: () => ref.invalidate(myZeroonProvider),
             nicknameController: _nicknameController,
             occupationController: _occupationController,
             selfDescriptionController: _selfDescriptionController,
@@ -137,6 +142,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
 class _ProfileForm extends StatelessWidget {
   const _ProfileForm({
+    required this.myZeroonState,
+    required this.onRetryMyZeroon,
     required this.nicknameController,
     required this.occupationController,
     required this.selfDescriptionController,
@@ -152,6 +159,8 @@ class _ProfileForm extends StatelessWidget {
     required this.onLogout,
   });
 
+  final AsyncValue<MyZeroonCompanion> myZeroonState;
+  final VoidCallback onRetryMyZeroon;
   final TextEditingController nicknameController;
   final TextEditingController occupationController;
   final TextEditingController selfDescriptionController;
@@ -169,7 +178,7 @@ class _ProfileForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+      padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
       children: [
         ZeroonHeader(
           mark: 'MY ZEROON',
@@ -185,21 +194,13 @@ class _ProfileForm extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        ZeroonCard(
-          padding: const EdgeInsets.fromLTRB(18, 17, 18, 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SectionMark('PRIVATE PROFILE'),
-              const SizedBox(height: 9),
-              Text('这些信息只用于帮助 ZEROON 更好理解你留下的记录。',
-                  style: zeroonSerif(context, size: 22)),
-              const SizedBox(height: 8),
-              const Text('你可以随时修改，也可以留空。这里不是公开主页。'),
-            ],
-          ),
+        _MyZeroonCard(
+          state: myZeroonState,
+          onRetry: onRetryMyZeroon,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
+        const _ProfileSectionIntro(),
+        const SizedBox(height: 12),
         TextField(
           controller: nicknameController,
           maxLength: 30,
@@ -279,6 +280,197 @@ class _ProfileForm extends StatelessWidget {
           const SizedBox(height: 12),
           Text(message!, style: const TextStyle(color: Color(0xFF2F6F78))),
         ],
+      ],
+    );
+  }
+}
+
+class _MyZeroonCard extends StatelessWidget {
+  const _MyZeroonCard({
+    required this.state,
+    required this.onRetry,
+  });
+
+  final AsyncValue<MyZeroonCompanion> state;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return ZeroonCard(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      color: Colors.white.withValues(alpha: 0.72),
+      child: state.when(
+        loading: () => const _MyZeroonLoadingCard(),
+        error: (error, stackTrace) => _MyZeroonErrorCard(
+          message: error.toString(),
+          onRetry: onRetry,
+        ),
+        data: (companion) {
+          if (companion.met) {
+            return _MyZeroonMetCard(companion: companion);
+          }
+          return const _MyZeroonNotMetCard();
+        },
+      ),
+    );
+  }
+}
+
+class _MyZeroonNotMetCard extends StatelessWidget {
+  const _MyZeroonNotMetCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const _ZeroonFigure(size: 168),
+        const SizedBox(height: 8),
+        const SectionMark('MY ZEROON'),
+        const SizedBox(height: 10),
+        Text('还没有与 ZEROON 相遇', style: zeroonSerif(context, size: 23)),
+        const SizedBox(height: 8),
+        const Text(
+          '首次登录后会先完成相遇，再启用 ZEROON 的记录和回看功能。',
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+class _MyZeroonMetCard extends StatelessWidget {
+  const _MyZeroonMetCard({required this.companion});
+
+  final MyZeroonCompanion companion;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const _ZeroonFigure(size: 178),
+        const SizedBox(height: 8),
+        const SectionMark('MY ZEROON'),
+        const SizedBox(height: 10),
+        Text('你的 ZEROON 已经在这里', style: zeroonSerif(context, size: 23)),
+        const SizedBox(height: 8),
+        const Text(
+          '我在这里。以后你留下的此刻，我都会陪你一起回看。',
+          textAlign: TextAlign.center,
+        ),
+        if (companion.nameplateSerial != null) ...[
+          const SizedBox(height: 14),
+          const SectionMark('NAMEPLATE'),
+          const SizedBox(height: 7),
+          Text(
+            companion.nameplateSerial!,
+            style: const TextStyle(
+              color: zeroonNight,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.6,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ZeroonFigure extends StatelessWidget {
+  const _ZeroonFigure({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: size * 0.9,
+            height: size * 0.9,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  zeroonBlue.withValues(alpha: 0.14),
+                  zeroonCyan.withValues(alpha: 0.08),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+          Image.asset(
+            'assets/zeroon-front.png',
+            height: size,
+            fit: BoxFit.contain,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileSectionIntro extends StatelessWidget {
+  const _ProfileSectionIntro();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionMark('LET ZEROON KNOW YOU'),
+        SizedBox(height: 7),
+        Text(
+          '让 ZEROON 更懂你。以下信息都可以留空，只用于帮助它理解你留下的记录。',
+          style: TextStyle(color: zeroonMuted, height: 1.45),
+        ),
+      ],
+    );
+  }
+}
+
+class _MyZeroonLoadingCard extends StatelessWidget {
+  const _MyZeroonLoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        SizedBox(width: 12),
+        Text('正在确认你的 ZEROON...'),
+      ],
+    );
+  }
+}
+
+class _MyZeroonErrorCard extends StatelessWidget {
+  const _MyZeroonErrorCard({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionMark('MY ZEROON'),
+        const SizedBox(height: 8),
+        Text('暂时没有见到 ZEROON', style: zeroonSerif(context, size: 22)),
+        const SizedBox(height: 6),
+        Text(message, style: const TextStyle(color: zeroonMuted)),
+        const SizedBox(height: 12),
+        OutlinedButton(onPressed: onRetry, child: const Text('再试一次')),
       ],
     );
   }

@@ -12,6 +12,8 @@ import 'package:zeroon_mobile/growth/growth_repository.dart';
 import 'package:zeroon_mobile/home/home_shell.dart';
 import 'package:zeroon_mobile/home/now_screen.dart';
 import 'package:zeroon_mobile/main.dart';
+import 'package:zeroon_mobile/my_zeroon/my_zeroon_models.dart';
+import 'package:zeroon_mobile/my_zeroon/my_zeroon_repository.dart';
 import 'package:zeroon_mobile/profile/profile_models.dart';
 import 'package:zeroon_mobile/profile/profile_repository.dart';
 import 'package:zeroon_mobile/record/record_models.dart';
@@ -91,6 +93,40 @@ void main() {
     expect(find.text('session expired'), findsOneWidget);
   });
 
+  testWidgets('authenticated user meets ZEROON before entering the app', (
+    tester,
+  ) async {
+    final myZeroonRepository = _FakeMyZeroonRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tokenStoreProvider
+              .overrideWithValue(_FakeTokenStore(session: _session)),
+          myZeroonRepositoryProvider.overrideWithValue(myZeroonRepository),
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+        ],
+        child: const ZeroonApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('与 ZEROON 相遇'), findsOneWidget);
+    expect(find.text('确认相遇'), findsOneWidget);
+    await tester.tap(find.text('确认相遇'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ZR-20260703-A8K2'), findsOneWidget);
+    expect(find.text('进入 ZEROON'), findsOneWidget);
+    await tester.tap(find.text('进入 ZEROON'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('今天的 ZEROON'), findsOneWidget);
+  });
+
   testWidgets('home shell navigates between Now Archive and Growth', (
     tester,
   ) async {
@@ -118,10 +154,10 @@ void main() {
     expect(find.text('7 天'), findsOneWidget);
     expect(find.text('点亮日期可回看'), findsOneWidget);
 
-    await tester.tap(find.text('19').first);
+    await tester.tap(find.text('${_testRecordCreatedAt.day}').first);
     await tester.pumpAndSettle();
     expect(find.text('山海缓存'), findsOneWidget);
-    expect(find.text('筛选：2026.06.19'), findsOneWidget);
+    expect(find.text('筛选：$_testRecordDateLabel'), findsOneWidget);
     expect(find.text('today I paused'), findsOneWidget);
     Navigator.of(tester.element(find.text('山海缓存'))).pop();
     await tester.pumpAndSettle();
@@ -153,9 +189,9 @@ void main() {
     await tester.tap(find.text('筛选'));
     await tester.pumpAndSettle();
     expect(find.text('选择一天回看'), findsOneWidget);
-    await tester.tap(find.text('2026.06.19'));
+    await tester.tap(find.text(_testRecordDateLabel));
     await tester.pumpAndSettle();
-    expect(find.text('筛选：2026.06.19'), findsOneWidget);
+    expect(find.text('筛选：$_testRecordDateLabel'), findsOneWidget);
     expect(find.text('筛选功能后续开放'), findsNothing);
 
     await tester.tap(find.text('today I paused'));
@@ -184,6 +220,9 @@ void main() {
           recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
           growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
           profileRepositoryProvider.overrideWithValue(profileRepository),
+          myZeroonRepositoryProvider.overrideWithValue(
+            _FakeMyZeroonRepository(initialMet: true),
+          ),
         ],
         child: const MaterialApp(home: HomeShell(session: _session)),
       ),
@@ -194,7 +233,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('我与 ZEROON'), findsOneWidget);
-    expect(find.textContaining('这里不是公开主页'), findsOneWidget);
+    expect(find.text('你的 ZEROON 已经在这里'), findsOneWidget);
+    expect(find.text('ZR-20260703-A8K2'), findsOneWidget);
+    expect(find.text('这是我的 ZEROON'), findsNothing);
+    expect(find.textContaining('让 ZEROON 更懂你'), findsOneWidget);
     await tester.enterText(find.byType(TextField).first, 'Bruce');
     await tester.drag(find.byType(ListView).last, const Offset(0, -700));
     await tester.pumpAndSettle();
@@ -322,6 +364,9 @@ const _session = AuthSession(
   ),
 );
 
+final _testRecordCreatedAt = DateTime.now();
+final _testRecordDateLabel = _formatTestDate(_testRecordCreatedAt);
+
 class _FakeCurrentStateController extends CurrentStateController {
   @override
   Future<StateSnapshot> build() async {
@@ -366,7 +411,7 @@ class _FakeRecordRepository extends RecordRepository {
     goal: 'first step',
     content: 'today I paused',
     aiSummary: '你已经把这一刻安放下来了。',
-    createdAt: DateTime.parse('2026-06-19T00:00:00Z'),
+    createdAt: _testRecordCreatedAt,
   );
 
   @override
@@ -454,6 +499,40 @@ class _FakeProfileRepository extends ProfileRepository {
   }
 }
 
+class _FakeMyZeroonRepository extends MyZeroonRepository {
+  _FakeMyZeroonRepository({bool initialMet = false}) : super(Dio()) {
+    if (initialMet) {
+      _companion = _metCompanion();
+    }
+  }
+
+  MyZeroonCompanion _companion = const MyZeroonCompanion(met: false);
+
+  @override
+  Future<MyZeroonCompanion> get() async {
+    return _companion;
+  }
+
+  @override
+  Future<MyZeroonCompanion> meet([
+    MeetMyZeroonRequest request = const MeetMyZeroonRequest(),
+  ]) async {
+    _companion = _metCompanion(companionKey: request.companionKey);
+    return _companion;
+  }
+
+  MyZeroonCompanion _metCompanion({String? companionKey = 'ZEROON_DEFAULT'}) {
+    return MyZeroonCompanion(
+      met: true,
+      companionKey: companionKey,
+      nameplateSerial: 'ZR-20260703-A8K2',
+      metAt: DateTime.parse('2026-07-03T00:00:00Z'),
+      createdAt: DateTime.parse('2026-07-03T00:00:00Z'),
+      updatedAt: DateTime.parse('2026-07-03T00:00:00Z'),
+    );
+  }
+}
+
 class _FakeCompanionRepository extends CompanionRepository {
   _FakeCompanionRepository() : super(Dio());
 
@@ -471,6 +550,10 @@ class _FakeCompanionRepository extends CompanionRepository {
       safetyNotice: 'ZEROON 不能替代医疗、法律、财务或心理咨询。',
     );
   }
+}
+
+String _formatTestDate(DateTime date) {
+  return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
 }
 
 class _FlakyCompanionRepository extends CompanionRepository {

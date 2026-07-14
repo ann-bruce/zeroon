@@ -27,6 +27,7 @@ Before editing:
 - Prefer `rg` and `rg --files` for search.
 
 Canonical docs:
+- Current state handoff: `CURRENT_STATE.md`
 - API contract: `docs/04_API/OpenAPI_V1.yaml`
 - REST notes: `docs/04_API/REST_API_V1.md`
 - Database model: `docs/03_Database/ER_Model_V1.md`
@@ -65,6 +66,17 @@ Infrastructure:
 ```bash
 cp .env.example .env
 docker compose --env-file .env -f deployment/compose.yaml up -d
+```
+
+Workflow shortcuts:
+
+```bash
+scripts/zeroon-snapshot.sh
+scripts/zeroon-service.sh status all
+scripts/zeroon-service.sh start all
+scripts/zeroon-service.sh restart mobile
+scripts/zeroon-verify.sh quick
+scripts/zeroon-verify.sh all
 ```
 
 ## Backend Conventions

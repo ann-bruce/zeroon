@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_DIR="${ROOT_DIR}/.run"
 LOG_DIR="${RUN_DIR}/logs"
 JAVA_HOME_DEFAULT="/Users/bruceann/Library/Java/JavaVirtualMachines/corretto-17.0.13/Contents/Home"
-MOBILE_API_BASE_URL="${ZEROON_API_BASE_URL:-http://localhost:8080/api/v1}"
+MOBILE_API_BASE_URL="${ZEROON_API_BASE_URL:-http://127.0.0.1:8080/api/v1}"
 
 mkdir -p "${RUN_DIR}" "${LOG_DIR}"
 
@@ -22,7 +22,7 @@ Examples:
 
 Environment:
   JAVA_HOME              Java home for backend. Defaults to local Corretto 17 path.
-  ZEROON_API_BASE_URL   API URL passed to Flutter mobile web.
+  ZEROON_API_BASE_URL   API URL passed to Flutter mobile web. Defaults to http://127.0.0.1:8080/api/v1.
 EOF
 }
 

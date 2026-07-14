@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'auth/auth_controller.dart';
+import 'auth/auth_models.dart';
 import 'auth/login_screen.dart';
 import 'common/zeroon_design.dart';
 import 'home/home_shell.dart';
+import 'my_zeroon/encounter_screen.dart';
+import 'my_zeroon/my_zeroon_controller.dart';
 
 void main() {
   runApp(const ProviderScope(child: ZeroonApp()));
@@ -102,9 +105,58 @@ class ZeroonApp extends ConsumerWidget {
         loading: () => const SplashScreen(),
         error: (error, stackTrace) =>
             LoginScreen(initialError: error.toString()),
-        data: (session) =>
-            session == null ? const LoginScreen() : HomeShell(session: session),
+        data: (session) => session == null
+            ? const LoginScreen()
+            : AuthenticatedEntry(session: session),
       ),
+    );
+  }
+}
+
+class AuthenticatedEntry extends ConsumerStatefulWidget {
+  const AuthenticatedEntry({super.key, required this.session});
+
+  final AuthSession session;
+
+  @override
+  ConsumerState<AuthenticatedEntry> createState() => _AuthenticatedEntryState();
+}
+
+class _AuthenticatedEntryState extends ConsumerState<AuthenticatedEntry> {
+  bool _holdEncounterAfterMeeting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final companionState = ref.watch(myZeroonProvider);
+
+    if (companionState.isLoading && !companionState.hasValue) {
+      return const SplashScreen();
+    }
+
+    if (companionState.hasError && !companionState.hasValue) {
+      return EncounterErrorScreen(
+        message: companionState.error.toString(),
+        onRetry: () => ref.invalidate(myZeroonProvider),
+      );
+    }
+
+    final companion = companionState.value;
+    if (companion == null) {
+      return const SplashScreen();
+    }
+
+    if (companion.met && !_holdEncounterAfterMeeting) {
+      return HomeShell(session: widget.session);
+    }
+
+    return EncounterScreen(
+      companion: companion,
+      loading: companionState.isLoading,
+      onMeet: () async {
+        setState(() => _holdEncounterAfterMeeting = true);
+        await ref.read(myZeroonProvider.notifier).meet();
+      },
+      onEnter: () => setState(() => _holdEncounterAfterMeeting = false),
     );
   }
 }

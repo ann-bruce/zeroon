@@ -12,6 +12,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ai.zeroon.user.UserEntity;
+import ai.zeroon.user.UserRepository;
+import ai.zeroon.user.UserRole;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -23,6 +26,9 @@ class AdminPromptTemplateControllerTest {
     @Autowired
     private PromptTemplateRepository promptTemplateRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Test
     void adminCanListAndReadPromptTemplates() throws Exception {
         PromptTemplateEntity template = promptTemplateRepository.save(new PromptTemplateEntity(
@@ -31,7 +37,7 @@ class AdminPromptTemplateControllerTest {
                 "Stay brief and non-diagnostic.",
                 true,
                 1));
-        String token = login();
+        String token = loginAdmin("13800138000");
 
         mockMvc.perform(get("/api/v1/admin/prompts")
                         .header("Authorization", "Bearer " + token))
@@ -54,22 +60,36 @@ class AdminPromptTemplateControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    private String login() throws Exception {
+    @Test
+    void normalUserCannotAccessPromptAdmin() throws Exception {
+        String token = login("13800138001");
+
+        mockMvc.perform(get("/api/v1/admin/prompts")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    private String loginAdmin(String mobile) throws Exception {
+        UserEntity admin = new UserEntity("admin-prompt-test", mobile);
+        admin.grantRole(UserRole.ADMIN);
+        userRepository.save(admin);
+        return login(mobile);
+    }
+
+    private String login(String mobile) throws Exception {
         mockMvc.perform(post("/api/v1/auth/codes")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                  {"mobile": "13800138000"}
-                                  """))
+                        .content("{\"mobile\":\"" + mobile + "\"}"))
                 .andExpect(status().isAccepted());
         String body = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                   {
-                                    "mobile": "13800138000",
+                                    "mobile": "%s",
                                     "code": "000000",
                                     "deviceId": "admin-prompt-test"
                                   }
-                                  """))
+                                  """.formatted(mobile)))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()

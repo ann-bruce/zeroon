@@ -25,7 +25,7 @@ tags:
   - name: Growth
     description: Long-term companion and personal growth metrics.
   - name: Admin
-    description: Role-protected operational APIs.
+    description: Operational APIs restricted to authenticated users with the ADMIN role.
 paths:
   /auth/codes:
     post:
@@ -175,6 +175,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserProfileResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /me/zeroon-companion:
+    get:
+      tags: [User]
+      summary: Get the current user's private ZEROON companion
+      description: Returns `met=false` when the user has not met their ZEROON yet.
+      operationId: getZeroonCompanion
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user's ZEROON companion state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZeroonCompanionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [User]
+      summary: Meet the current user's private ZEROON companion
+      description: Creates the companion once and returns the existing companion on repeated calls.
+      operationId: meetZeroonCompanion
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetZeroonCompanionRequest"
+      responses:
+        "200":
+          description: Current user's ZEROON companion state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZeroonCompanionResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -711,6 +752,46 @@ components:
         aiProfileContextEnabled:
           type: boolean
           default: false
+    MeetZeroonCompanionRequest:
+      type: object
+      properties:
+        companionKey:
+          $ref: "#/components/schemas/ZeroonCompanionKey"
+      description: Omit `companionKey` to use the default ZEROON companion.
+    ZeroonCompanionResponse:
+      type: object
+      required: [met]
+      properties:
+        met:
+          type: boolean
+          description: Whether the user has met their private ZEROON companion.
+        companionKey:
+          $ref: "#/components/schemas/ZeroonCompanionKey"
+          nullable: true
+        displayName:
+          type: string
+          maxLength: 30
+          nullable: true
+        nameplateSerial:
+          type: string
+          pattern: "^ZR-[0-9]{8}-[A-Z2-9]{4}$"
+          nullable: true
+          description: Stable private ZEROON nameplate serial assigned at first meeting.
+        metAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+    ZeroonCompanionKey:
+      type: string
+      enum: [ZEROON_DEFAULT]
     AvatarPreset:
       type: string
       enum: [ZEROON_DEFAULT, MOON, MOUNTAIN, SEA, LIGHT, SEED]

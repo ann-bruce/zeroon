@@ -1,6 +1,7 @@
 package ai.zeroon.security;
 
 import ai.zeroon.user.UserEntity;
+import ai.zeroon.user.UserRole;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
@@ -10,8 +11,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
-import java.util.List;
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,7 +50,7 @@ public class TokenService {
             String payload = encodeJson(Map.of(
                     "sub", user.getId().toString(),
                     "uid", user.getUid(),
-                    "roles", List.of("USER"),
+                    "roles", user.getRoles().stream().map(UserRole::name).sorted().toList(),
                     "iat", issuedAt.getEpochSecond(),
                     "exp", expiresAt.getEpochSecond()));
             String signature = sign(header + "." + payload);
@@ -74,7 +76,24 @@ public class TokenService {
             if (payload.path("exp").asLong() <= Instant.now().getEpochSecond()) {
                 return null;
             }
-            return new UserPrincipal(payload.path("sub").asLong(), payload.path("uid").asText());
+            Set<UserRole> roles = EnumSet.noneOf(UserRole.class);
+            JsonNode roleClaims = payload.path("roles");
+            if (roleClaims.isArray()) {
+                for (JsonNode roleClaim : roleClaims) {
+                    try {
+                        roles.add(UserRole.valueOf(roleClaim.asText()));
+                    } catch (IllegalArgumentException ignored) {
+                        // Unknown roles never grant authority.
+                    }
+                }
+            }
+            if (roles.isEmpty()) {
+                return null;
+            }
+            return new UserPrincipal(
+                    payload.path("sub").asLong(),
+                    payload.path("uid").asText(),
+                    roles);
         } catch (Exception ex) {
             return null;
         }
