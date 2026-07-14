@@ -11,6 +11,7 @@ import ai.zeroon.user.UserState;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Duration;
 import java.time.Instant;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -27,16 +28,19 @@ public class RecordService {
     private final ZeroRecordRepository zeroRecordRepository;
     private final StateSessionRepository stateSessionRepository;
     private final StateService stateService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RecordService(
             UserRepository userRepository,
             ZeroRecordRepository zeroRecordRepository,
             StateSessionRepository stateSessionRepository,
-            StateService stateService) {
+            StateService stateService,
+            ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.zeroRecordRepository = zeroRecordRepository;
         this.stateSessionRepository = stateSessionRepository;
         this.stateService = stateService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -63,6 +67,7 @@ public class RecordService {
         if (duplicatedRecord.isPresent()) {
             var record = duplicatedRecord.get();
             activeSession.ifPresent(session -> stateService.endSessionWithRecord(session, record.getId()));
+            publishCommittedRecord(userId, record.getId());
             return toDto(record);
         }
 
@@ -73,6 +78,7 @@ public class RecordService {
                 normalize(request.content()),
                 activeSession.map(session -> session.getId()).orElse(null)));
         activeSession.ifPresent(session -> stateService.endSessionWithRecord(session, record.getId()));
+        publishCommittedRecord(userId, record.getId());
         return toDto(record);
     }
 
@@ -98,6 +104,10 @@ public class RecordService {
 
     private boolean isRecentDuplicate(ZeroRecordEntity record) {
         return record.getCreatedAt().isAfter(Instant.now().minus(DUPLICATE_SAVE_WINDOW));
+    }
+
+    private void publishCommittedRecord(Long userId, Long recordId) {
+        eventPublisher.publishEvent(new RecordCommittedEvent(userId, recordId));
     }
 
     private ZeroRecord toDto(ZeroRecordEntity record) {

@@ -1,5 +1,7 @@
 package ai.zeroon.record;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -7,6 +9,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import ai.zeroon.memory.MemoryEntryRepository;
+import ai.zeroon.memory.MemoryEntryType;
+import ai.zeroon.memory.MemoryProductionService;
+import ai.zeroon.user.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +31,15 @@ class RecordControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private MemoryEntryRepository memoryEntryRepository;
+
+    @Autowired
+    private MemoryProductionService memoryProductionService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Test
     void userCanCreateListAndReadOwnRecords() throws Exception {
@@ -66,6 +82,10 @@ class RecordControllerTest {
         String accessToken = login("13200132000");
 
         Long firstId = createRecord(accessToken, "TIRED", "rest", "same content");
+        Long userId = userRepository.findByMobile("13200132000").orElseThrow().getId();
+        var firstMemory = memoryEntryRepository.findByUserIdAndTypeAndSourceTypeAndSourceId(
+                userId, MemoryEntryType.ZERO_RECORD, "ZERO_RECORD", firstId).orElseThrow();
+        memoryEntryRepository.delete(firstMemory);
         Long repeatedId = createRecord(accessToken, "TIRED", "rest", "same content");
 
         mockMvc.perform(get("/api/v1/records")
@@ -74,6 +94,43 @@ class RecordControllerTest {
                 .andExpect(jsonPath("$.items", hasSize(1)))
                 .andExpect(jsonPath("$.items[0].id").value(firstId))
                 .andExpect(jsonPath("$.items[0].id").value(repeatedId));
+
+        assertThat(memoryEntryRepository.countByUserIdAndTypeAndSourceTypeAndSourceId(
+                userId, MemoryEntryType.ZERO_RECORD, "ZERO_RECORD", firstId)).isOne();
+    }
+
+    @Test
+    void committedRecordCreatesOwnedSourceLinkedMemoryWithSafeDefaults() throws Exception {
+        String accessToken = login("13200132001");
+        Long recordId = createRecord(
+                accessToken,
+                "CREATE",
+                "finish a small draft",
+                "I kept the first version without judging it.");
+        Long userId = userRepository.findByMobile("13200132001").orElseThrow().getId();
+
+        var memory = memoryEntryRepository.findByUserIdAndTypeAndSourceTypeAndSourceId(
+                userId, MemoryEntryType.ZERO_RECORD, "ZERO_RECORD", recordId).orElseThrow();
+
+        assertThat(memory.getTitle()).isEqualTo("finish a small draft");
+        assertThat(memory.getSummary()).isEqualTo("I kept the first version without judging it.");
+        assertThat(memory.getSourceId()).isEqualTo(recordId);
+        assertThat(memory.isEnabled()).isTrue();
+        assertThat(memory.isAiContextEnabled()).isFalse();
+    }
+
+    @Test
+    void memoryProductionRejectsRecordOwnedByAnotherUser() throws Exception {
+        String ownerToken = login("13200132002");
+        login("13200132003");
+        Long recordId = createRecord(ownerToken, "CALM", "private goal", "private source");
+        Long otherUserId = userRepository.findByMobile("13200132003").orElseThrow().getId();
+
+        assertThatThrownBy(() -> memoryProductionService.ensureForRecord(otherUserId, recordId))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Record not found");
+        assertThat(memoryEntryRepository.countByUserIdAndTypeAndSourceTypeAndSourceId(
+                otherUserId, MemoryEntryType.ZERO_RECORD, "ZERO_RECORD", recordId)).isZero();
     }
 
     @Test

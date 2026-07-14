@@ -211,6 +211,9 @@ Memory source, ownership, activation, AI-use, expiry, and deletion semantics
 are defined in `docs/02_Architecture/ADR_004_Memory_V1.md`. New memory writers
 must enforce source ownership and idempotency transactionally. Saving a record
 does not itself grant permission to send derived memory to an AI provider.
+The S9-02 writer runs after record commit in an independent transaction and
+uses bounded user-authored text only; it must not add an external provider call
+to the record transaction.
 
 ---
 

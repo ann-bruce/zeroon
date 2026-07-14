@@ -93,8 +93,13 @@ Key product guardrails:
   separates reversible memory activation from per-entry AI-use permission,
   defaults AI use off, requires source ownership, and hard-deletes memory
   content. V9 adds control/update fields and source idempotency, and passed a
-  real PostgreSQL migration. S9-02 record-to-memory production is next; user
-  mutation controls remain subsequent items.
+  real PostgreSQL migration.
+- Sprint 09 S9-02 record-to-memory production is complete. A committed record
+  publishes a post-commit event; an independent transaction creates one
+  private source-linked Memory from bounded user-authored text, with AI use
+  still off. Duplicate saves are idempotent and repair a missing entry, while
+  simulated Memory failures leave the record response and persistence intact.
+  S9-03 owner-only Memory control and hard-delete APIs are next.
 
 ## Recent Completed Work
 

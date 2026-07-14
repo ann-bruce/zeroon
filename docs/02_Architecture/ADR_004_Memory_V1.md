@@ -39,6 +39,14 @@ The V9 migration adds the control and update fields without creating a writer.
 The record-to-memory writer and user mutation endpoints are later Sprint 09
 items so their ownership and idempotency behavior can be accepted separately.
 
+S9-02 implements the first writer as a post-commit domain-event listener. It
+copies a bounded excerpt of user-authored record text without calling an AI
+provider. Memory creation runs in an independent transaction, so an unexpected
+writer failure cannot roll back or misreport the saved Zero Record. Repeated
+submission of the same recent record runs the idempotent ensure operation again
+and can restore a missing entry; the database source index remains the final
+concurrency boundary.
+
 ## Invariants
 
 1. A user cannot read, mutate, or delete another user's memory.
