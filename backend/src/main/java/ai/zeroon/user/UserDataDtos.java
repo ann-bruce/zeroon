@@ -109,7 +109,10 @@ public final class UserDataDtos {
             String sourceType,
             Long sourceId,
             Instant expiresAt,
-            Instant createdAt) {
+            boolean enabled,
+            boolean aiContextEnabled,
+            Instant createdAt,
+            Instant updatedAt) {
     }
 
     public record AiUsageExport(

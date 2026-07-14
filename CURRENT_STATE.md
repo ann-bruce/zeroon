@@ -13,25 +13,25 @@ This file is the short handoff for new Codex threads. Read it before scanning lo
 ## Current Branch
 
 ```text
-main
+agent/zeroon-validation-foundation
 ```
 
 ## Current Focus
 
-90-day product validation: Phase 0 baseline and scope freeze.
+90-day product validation: Phase 2 controllable memory and real AI.
 
-Goal: determine whether ZEROON can become a sustainable long-term companion
-and private memory product by validating trust, retained use, reflective
-continuity, and real willingness to pay.
+Sprint 08 trust-foundation engineering is complete. Sprint 09 now turns the
+existing read-only Memory placeholder into user-controlled reflective
+continuity before a real provider is expanded.
 
-Immediate execution scope is Validation Sprint 00:
+Immediate execution order:
 
-- inventory and verify the current uncommitted Sprint 06 / My ZEROON work;
-- establish the current backend, mobile, admin, OpenAPI, and service baseline;
-- freeze one beta promise and target cohort;
-- define the beta event dictionary without collecting private record or message content;
-- create a release-blocker matrix;
-- prepare the trust-foundation implementation sprint.
+- accept the Memory V1 source, ownership, activation, AI-use, and deletion model;
+- create an idempotent record-to-memory production path;
+- add owner-only enable, AI-use, and hard-delete controls;
+- expose those controls in mobile without pressure or personality labels;
+- assemble only explicitly allowed memory into AI context;
+- move provider calls out of long database transactions and verify observability.
 
 Key product guardrails:
 
@@ -47,8 +47,10 @@ Key product guardrails:
 - 90-day validation plan: `docs/08_Roadmap/ZEROON_90_Day_Product_Validation_Plan_V1.md`
 - Validation baseline: `docs/08_Roadmap/Validation_Sprint_00_Baseline_V1.md`
 - Beta brief: `docs/01_PRD/Beta_Validation_Brief_V1.md`
-- Next engineering sprint: `docs/07_Sprints/Sprint_08_Trust_Foundation_V1.md`
-- Phase 0 dates: 2026-07-14 to 2026-07-20
+- Current engineering sprint: `docs/07_Sprints/Sprint_09_Controllable_Memory_V1.md`
+- Memory decision: `docs/02_Architecture/ADR_004_Memory_V1.md`
+- Phase 2 target window: 2026-08-11 to 2026-08-31; engineering began early
+  after Sprint 08 closure.
 - Day-90 review: 2026-10-12
 - Sprint 06 implementation exists in the worktree but must not be marked
   accepted until code, contract, tests, and local UI evidence are verified.
@@ -87,6 +89,12 @@ Key product guardrails:
   documented deidentified AI/audit metadata may remain. Sprint 08 engineering
   scope is complete; compliance readiness and SMS-provider onboarding remain
   release blockers.
+- Sprint 09 S9-01 Memory V1 foundation is complete. The accepted decision
+  separates reversible memory activation from per-entry AI-use permission,
+  defaults AI use off, requires source ownership, and hard-deletes memory
+  content. V9 adds control/update fields and source idempotency, and passed a
+  real PostgreSQL migration. S9-02 record-to-memory production is next; user
+  mutation controls remain subsequent items.
 
 ## Recent Completed Work
 

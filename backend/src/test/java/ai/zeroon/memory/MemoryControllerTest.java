@@ -72,13 +72,18 @@ class MemoryControllerTest {
                 .andExpect(jsonPath("$.items[0].id").value(owned.getId()))
                 .andExpect(jsonPath("$.items[0].type").value("ZERO_RECORD"))
                 .andExpect(jsonPath("$.items[0].summary").value("今天第一次把状态放进 Archive。"))
+                .andExpect(jsonPath("$.items[0].enabled").value(true))
+                .andExpect(jsonPath("$.items[0].aiContextEnabled").value(false))
+                .andExpect(jsonPath("$.items[0].updatedAt").value("2026-06-10T00:00:00Z"))
                 .andExpect(jsonPath("$.totalElements").value(1));
 
         mockMvc.perform(get("/api/v1/memory/{memoryId}", owned.getId())
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(owned.getId()))
-                .andExpect(jsonPath("$.sourceType").value("ZERO_RECORD"));
+                .andExpect(jsonPath("$.sourceType").value("ZERO_RECORD"))
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.aiContextEnabled").value(false));
     }
 
     @Test

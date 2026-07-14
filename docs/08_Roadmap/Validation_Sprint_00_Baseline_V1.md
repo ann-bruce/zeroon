@@ -1,7 +1,7 @@
 # Validation Sprint 00 Baseline V1
 
 Date: 2026-07-14  
-Status: In progress  
+Status: Completed
 
 ## 1. Baseline Decision
 
@@ -113,20 +113,21 @@ restart was required for that tooling-only change.
 | RB-03 | Engineering closed in S8-03 | Verification code path was local-only and abuse-prone | Prod now uses random one-time codes, Redis atomic state, HTTPS sender boundary, mobile/IP/device throttling, and five-attempt deletion; local-only beans are profile-isolated | Public authentication remains blocked until an SMS provider is onboarded and production delivery smoke passes | Controller/service/store tests, real Redis cross-instance test, safe prod-profile startup, and full quality gate passed |
 | RB-04 | P0 | Public anthropomorphic-service compliance path is incomplete | No complete age/minor, overuse, escalation, complaint, filing, or assessment workflow | Public China release is blocked pending professional review | Product, engineering, operations, and legal readiness checklist signed off |
 | RB-05 | Closed in S8-04 | AI profile permission was stored but not applied to companion context | Companion now reads consent on every request and assembles only nickname, age range, occupation/identity, and self-description; avatar and inferred traits are excluded | AI-context beta claim is supported for the documented Profile fields | Capturing fake-provider test proves off/on/off behavior, immediate disable, whitelist inclusion, and excluded fields; full quality gate passed |
-| RB-06 | P1 | Long-term memory has no production write/control loop | Memory query exists; record-to-memory flow and controls do not | Long-term-memory value claim is blocked | Source-linked memory can be created, viewed, deleted, disabled, and excluded from AI |
+| RB-06 | P1; S9 active | Long-term memory has no production write/control loop | ADR 004 fixes source ownership, disable/delete semantics, and separate privacy-safe AI permission; V9 adds the control data foundation, while record production and mutations remain open | Long-term-memory value claim stays blocked until Sprint 09 control loop is accepted | Source-linked memory can be created, viewed, deleted, disabled, and excluded from AI |
 | RB-07 | P1 | External LLM call occurs inside companion transaction | `CompanionService.send` is transactional and calls provider | Real-provider scale is blocked | Provider timeout does not hold a long DB transaction; fallback persists correctly |
 | RB-08 | Closed in S8-05 | Data export/account deletion contract and implementation were not aligned | `/me`, versioned JSON export, synchronous idempotent hard deletion, session revocation, mobile controls, and explicit deidentified-retention rules are implemented | Data-control engineering blocker is closed; jurisdiction-specific compliance review remains separate | Ownership isolation, credential exclusion, cascade deletion, retained-metadata deidentification, repeated deletion, logout ownership, mobile controller, Widget, OpenAPI, and full quality-gate tests pass |
 | RB-09 | P2 | Admin Hook warnings and large bundle remain | Lint warnings and Vite chunk warning | Does not block private beta | Warnings resolved; route-based code split evaluated |
 
 ## 8. Next Action
 
-Start Sprint 08 Trust Foundation in this order:
+Sprint 08 trust foundation is complete. Continue Sprint 09 in this order:
 
-1. administrator authorization and tests;
-2. production configuration fail-fast;
-3. verification-code environment and abuse boundary;
-4. profile AI consent closure;
-5. data-control and OpenAPI alignment.
+1. Memory V1 ADR and data foundation;
+2. idempotent record-to-memory production;
+3. owner-only activation, AI-use, and deletion controls;
+4. mobile Memory management;
+5. consent-aware context assembly and real-provider transaction closure.
 
-Memory V1 design begins after these trust decisions are explicit, and can run
-in the same 90-day Phase 1 only when it does not weaken the P0 sequence.
+Public release remains blocked by RB-03 provider onboarding and RB-04
+professional compliance review; neither blocker authorizes widening Memory
+scope into hidden profiling or diagnosis.

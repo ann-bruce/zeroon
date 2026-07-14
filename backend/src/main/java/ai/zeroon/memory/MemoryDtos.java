@@ -16,7 +16,11 @@ public final class MemoryDtos {
             int importance,
             String sourceType,
             Long sourceId,
-            Instant createdAt) {
+            Instant expiresAt,
+            boolean enabled,
+            boolean aiContextEnabled,
+            Instant createdAt,
+            Instant updatedAt) {
 
         static MemoryEntry from(MemoryEntryEntity entry) {
             return new MemoryEntry(
@@ -27,7 +31,11 @@ public final class MemoryDtos {
                     entry.getImportance(),
                     entry.getSourceType(),
                     entry.getSourceId(),
-                    entry.getCreatedAt());
+                    entry.getExpiresAt(),
+                    entry.isEnabled(),
+                    entry.isAiContextEnabled(),
+                    entry.getCreatedAt(),
+                    entry.getUpdatedAt());
         }
     }
 

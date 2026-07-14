@@ -128,7 +128,12 @@ CREATE TABLE memory_entries (
     source_type VARCHAR(30),
     source_id BIGINT,
     expires_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    ai_context_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CHECK ((source_type IS NULL) = (source_id IS NULL)),
+    UNIQUE (user_id, source_type, source_id, type)
 );
 
 CREATE TABLE prompt_templates (

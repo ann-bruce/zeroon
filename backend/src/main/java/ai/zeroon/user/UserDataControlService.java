@@ -203,7 +203,8 @@ public class UserDataControlService {
 
     private List<MemoryEntryExport> memoryEntries(Long userId) {
         return jdbcTemplate.query("""
-                SELECT id, type, title, summary, importance, source_type, source_id, expires_at, created_at
+                SELECT id, type, title, summary, importance, source_type, source_id, expires_at,
+                       enabled, ai_context_enabled, created_at, updated_at
                 FROM memory_entries WHERE user_id = ? ORDER BY created_at
                 """, (rs, row) -> new MemoryEntryExport(
                 rs.getLong("id"),
@@ -214,7 +215,10 @@ public class UserDataControlService {
                 rs.getString("source_type"),
                 nullableLong(rs, "source_id"),
                 instant(rs, "expires_at"),
-                instant(rs, "created_at")), userId);
+                rs.getBoolean("enabled"),
+                rs.getBoolean("ai_context_enabled"),
+                instant(rs, "created_at"),
+                instant(rs, "updated_at")), userId);
     }
 
     private List<AiUsageExport> aiUsage(Long userId) {

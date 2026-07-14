@@ -48,8 +48,17 @@ public class MemoryEntryEntity {
     @Column(name = "expires_at")
     private Instant expiresAt;
 
+    @Column(nullable = false)
+    private boolean enabled = true;
+
+    @Column(name = "ai_context_enabled", nullable = false)
+    private boolean aiContextEnabled;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt = Instant.now();
 
     protected MemoryEntryEntity() {
     }
@@ -85,6 +94,7 @@ public class MemoryEntryEntity {
         this.sourceId = sourceId;
         this.expiresAt = expiresAt;
         this.createdAt = createdAt;
+        this.updatedAt = createdAt;
     }
 
     public Long getId() {
@@ -115,7 +125,23 @@ public class MemoryEntryEntity {
         return sourceId;
     }
 
+    public Instant getExpiresAt() {
+        return expiresAt;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public boolean isAiContextEnabled() {
+        return aiContextEnabled;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
     }
 }

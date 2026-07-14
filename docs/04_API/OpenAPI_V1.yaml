@@ -1006,7 +1006,8 @@ components:
           format: date-time
     UserDataMemoryEntry:
       type: object
-      required: [id, type, summary, importance, createdAt]
+      required:
+        [id, type, summary, importance, enabled, aiContextEnabled, createdAt, updatedAt]
       properties:
         id:
           type: integer
@@ -1034,7 +1035,16 @@ components:
           type: string
           format: date-time
           nullable: true
+        enabled:
+          type: boolean
+          description: Whether the entry participates in continuity features.
+        aiContextEnabled:
+          type: boolean
+          description: Per-entry AI-use permission; ineffective while enabled is false.
         createdAt:
+          type: string
+          format: date-time
+        updatedAt:
           type: string
           format: date-time
     UserDataAiUsage:
@@ -1305,7 +1315,8 @@ components:
           nullable: true
     MemoryEntry:
       type: object
-      required: [id, type, summary, createdAt]
+      required:
+        [id, type, summary, importance, enabled, aiContextEnabled, createdAt, updatedAt]
       properties:
         id:
           type: integer
@@ -1328,7 +1339,20 @@ components:
           type: integer
           format: int64
           nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        enabled:
+          type: boolean
+          description: Whether the entry participates in continuity features.
+        aiContextEnabled:
+          type: boolean
+          description: Per-entry AI-use permission; ineffective while enabled is false.
         createdAt:
+          type: string
+          format: date-time
+        updatedAt:
           type: string
           format: date-time
     MemoryPage:

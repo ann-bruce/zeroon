@@ -57,6 +57,11 @@ class UserDataControlControllerTest {
                 owner, UserState.FOCUS, "owner goal", "owner private content"));
         zeroRecordRepository.save(new ZeroRecordEntity(
                 other, UserState.CALM, "other goal", "other private content"));
+        jdbcTemplate.update("""
+                INSERT INTO memory_entries (
+                    user_id, type, summary, source_type, source_id
+                ) VALUES (?, 'ZERO_RECORD', 'owner memory summary', 'ZERO_RECORD', 9001)
+                """, owner.getId());
 
         String accessToken = ownerSession.path("accessToken").asText();
         mockMvc.perform(put("/api/v1/me/profile")
@@ -87,6 +92,9 @@ class UserDataControlControllerTest {
                 .andExpect(jsonPath("$.account.mobile").value("13700805001"))
                 .andExpect(jsonPath("$.profile.nickname").value("River"))
                 .andExpect(jsonPath("$.records[0].content").value("owner private content"))
+                .andExpect(jsonPath("$.memoryEntries[0].enabled").value(true))
+                .andExpect(jsonPath("$.memoryEntries[0].aiContextEnabled").value(false))
+                .andExpect(jsonPath("$.memoryEntries[0].updatedAt").isNotEmpty())
                 .andExpect(jsonPath("$.sessions[0].deviceId").value("data-control-owner"))
                 .andReturn()
                 .getResponse()

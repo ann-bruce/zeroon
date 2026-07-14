@@ -205,6 +205,13 @@ The implemented Beta export, deletion, retention, and logout semantics are
 defined in `docs/05_Engineering/Data_Control_Lifecycle_V1.md`. OpenAPI must not
 describe planned asynchronous deletion as an implemented response.
 
+## Memory V1
+
+Memory source, ownership, activation, AI-use, expiry, and deletion semantics
+are defined in `docs/02_Architecture/ADR_004_Memory_V1.md`. New memory writers
+must enforce source ownership and idempotency transactionally. Saving a record
+does not itself grant permission to send derived memory to an AI provider.
+
 ---
 
 ## MVP Principle
