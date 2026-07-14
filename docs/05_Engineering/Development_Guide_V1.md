@@ -144,6 +144,32 @@ Build Pass
 
 ---
 
+## Production Configuration Safety
+
+Production starts with the `prod` profile:
+
+```bash
+SPRING_PROFILES_ACTIVE=prod java -jar zeroon-backend.jar
+```
+
+Before the application context is created, ZEROON rejects production startup
+when any of the following are missing, too short, or still use a known
+development/example value:
+
+- `ZEROON_ACCESS_TOKEN_SECRET`: at least 32 characters;
+- `POSTGRES_PASSWORD`: at least 12 characters;
+- `ZEROON_LOCAL_VERIFICATION_CODE`: six non-default characters during the
+  temporary pre-SMS stage.
+
+The validator reports only the environment variable name and never logs its
+value. Local and test profiles retain the documented development defaults.
+
+The verification-code setting is temporary. Sprint 08 authentication work must
+replace the production fixed-code path with a real sender, random one-time
+codes, shared storage, throttling, and attempt limits before public release.
+
+---
+
 ## MVP Principle
 
 Simple First

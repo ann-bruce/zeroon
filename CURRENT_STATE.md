@@ -61,6 +61,11 @@ Key product guardrails:
   requires ADMIN. Automated USER/ADMIN tests pass and local USER access returns
   403. Production admin provisioning and future mutation audit remain
   operational follow-ups.
+- Sprint 08 S8-02 production fail-fast is complete: the `prod` profile rejects
+  missing, short, development, or example JWT, PostgreSQL password, and
+  verification-code values before the Spring application context is created.
+  Focused tests, an expected unsafe-prod startup failure, and the full quality
+  gate passed. S8-03 remains required before public authentication.
 
 ## Recent Completed Work
 
