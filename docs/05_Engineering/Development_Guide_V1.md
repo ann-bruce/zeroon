@@ -218,6 +218,10 @@ Memory control changes use `PATCH /api/v1/memory/{memoryId}` and hard deletion
 uses `DELETE /api/v1/memory/{memoryId}`. Both resolve the current owner before
 mutation. A disabled entry is ineligible for AI context regardless of its
 stored per-entry AI preference.
+The mobile Memory management page is entered from Archive. It uses local card
+feedback for mutations, preserves the source Zero Record on Memory deletion,
+and must not expose an editable AI-use switch until context assembly consumes
+the permission in the same release.
 
 ---
 

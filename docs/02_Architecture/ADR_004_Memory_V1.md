@@ -54,6 +54,14 @@ require both flags. DELETE immediately removes the Memory row, including title
 and summary. Missing, expired, and cross-user entries all return not found so
 the API does not reveal ownership.
 
+S9-04 adds a mobile Memory management surface reached from Archive. It shows
+the source, supports reversible activation, and confirms hard deletion while
+explaining that the original Zero Record remains. The per-entry AI permission
+is displayed read-only until S9-05 actually consumes allowed Memory; exposing
+an editable switch before provider behavior exists would create a false
+control. S9-05 must update the copy and enable that control in the same change
+that makes its on/off behavior testable.
+
 ## Invariants
 
 1. A user cannot read, mutate, or delete another user's memory.

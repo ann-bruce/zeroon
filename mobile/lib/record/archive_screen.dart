@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../companion/companion_models.dart';
 import '../companion/companion_repository.dart';
 import '../common/zeroon_design.dart';
+import '../memory/memory_screen.dart';
 import 'record_controller.dart';
 import 'record_detail_screen.dart';
 import 'record_models.dart';
@@ -205,22 +206,33 @@ class _ArchiveHeader extends StatelessWidget {
       mark: 'ARCHIVE',
       title: '山海缓存',
       leading: const SizedBox.shrink(),
-      action: TextButton(
-        onPressed: () {
-          if (selectedDate != null) {
-            onClearDate();
-            return;
-          }
-          if (availableDates.isEmpty) {
-            return;
-          }
-          _showDateFilterSheet(
-            context: context,
-            dates: availableDates,
-            onSelectDate: onSelectDate,
-          );
-        },
-        child: Text(selectedDate == null ? '筛选' : '全部'),
+      action: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const MemoryScreen()),
+            ),
+            child: const Text('记忆'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (selectedDate != null) {
+                onClearDate();
+                return;
+              }
+              if (availableDates.isEmpty) {
+                return;
+              }
+              _showDateFilterSheet(
+                context: context,
+                dates: availableDates,
+                onSelectDate: onSelectDate,
+              );
+            },
+            child: Text(selectedDate == null ? '筛选' : '全部'),
+          ),
+        ],
       ),
     );
   }

@@ -14,6 +14,8 @@ import 'package:zeroon_mobile/growth/growth_repository.dart';
 import 'package:zeroon_mobile/home/home_shell.dart';
 import 'package:zeroon_mobile/home/now_screen.dart';
 import 'package:zeroon_mobile/main.dart';
+import 'package:zeroon_mobile/memory/memory_models.dart';
+import 'package:zeroon_mobile/memory/memory_repository.dart';
 import 'package:zeroon_mobile/my_zeroon/my_zeroon_models.dart';
 import 'package:zeroon_mobile/my_zeroon/my_zeroon_repository.dart';
 import 'package:zeroon_mobile/profile/profile_models.dart';
@@ -213,7 +215,8 @@ void main() {
     tester,
   ) async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (call) async => null);
+        .setMockMethodCallHandler(
+            SystemChannels.platform, (call) async => null);
     addTearDown(
       () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(SystemChannels.platform, null),
@@ -391,6 +394,69 @@ void main() {
 
     expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
   });
+
+  testWidgets('memory management keeps source and controls user-owned', (
+    tester,
+  ) async {
+    final memoryRepository = _FakeMemoryRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          companionRepositoryProvider.overrideWithValue(
+            _FakeCompanionRepository(),
+          ),
+          memoryRepositoryProvider.overrideWithValue(memoryRepository),
+        ],
+        child: const MaterialApp(home: HomeShell(session: _session)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('缓存'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('记忆'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ZEROON 记住的'), findsOneWidget);
+    expect(find.text('这条记忆来自一段真实记录。'), findsOneWidget);
+    expect(find.text('来源 · 一次 Zero Record'), findsOneWidget);
+    expect(find.text('回应参考权限 · 未允许'), findsOneWidget);
+    expect(find.textContaining('当前不会进入 ZEROON 的回应'), findsOneWidget);
+    expect(find.byType(Switch), findsOneWidget);
+
+    await tester.tap(find.text('查看来源'));
+    await tester.pumpAndSettle();
+    expect(find.text('记录详情'), findsOneWidget);
+    expect(find.text('记录编号 #1'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('保留在连续记忆中'));
+    await tester.pumpAndSettle();
+    expect(memoryRepository.lastEnabled, isFalse);
+    expect(find.text('已暂停'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('删除这条记忆'));
+    await tester.tap(find.text('删除这条记忆'));
+    await tester.pumpAndSettle();
+    expect(find.text('删除这条记忆？'), findsOneWidget);
+    expect(find.textContaining('原始 Zero Record 仍会留在山海缓存中'), findsOneWidget);
+    await tester.tap(find.text('先保留'));
+    await tester.pumpAndSettle();
+    expect(memoryRepository.deleted, isFalse);
+
+    await tester.tap(find.text('删除这条记忆'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('确认删除'));
+    await tester.pumpAndSettle();
+    expect(memoryRepository.deleted, isTrue);
+    expect(find.text('这里还很安静。'), findsOneWidget);
+    expect(find.text('这条记忆已经删除。'), findsOneWidget);
+  });
 }
 
 const _session = AuthSession(
@@ -472,6 +538,66 @@ class _FakeRecordRepository extends RecordRepository {
       size: size,
       totalElements: 1,
     );
+  }
+}
+
+class _FakeMemoryRepository extends MemoryRepository {
+  _FakeMemoryRepository() : super(Dio());
+
+  MemoryEntry? _entry = MemoryEntry(
+    id: 11,
+    type: 'ZERO_RECORD',
+    title: '第一次认真停下来',
+    summary: '这条记忆来自一段真实记录。',
+    importance: 1,
+    sourceType: 'ZERO_RECORD',
+    sourceId: 1,
+    enabled: true,
+    aiContextEnabled: false,
+    createdAt: DateTime.parse('2026-07-14T08:00:00Z'),
+    updatedAt: DateTime.parse('2026-07-14T08:00:00Z'),
+  );
+  bool? lastEnabled;
+  bool deleted = false;
+
+  @override
+  Future<MemoryPage> list({int page = 0, int size = 100}) async {
+    return MemoryPage(
+      items: _entry == null ? [] : [_entry!],
+      page: page,
+      size: size,
+      totalElements: _entry == null ? 0 : 1,
+    );
+  }
+
+  @override
+  Future<MemoryEntry> updateControls(
+    int memoryId,
+    UpdateMemoryControlsRequest request,
+  ) async {
+    final current = _entry!;
+    lastEnabled = request.enabled;
+    _entry = MemoryEntry(
+      id: current.id,
+      type: current.type,
+      title: current.title,
+      summary: current.summary,
+      importance: current.importance,
+      sourceType: current.sourceType,
+      sourceId: current.sourceId,
+      expiresAt: current.expiresAt,
+      enabled: request.enabled ?? current.enabled,
+      aiContextEnabled: request.aiContextEnabled ?? current.aiContextEnabled,
+      createdAt: current.createdAt,
+      updatedAt: DateTime.parse('2026-07-14T09:00:00Z'),
+    );
+    return _entry!;
+  }
+
+  @override
+  Future<void> delete(int memoryId) async {
+    deleted = true;
+    _entry = null;
   }
 }
 

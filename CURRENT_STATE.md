@@ -103,7 +103,13 @@ Key product guardrails:
   explicitly supplied activation and AI-use preferences; disable preserves the
   preference but makes it ineffective. DELETE hard-deletes Memory content.
   Empty updates return 400 and missing, expired, or cross-user resources return
-  404. S9-04 mobile Memory controls are next.
+  404.
+- Sprint 09 S9-04 mobile Memory management is complete. Archive now has a
+  restrained Memory entry; users can inspect source records, pause/re-enable a
+  Memory with local feedback, and confirm hard deletion while keeping the
+  source Zero Record. AI permission is shown read-only with honest inactive
+  copy until S9-05 connects and tests context consumption; no inert switch is
+  exposed. S9-05 consent-aware Memory context assembly is next.
 
 ## Recent Completed Work
 
