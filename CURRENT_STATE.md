@@ -111,11 +111,14 @@ Key product guardrails:
 - Sprint 09 S9-05 consent-aware Memory context assembly is complete. Companion
   prompts include only owned, enabled, AI-permitted, unexpired Memory within
   count and character bounds, with source class and source id and without
-  personality labels, diagnoses, or scores. Profile AI consent remains a
-  separate gate for profile fields. Capturing fake-provider tests cover
-  default-off, allow, pause, revoke, expiry, cross-user isolation, and bounds.
-  Private Memory text is excluded from usage metadata. Mobile now exposes an
-  editable `aiContextEnabled` switch with local success and failure feedback.
+  personality labels, diagnoses, or scores. Raw recent Zero Record goal/content
+  is no longer injected outside that path, so pause, AI-permission revoke, and
+  Memory deletion keep source text out of the next provider request. Profile AI
+  consent remains a separate gate for profile fields. Capturing fake-provider
+  tests cover default-off, allow, pause, revoke, expiry, cross-user isolation,
+  bounds, and Record→Memory control bypass regression. Private Memory text is
+  excluded from usage metadata. Mobile exposes an editable `aiContextEnabled`
+  switch with honest paused-state copy and local success/failure feedback.
   S9-06 provider transaction and observability is next.
 
 ## Recent Completed Work

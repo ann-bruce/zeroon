@@ -409,8 +409,11 @@ paths:
         aiContextEnabled is true, and the entry is unexpired. Memory context is
         bounded by entry count and character length, includes source class and
         source id, and never invents personality labels, diagnoses, or scores.
-        Titles, summaries, and other private Memory text are excluded from usage
-        logs and error metadata.
+        Companion continuity does not append raw recent Zero Record goal/content
+        outside this Memory path, so pausing, revoking AI permission, or deleting
+        Memory immediately prevents that source text from entering the next
+        provider request. Titles, summaries, and other private Memory text are
+        excluded from usage logs and error metadata.
       operationId: sendCompanionMessage
       security:
         - bearerAuth: []

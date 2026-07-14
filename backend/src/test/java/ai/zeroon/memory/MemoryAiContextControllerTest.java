@@ -11,6 +11,7 @@ import ai.zeroon.ai.LlmRequest;
 import ai.zeroon.ai.LlmResponse;
 import ai.zeroon.user.UserEntity;
 import ai.zeroon.user.UserRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -189,6 +190,54 @@ class MemoryAiContextControllerTest {
     }
 
     @Test
+    void closedProducedMemoryDoesNotLeakSourceRecordTextThroughCompanionPrompt() throws Exception {
+        UserEntity owner = saveUser("memory_ai_record_path", "13900001006");
+        String token = login(owner.getMobile());
+        String goal = "unique-record-goal-bypass-check";
+        String content = "unique-record-content-must-not-bypass-memory-controls";
+
+        Long recordId = createRecord(token, "FOCUS", goal, content);
+        MemoryEntryEntity memory = memoryEntryRepository
+                .findByUserIdAndTypeAndSourceTypeAndSourceId(
+                        owner.getId(), MemoryEntryType.ZERO_RECORD, "ZERO_RECORD", recordId)
+                .orElseThrow();
+        assertThat(memory.isEnabled()).isTrue();
+        assertThat(memory.isAiContextEnabled()).isFalse();
+        assertThat(memory.getTitle()).isEqualTo(goal);
+        assertThat(memory.getSummary()).isEqualTo(content);
+
+        sendMessage(token, "After record save without AI permission");
+        assertSourceRecordAbsent(capturingLlmProvider.requireRequest(), goal, content);
+
+        enableAiContext(token, memory.getId());
+        sendMessage(token, "After explicit AI allow");
+        assertThat(capturingLlmProvider.requireRequest().userPrompt())
+                .contains("User-allowed memory context")
+                .contains("Source: ZERO_RECORD #" + recordId)
+                .contains("Title: " + goal)
+                .contains("Summary: " + content)
+                .doesNotContain("Recent records")
+                .doesNotContain(" | goal: ")
+                .doesNotContain(" | content: ");
+
+        mockMvc.perform(patch("/api/v1/memory/{memoryId}", memory.getId())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":false}"))
+                .andExpect(status().isOk());
+        sendMessage(token, "After pause");
+        assertSourceRecordAbsent(capturingLlmProvider.requireRequest(), goal, content);
+
+        mockMvc.perform(patch("/api/v1/memory/{memoryId}", memory.getId())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":true,\"aiContextEnabled\":false}"))
+                .andExpect(status().isOk());
+        sendMessage(token, "After AI permission revoke");
+        assertSourceRecordAbsent(capturingLlmProvider.requireRequest(), goal, content);
+    }
+
+    @Test
     void memoryContextHonorsCountAndCharacterBounds() throws Exception {
         UserEntity owner = saveUser("memory_ai_bounds", "13900001005");
         Instant base = Instant.parse("2026-07-05T00:00:00Z");
@@ -252,6 +301,37 @@ class MemoryAiContextControllerTest {
                 .doesNotContain("User-allowed memory context")
                 .doesNotContain(title)
                 .doesNotContain(summary);
+    }
+
+    private void assertSourceRecordAbsent(LlmRequest request, String goal, String content) {
+        assertThat(request.userPrompt())
+                .doesNotContain("User-allowed memory context")
+                .doesNotContain("Recent records")
+                .doesNotContain(goal)
+                .doesNotContain(content)
+                .doesNotContain(" | goal: ")
+                .doesNotContain(" | content: ");
+    }
+
+    private Long createRecord(String token, String state, String goal, String content) throws Exception {
+        String body = mockMvc.perform(post("/api/v1/records")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "state": "%s",
+                                  "goal": "%s",
+                                  "content": "%s"
+                                }
+                                """.formatted(state, goal, content)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        JsonNode node = objectMapper.readTree(body);
+        long recordId = node.path("id").asLong();
+        assertThat(recordId).isPositive();
+        return recordId;
     }
 
     private void assertUsageLogsDoNotContainPrivateText(String title, String summary) {

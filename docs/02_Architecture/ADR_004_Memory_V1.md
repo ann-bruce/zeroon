@@ -74,6 +74,14 @@ logs, AI usage metadata, or exception messages. Mobile exposes an editable
 release that makes inclusion and exclusion testable with a capturing fake
 provider.
 
+Companion continuity context is assembled only from that allowed Memory path.
+Raw recent Zero Record `goal`/`content` must not be appended unconditionally to
+provider prompts, because Memory summaries are derived from those fields and
+unconditional record injection would bypass pause, AI-permission, and deletion
+controls. When a Memory is paused (`enabled = false`), mobile may still store
+the AI preference, but copy and feedback must state that the entry will not be
+used until it is re-enabled.
+
 ## Invariants
 
 1. A user cannot read, mutate, or delete another user's memory.
@@ -88,6 +96,8 @@ provider.
    logs and analytics properties.
 7. Memory AI context assembly is bounded; overflow entries are omitted rather
    than truncated into unlabeled fragments beyond the configured limits.
+8. Companion prompts must not inject raw recent Zero Record text outside the
+   consent-aware Memory assembly path.
 
 ## Consequences
 

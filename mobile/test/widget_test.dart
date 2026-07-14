@@ -448,6 +448,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(memoryRepository.lastEnabled, isFalse);
     expect(find.text('已暂停'), findsOneWidget);
+    expect(
+      find.textContaining('当前不会用于回应。重新加入连续记忆后，此权限才会生效'),
+      findsOneWidget,
+    );
 
     await tester.ensureVisible(find.text('删除这条记忆'));
     await tester.tap(find.text('删除这条记忆'));
@@ -465,6 +469,68 @@ void main() {
     expect(memoryRepository.deleted, isTrue);
     expect(find.text('这里还很安静。'), findsOneWidget);
     expect(find.text('这条记忆已经删除。'), findsOneWidget);
+  });
+
+  testWidgets('paused memory shows honest AI permission semantics', (tester) async {
+    final memoryRepository = _FakeMemoryRepository(
+      enabled: false,
+      aiContextEnabled: true,
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          companionRepositoryProvider.overrideWithValue(
+            _FakeCompanionRepository(),
+          ),
+          memoryRepositoryProvider.overrideWithValue(memoryRepository),
+        ],
+        child: const MaterialApp(home: HomeShell(session: _session)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('缓存'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('记忆'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('已暂停'), findsOneWidget);
+    expect(find.text('允许用于回应参考'), findsOneWidget);
+    expect(
+      find.textContaining('当前不会用于回应。重新加入连续记忆后，此权限才会生效'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('开启后，这条记忆可在下一次回应中作为上下文使用'),
+      findsNothing,
+    );
+
+    await tester.tap(find.text('允许用于回应参考'));
+    await tester.pump();
+    expect(memoryRepository.lastAiContextEnabled, isFalse);
+    expect(
+      find.text('已关闭回应参考权限。'),
+      findsOneWidget,
+    );
+    ScaffoldMessenger.of(tester.element(find.text('ZEROON 记住的')))
+        .hideCurrentSnackBar();
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('当前已暂停。即使开启此权限，重新加入连续记忆前也不会用于回应'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('允许用于回应参考'));
+    await tester.pump();
+    expect(memoryRepository.lastAiContextEnabled, isTrue);
+    expect(
+      find.text('已保存权限偏好。重新加入连续记忆后才会用于回应。'),
+      findsOneWidget,
+    );
   });
 }
 
@@ -551,21 +617,26 @@ class _FakeRecordRepository extends RecordRepository {
 }
 
 class _FakeMemoryRepository extends MemoryRepository {
-  _FakeMemoryRepository() : super(Dio());
+  _FakeMemoryRepository({
+    bool enabled = true,
+    bool aiContextEnabled = false,
+  }) : super(Dio()) {
+    _entry = MemoryEntry(
+      id: 11,
+      type: 'ZERO_RECORD',
+      title: '第一次认真停下来',
+      summary: '这条记忆来自一段真实记录。',
+      importance: 1,
+      sourceType: 'ZERO_RECORD',
+      sourceId: 1,
+      enabled: enabled,
+      aiContextEnabled: aiContextEnabled,
+      createdAt: DateTime.parse('2026-07-14T08:00:00Z'),
+      updatedAt: DateTime.parse('2026-07-14T08:00:00Z'),
+    );
+  }
 
-  MemoryEntry? _entry = MemoryEntry(
-    id: 11,
-    type: 'ZERO_RECORD',
-    title: '第一次认真停下来',
-    summary: '这条记忆来自一段真实记录。',
-    importance: 1,
-    sourceType: 'ZERO_RECORD',
-    sourceId: 1,
-    enabled: true,
-    aiContextEnabled: false,
-    createdAt: DateTime.parse('2026-07-14T08:00:00Z'),
-    updatedAt: DateTime.parse('2026-07-14T08:00:00Z'),
-  );
+  MemoryEntry? _entry;
   bool? lastEnabled;
   bool? lastAiContextEnabled;
   bool deleted = false;

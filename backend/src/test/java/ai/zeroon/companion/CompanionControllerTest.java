@@ -63,7 +63,15 @@ class CompanionControllerTest {
                 .andExpect(jsonPath("$.reply").value("You made a small clear step."))
                 .andExpect(jsonPath("$.safetyNotice", not(blankOrNullString())));
 
-        assertPromptContainsRecordContext(capturingLlmProvider.requireRequest());
+        LlmRequest request = capturingLlmProvider.requireRequest();
+        assertThat(request.systemPrompt()).contains("long-term companion");
+        assertThat(request.userPrompt())
+                .contains("Current state: CALM")
+                .contains("What should I notice today?")
+                .doesNotContain("Recent records")
+                .doesNotContain("I completed one task.")
+                .doesNotContain("finish one thing")
+                .doesNotContain("User-allowed memory context");
 
         var logs = aiUsageLogRepository.findByUserIdOrderByCreatedAtDesc(1L);
         org.assertj.core.api.Assertions.assertThat(logs).hasSize(1);
@@ -138,13 +146,6 @@ class CompanionControllerTest {
                 .doesNotContain("MOON")
                 .doesNotContain("Product designer")
                 .doesNotContain("I notice quiet changes over time.");
-    }
-
-    private void assertPromptContainsRecordContext(LlmRequest request) {
-        assertThat(request.systemPrompt()).contains("long-term companion");
-        assertThat(request.userPrompt())
-                .contains("Current state: CALM")
-                .contains("I completed one task.");
     }
 
     private void createRecord(String accessToken) throws Exception {

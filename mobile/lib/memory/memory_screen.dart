@@ -170,9 +170,7 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
               contentPadding: EdgeInsets.zero,
               title: const Text('允许用于回应参考'),
               subtitle: Text(
-                entry.aiContextEnabled
-                    ? '开启后，这条记忆可在下一次回应中作为上下文使用。'
-                    : '默认关闭。开启后才会进入 ZEROON 的回应。',
+                _aiPermissionSubtitle(entry),
                 style: const TextStyle(color: zeroonMuted, fontSize: 11),
               ),
               value: entry.aiContextEnabled,
@@ -235,12 +233,14 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
             aiContextEnabled,
           );
       if (mounted) {
+        final paused = !widget.entry.enabled;
+        final message = !aiContextEnabled
+            ? '已关闭回应参考权限。'
+            : paused
+                ? '已保存权限偏好。重新加入连续记忆后才会用于回应。'
+                : '已允许用于回应参考。';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              aiContextEnabled ? '已允许用于回应参考。' : '已关闭回应参考权限。',
-            ),
-          ),
+          SnackBar(content: Text(message)),
         );
       }
     } catch (_) {
@@ -252,6 +252,17 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
         setState(() => _busy = false);
       }
     }
+  }
+
+  String _aiPermissionSubtitle(MemoryEntry entry) {
+    if (!entry.enabled) {
+      return entry.aiContextEnabled
+          ? '当前不会用于回应。重新加入连续记忆后，此权限才会生效。'
+          : '当前已暂停。即使开启此权限，重新加入连续记忆前也不会用于回应。';
+    }
+    return entry.aiContextEnabled
+        ? '开启后，这条记忆可在下一次回应中作为上下文使用。'
+        : '默认关闭。开启后才会进入 ZEROON 的回应。';
   }
 
   Future<void> _confirmDelete() async {

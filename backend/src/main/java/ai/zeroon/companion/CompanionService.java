@@ -10,14 +10,10 @@ import ai.zeroon.prompt.PromptTemplateSelection;
 import ai.zeroon.prompt.PromptTemplateService;
 import ai.zeroon.memory.MemoryAiContextAssembler;
 import ai.zeroon.profile.ProfileAiContextAssembler;
-import ai.zeroon.record.ZeroRecordEntity;
-import ai.zeroon.record.ZeroRecordRepository;
 import ai.zeroon.user.UserEntity;
 import ai.zeroon.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Duration;
-import java.util.List;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +29,6 @@ public class CompanionService {
 
     private final LlmProvider llmProvider;
     private final UserRepository userRepository;
-    private final ZeroRecordRepository zeroRecordRepository;
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final PromptTemplateService promptTemplateService;
@@ -45,7 +40,6 @@ public class CompanionService {
     public CompanionService(
             LlmProvider llmProvider,
             UserRepository userRepository,
-            ZeroRecordRepository zeroRecordRepository,
             ConversationRepository conversationRepository,
             MessageRepository messageRepository,
             PromptTemplateService promptTemplateService,
@@ -55,7 +49,6 @@ public class CompanionService {
             MemoryAiContextAssembler memoryAiContextAssembler) {
         this.llmProvider = llmProvider;
         this.userRepository = userRepository;
-        this.zeroRecordRepository = zeroRecordRepository;
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.promptTemplateService = promptTemplateService;
@@ -138,9 +131,9 @@ public class CompanionService {
     }
 
     private String userPrompt(UserEntity user, String message) {
-        List<ZeroRecordEntity> recentRecords = zeroRecordRepository
-                .findByUserIdOrderByCreatedAtDesc(user.getId(), PageRequest.of(0, 3))
-                .getContent();
+        // Continuity context comes only from consent-aware Memory assembly.
+        // Raw Zero Record goal/content must not bypass Memory enablement or
+        // per-entry AI permission by being appended as unconditional "recent records".
         StringBuilder prompt = new StringBuilder();
         profileAiContextAssembler.assemble(user.getId())
                 .ifPresent(profileContext -> prompt.append(profileContext).append("\n\n"));
@@ -148,23 +141,6 @@ public class CompanionService {
                 .ifPresent(memoryContext -> prompt.append(memoryContext).append("\n\n"));
         prompt.append("Current state: ").append(user.getCurrentState().name()).append('\n');
         prompt.append("User message: ").append(message).append('\n');
-        prompt.append("Recent records:\n");
-        for (ZeroRecordEntity record : recentRecords) {
-            prompt.append("- ")
-                    .append(record.getState().name())
-                    .append(" | goal: ")
-                    .append(orEmpty(record.getGoal()))
-                    .append(" | content: ")
-                    .append(orEmpty(record.getContent()))
-                    .append('\n');
-        }
         return prompt.toString();
-    }
-
-    private String orEmpty(String value) {
-        if (value == null || value.isBlank()) {
-            return "(empty)";
-        }
-        return value.strip();
     }
 }

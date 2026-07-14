@@ -41,7 +41,7 @@ than preceding it.
 | S9-02 Record-to-memory production | Completed | Post-commit event creates one deterministic, owned and source-linked memory in an independent transaction; repeat save is idempotent and repairs a missing entry; failures do not alter record success |
 | S9-03 Memory management API | Completed | Owner-only PATCH updates supplied activation/AI-use controls and DELETE hard-deletes content; empty input is 400 and missing, expired, or cross-user entries are 404 |
 | S9-04 Mobile Memory controls | Completed | Archive exposes a quiet Memory management page with source navigation, local activation, editable AI-use permission after S9-05, recoverable errors, and confirmed hard deletion |
-| S9-05 Consent-aware context assembly | Completed | Only owned, active, unexpired, explicitly allowed Memory enters companion context with count/character bounds and source class; capturing-provider tests cover default-off, allow, pause, revoke, expiry, cross-user isolation, and bounds; mobile AI switch has local success/failure feedback |
+| S9-05 Consent-aware context assembly | Completed | Only owned, active, unexpired, explicitly allowed Memory enters companion context with count/character bounds and source class; raw recent Zero Record text is not injected outside that path; capturing-provider tests cover default-off, allow, pause, revoke, expiry, cross-user isolation, bounds, and Record→Memory control bypass regression; mobile AI switch uses honest paused-state copy with local success/failure feedback |
 | S9-06 Provider transaction and observability | Pending | External calls do not hold long DB transactions; success/fallback/refusal, latency, version, and cost metadata are verified without private text logs |
 
 ## S9-01 Acceptance
@@ -65,6 +65,9 @@ than preceding it.
 
 - Companion requests include Memory only when the entry is owned by the caller,
   `enabled=true`, `aiContextEnabled=true`, and unexpired.
+- Companion continuity does not append raw recent Zero Record `goal`/`content`
+  outside consent-aware Memory assembly; pausing, revoking AI permission, or
+  deleting Memory must keep source text out of the next provider request.
 - Account-level Profile AI context consent remains independently enforced for
   profile fields; any closed Memory control immediately excludes that Memory.
 - Memory context is bounded by maximum entry count and character length, and
@@ -73,10 +76,12 @@ than preceding it.
 - AI usage metadata, logs, and exception messages never store Memory titles or
   summaries.
 - Capturing fake-provider tests cover default-off, allow-in, pause-out,
-  permission-off-out, expired exclusion, cross-user isolation, and
-  count/length bounds.
+  permission-off-out, expired exclusion, cross-user isolation,
+  count/length bounds, and a real Record → Memory production path regression
+  that asserts source goal/content stay out after controls close.
 - Mobile exposes an editable `aiContextEnabled` switch with local success and
-  failure feedback.
+  failure feedback; when `enabled=false`, copy states the preference is stored
+  but will not affect the next response until Memory is re-enabled.
 - OpenAPI, ADR 004, and engineering docs describe the assembly rules.
 
 ## Sprint Exit

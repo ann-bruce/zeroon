@@ -226,8 +226,14 @@ Companion AI requests assemble Memory through `MemoryAiContextAssembler`:
 owned, enabled, AI-permitted, unexpired entries only; newest first; capped by
 entry count and character length; source class and source id included;
 no personality labels, diagnoses, or scores. Profile AI context consent remains
-an independent gate for profile fields. Memory titles and summaries must not
-appear in logs, AI usage metadata, or exception messages.
+an independent gate for profile fields. Companion continuity must not append
+raw recent Zero Record goal/content outside that Memory path, because Memory
+summaries are derived from those fields and an unconditional record channel
+would bypass pause, AI-permission, and deletion. When Memory is paused, the
+mobile AI-use control may still store preference, but UI copy must state that
+the entry will not enter the next response until it is re-enabled. Memory
+titles and summaries must not appear in logs, AI usage metadata, or exception
+messages.
 
 ---
 
