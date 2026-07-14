@@ -71,7 +71,13 @@ Key product guardrails:
   mobile/IP/device throttling, and a five-failure cap. Redis/sender safety is
   fail-fast, dependency outages return 503, and limits return 429 with
   `Retry-After`. SMS-provider onboarding and a real delivery smoke remain
-  operational release blockers; S8-04 is the next engineering item.
+  operational release blockers.
+- Sprint 08 S8-04 AI profile consent closure is complete: Companion rereads
+  consent for every request and includes only the user's nickname, age range,
+  occupation or identity, and self-description when enabled. Avatar presets,
+  inferred traits, and personality labels are excluded. Capturing-provider
+  tests prove off/on/off behavior and immediate disable without logging prompt
+  content. S8-05 data-control and contract alignment is next.
 
 ## Recent Completed Work
 

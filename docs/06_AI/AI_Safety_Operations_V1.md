@@ -20,10 +20,21 @@
   expose memory belonging to another user.
 - Admin prompt changes require the `ADMIN` role and an audit event.
 
+## Profile Context Consent
+
+- Profile context is off by default and is read again for every AI request.
+- When enabled, only the user's nickname, age range, occupation or identity,
+  and self-description may enter the provider request.
+- Avatar presets, internal identifiers, inferred traits, personality labels,
+  and fields belonging to another user are excluded.
+- Disabling permission affects the next request immediately; no context cache
+  may preserve an earlier consent decision.
+- Profile values are treated as user data rather than prompt instructions.
+- Usage logs store metadata and character counts, never profile or prompt text.
+
 ## Cost Controls
 
 - Configure model and token limits outside source code.
 - Record daily token totals by environment and model.
 - Alert when daily cost reaches 70%, 90%, and 100% of budget.
 - Disable nonessential AI summaries before disabling the core record flow.
-

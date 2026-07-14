@@ -2,7 +2,9 @@ package ai.zeroon.companion;
 
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.blankOrNullString;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -13,6 +15,8 @@ import ai.zeroon.ai.AiUsageLogRepository;
 import ai.zeroon.ai.AiUsageOutcome;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -36,6 +40,14 @@ class CompanionControllerTest {
     @Autowired
     private AiUsageLogRepository aiUsageLogRepository;
 
+    @Autowired
+    private CapturingLlmProvider capturingLlmProvider;
+
+    @BeforeEach
+    void clearCapturedRequest() {
+        capturingLlmProvider.clear();
+    }
+
     @Test
     void companionMessageReturnsReflection() throws Exception {
         String accessToken = login("13800138101");
@@ -51,6 +63,8 @@ class CompanionControllerTest {
                 .andExpect(jsonPath("$.reply").value("You made a small clear step."))
                 .andExpect(jsonPath("$.safetyNotice", not(blankOrNullString())));
 
+        assertPromptContainsRecordContext(capturingLlmProvider.requireRequest());
+
         var logs = aiUsageLogRepository.findByUserIdOrderByCreatedAtDesc(1L);
         org.assertj.core.api.Assertions.assertThat(logs).hasSize(1);
         org.assertj.core.api.Assertions.assertThat(logs.get(0).getOutcome()).isEqualTo(AiUsageOutcome.SUCCESS);
@@ -64,6 +78,73 @@ class CompanionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"message\":\"hello\"}"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void profileContextFollowsCurrentConsentAndUsesOnlyAllowedFields() throws Exception {
+        String accessToken = login("13800138104");
+
+        saveProfile(accessToken, false);
+        sendMessage(accessToken, "Consent is currently off");
+        assertProfileContextAbsent(capturingLlmProvider.requireRequest());
+
+        saveProfile(accessToken, true);
+        sendMessage(accessToken, "Consent is now on");
+        LlmRequest enabledRequest = capturingLlmProvider.requireRequest();
+        assertThat(enabledRequest.userPrompt())
+                .contains("User-provided profile context")
+                .contains("- Nickname: River")
+                .contains("- Age range: 25_34")
+                .contains("- Occupation or identity: Product designer")
+                .contains("- Self-description: I notice quiet changes over time.")
+                .contains("Do not diagnose, label, or infer fixed traits.")
+                .doesNotContain("MOON");
+
+        saveProfile(accessToken, false);
+        sendMessage(accessToken, "Consent is off again");
+        assertProfileContextAbsent(capturingLlmProvider.requireRequest());
+    }
+
+    private void saveProfile(String accessToken, boolean enabled) throws Exception {
+        mockMvc.perform(put("/api/v1/me/profile")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nickname": "River",
+                                  "avatarPreset": "MOON",
+                                  "ageRange": "25_34",
+                                  "occupation": "Product designer",
+                                  "selfDescription": "I notice quiet changes over time.",
+                                  "aiProfileContextEnabled": %s
+                                }
+                                """.formatted(enabled)))
+                .andExpect(status().isOk());
+    }
+
+    private void sendMessage(String accessToken, String message) throws Exception {
+        mockMvc.perform(post("/api/v1/companion/messages")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"" + message + "\"}"))
+                .andExpect(status().isOk());
+    }
+
+    private void assertProfileContextAbsent(LlmRequest request) {
+        assertThat(request.userPrompt())
+                .doesNotContain("User-provided profile context")
+                .doesNotContain("River")
+                .doesNotContain("25_34")
+                .doesNotContain("MOON")
+                .doesNotContain("Product designer")
+                .doesNotContain("I notice quiet changes over time.");
+    }
+
+    private void assertPromptContainsRecordContext(LlmRequest request) {
+        assertThat(request.systemPrompt()).contains("long-term companion");
+        assertThat(request.userPrompt())
+                .contains("Current state: CALM")
+                .contains("I completed one task.");
     }
 
     private void createRecord(String accessToken) throws Exception {
@@ -108,19 +189,31 @@ class CompanionControllerTest {
 
         @Bean
         @Primary
-        LlmProvider testLlmProvider() {
-            return request -> {
-                assertPromptContainsContext(request);
-                return new LlmResponse("You made a small clear step.", "test", "test-model", "stop");
-            };
+        CapturingLlmProvider testLlmProvider() {
+            return new CapturingLlmProvider();
+        }
+    }
+
+    static class CapturingLlmProvider implements LlmProvider {
+
+        private final AtomicReference<LlmRequest> lastRequest = new AtomicReference<>();
+
+        @Override
+        public LlmResponse generate(LlmRequest request) {
+            lastRequest.set(request);
+            return new LlmResponse("You made a small clear step.", "test", "test-model", "stop");
         }
 
-        private static void assertPromptContainsContext(LlmRequest request) {
-            if (!request.systemPrompt().contains("long-term companion")
-                    || !request.userPrompt().contains("Current state: CALM")
-                    || !request.userPrompt().contains("I completed one task.")) {
-                throw new AssertionError("Prompt does not contain expected state and record context");
+        LlmRequest requireRequest() {
+            LlmRequest request = lastRequest.get();
+            if (request == null) {
+                throw new AssertionError("Expected the fake provider to capture a request");
             }
+            return request;
+        }
+
+        void clear() {
+            lastRequest.set(null);
         }
     }
 }

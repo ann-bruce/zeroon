@@ -10,7 +10,7 @@ Prepared: 2026-07-14
 | S8-01 Administrator authorization | Completed | Database role mapping, signed-token roles, ADMIN route guard, migration V8, USER/ADMIN tests, local USER 403 |
 | S8-02 Production configuration fail-fast | Completed | Focused tests and real unsafe-prod boot prove JWT, database, and fixed verification-code defaults are rejected before context creation |
 | S8-03 Verification-code environment boundary | Completed | Profile-separated generator/store/sender, Redis atomic sharing, request/login throttling, five-attempt cap, 429/503 contract, focused and Redis integration tests |
-| S8-04 AI profile consent closure | Pending | Not started |
+| S8-04 AI profile consent closure | Completed | Per-request consent lookup, four-field whitelist assembler, capturing fake-provider off/on/off tests, privacy copy and AI operations rules |
 | S8-05 Data-control and contract alignment | Pending | Not started |
 
 ## Sprint Goal

@@ -257,7 +257,7 @@ class _ProfileForm extends StatelessWidget {
                         style: TextStyle(fontWeight: FontWeight.w700)),
                     SizedBox(height: 6),
                     Text(
-                      '开启后，ZEROON 会在生成观察和回应时参考这些自我介绍。关闭后不会使用。',
+                      '开启后，ZEROON 只会参考你主动填写的昵称、年龄段、职业 / 身份和自我描述。关闭后，下一次回应起就不再使用。',
                       style: TextStyle(color: zeroonMuted, fontSize: 11),
                     ),
                   ],

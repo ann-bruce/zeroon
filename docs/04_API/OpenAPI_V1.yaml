@@ -168,7 +168,10 @@ paths:
     put:
       tags: [User]
       summary: Create or update the current user's optional ZEROON profile
-      description: Blank strings are saved as null. AI profile context is disabled unless explicitly enabled.
+      description: >-
+        Blank strings are saved as null. AI profile context is disabled unless
+        explicitly enabled. The current value applies to the next AI request;
+        no profile field is used while disabled.
       operationId: updateUserProfile
       security:
         - bearerAuth: []
@@ -759,6 +762,10 @@ components:
         aiProfileContextEnabled:
           type: boolean
           default: false
+          description: >-
+            When true, Companion may use only nickname, ageRange, occupation,
+            and selfDescription as user-provided context. Avatar presets and
+            inferred traits are excluded. Disabling applies to the next request.
         createdAt:
           type: string
           format: date-time

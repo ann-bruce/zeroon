@@ -8,6 +8,7 @@ import ai.zeroon.ai.AiUsageLogService;
 import ai.zeroon.companion.CompanionDtos.ChatResponse;
 import ai.zeroon.prompt.PromptTemplateSelection;
 import ai.zeroon.prompt.PromptTemplateService;
+import ai.zeroon.profile.ProfileAiContextAssembler;
 import ai.zeroon.record.ZeroRecordEntity;
 import ai.zeroon.record.ZeroRecordRepository;
 import ai.zeroon.user.UserEntity;
@@ -37,6 +38,7 @@ public class CompanionService {
     private final PromptTemplateService promptTemplateService;
     private final AiUsageLogService aiUsageLogService;
     private final SafetyBoundaryService safetyBoundaryService;
+    private final ProfileAiContextAssembler profileAiContextAssembler;
 
     public CompanionService(
             LlmProvider llmProvider,
@@ -46,7 +48,8 @@ public class CompanionService {
             MessageRepository messageRepository,
             PromptTemplateService promptTemplateService,
             AiUsageLogService aiUsageLogService,
-            SafetyBoundaryService safetyBoundaryService) {
+            SafetyBoundaryService safetyBoundaryService,
+            ProfileAiContextAssembler profileAiContextAssembler) {
         this.llmProvider = llmProvider;
         this.userRepository = userRepository;
         this.zeroRecordRepository = zeroRecordRepository;
@@ -55,6 +58,7 @@ public class CompanionService {
         this.promptTemplateService = promptTemplateService;
         this.aiUsageLogService = aiUsageLogService;
         this.safetyBoundaryService = safetyBoundaryService;
+        this.profileAiContextAssembler = profileAiContextAssembler;
     }
 
     @Transactional
@@ -134,6 +138,8 @@ public class CompanionService {
                 .findByUserIdOrderByCreatedAtDesc(user.getId(), PageRequest.of(0, 3))
                 .getContent();
         StringBuilder prompt = new StringBuilder();
+        profileAiContextAssembler.assemble(user.getId())
+                .ifPresent(profileContext -> prompt.append(profileContext).append("\n\n"));
         prompt.append("Current state: ").append(user.getCurrentState().name()).append('\n');
         prompt.append("User message: ").append(message).append('\n');
         prompt.append("Recent records:\n");

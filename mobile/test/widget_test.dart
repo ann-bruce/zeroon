@@ -240,6 +240,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'Bruce');
     await tester.drag(find.byType(ListView).last, const Offset(0, -700));
     await tester.pumpAndSettle();
+    expect(find.textContaining('下一次回应起就不再使用'), findsOneWidget);
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
     await tester.tap(find.text('保存我的信息'));
