@@ -31,6 +31,9 @@ paths:
     post:
       tags: [Auth]
       summary: Request an SMS verification code
+      description: >-
+        Requests an expiring one-time code. Production applies a 60-second
+        mobile cooldown plus hourly mobile and source-IP limits.
       operationId: requestLoginCode
       security: []
       requestBody:
@@ -45,11 +48,16 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "429":
-          $ref: "#/components/responses/RateLimited"
+          $ref: "#/components/responses/AuthRateLimited"
+        "503":
+          $ref: "#/components/responses/AuthUnavailable"
   /auth/login:
     post:
       tags: [Auth]
       summary: Login or register with a verification code
+      description: >-
+        Consumes a valid code once. Production limits attempts by device and
+        source IP, and deletes a code after five failed attempts.
       operationId: login
       security: []
       requestBody:
@@ -70,7 +78,9 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "429":
-          $ref: "#/components/responses/RateLimited"
+          $ref: "#/components/responses/AuthRateLimited"
+        "503":
+          $ref: "#/components/responses/AuthUnavailable"
   /auth/refresh:
     post:
       tags: [Auth]
@@ -625,6 +635,24 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
+    AuthRateLimited:
+      description: Verification-code rate or failed-attempt limit exceeded
+      headers:
+        Retry-After:
+          description: Minimum seconds before retrying this operation
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    AuthUnavailable:
+      description: Verification-code storage or delivery service unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
     Unavailable:
       description: Upstream service unavailable
       content:
@@ -632,6 +660,15 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    ApiError:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          example: rate_limited
+        message:
+          type: string
     CodeRequest:
       type: object
       required: [mobile]

@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.blankOrNullString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,7 +16,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+    "zeroon.auth.verification-code-request-cooldown-seconds=60",
+    "zeroon.auth.verification-code-mobile-hourly-limit=5",
+    "zeroon.auth.verification-code-ip-hourly-limit=20",
+    "zeroon.auth.verification-code-device-login-limit=10",
+    "zeroon.auth.verification-code-ip-login-limit=30"
+})
 @AutoConfigureMockMvc
 class AuthControllerTest {
 
@@ -98,5 +105,57 @@ class AuthControllerTest {
                                 }
                                 """))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void codeRequestIsRateLimitedByMobileCooldown() throws Exception {
+        String request = "{\"mobile\":\"13700137000\"}";
+
+        mockMvc.perform(post("/api/v1/auth/codes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isAccepted());
+
+        mockMvc.perform(post("/api/v1/auth/codes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().exists("Retry-After"))
+                .andExpect(jsonPath("$.error").value("rate_limited"));
+    }
+
+    @Test
+    void fifthWrongAttemptExhaustsAndDeletesCode() throws Exception {
+        String mobile = "13600136000";
+        mockMvc.perform(post("/api/v1/auth/codes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"mobile\":\"" + mobile + "\"}"))
+                .andExpect(status().isAccepted());
+
+        for (int attempt = 1; attempt < 5; attempt++) {
+            login(mobile, "123456", "attempt-limit-device")
+                    .andExpect(status().isUnauthorized());
+        }
+
+        login(mobile, "123456", "attempt-limit-device")
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().exists("Retry-After"))
+                .andExpect(jsonPath("$.error").value("verification_attempts_exhausted"));
+
+        login(mobile, "000000", "attempt-limit-device")
+                .andExpect(status().isUnauthorized());
+    }
+
+    private org.springframework.test.web.servlet.ResultActions login(
+            String mobile, String code, String deviceId) throws Exception {
+        return mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "mobile": "%s",
+                          "code": "%s",
+                          "deviceId": "%s"
+                        }
+                        """.formatted(mobile, code, deviceId)));
     }
 }

@@ -53,13 +53,31 @@ class ProductionSafetyEnvironmentPostProcessorTest {
     }
 
     @Test
-    void productionRejectsFixedVerificationCode() {
+    void productionRejectsLocalRedisHost() {
         MockEnvironment environment = safeProductionEnvironment()
                 .withProperty(
-                        "zeroon.auth.local-verification-code",
-                        ProductionSafetyEnvironmentPostProcessor.DEVELOPMENT_VERIFICATION_CODE);
+                        "spring.data.redis.host",
+                        "localhost");
 
-        assertUnsafe(environment, "ZEROON_LOCAL_VERIFICATION_CODE");
+        assertUnsafe(environment, "REDIS_HOST");
+    }
+
+    @Test
+    void productionRejectsDefaultRedisPassword() {
+        MockEnvironment environment = safeProductionEnvironment()
+                .withProperty(
+                        "spring.data.redis.password",
+                        ProductionSafetyEnvironmentPostProcessor.DEVELOPMENT_REDIS_PASSWORD);
+
+        assertUnsafe(environment, "REDIS_PASSWORD");
+    }
+
+    @Test
+    void productionRejectsNonHttpsVerificationSender() {
+        MockEnvironment environment = safeProductionEnvironment()
+                .withProperty("zeroon.auth.verification-code-sender-url", "http://sms.example.test/send");
+
+        assertUnsafe(environment, "ZEROON_VERIFICATION_CODE_SENDER_URL");
     }
 
     @Test
@@ -79,8 +97,9 @@ class ProductionSafetyEnvironmentPostProcessorTest {
                         "spring.datasource.password",
                         ProductionSafetyEnvironmentPostProcessor.DEVELOPMENT_DATABASE_PASSWORD)
                 .withProperty(
-                        "zeroon.auth.local-verification-code",
-                        ProductionSafetyEnvironmentPostProcessor.DEVELOPMENT_VERIFICATION_CODE);
+                        "spring.data.redis.password",
+                        ProductionSafetyEnvironmentPostProcessor.DEVELOPMENT_REDIS_PASSWORD)
+                .withProperty("spring.data.redis.host", "localhost");
     }
 
     private MockEnvironment safeProductionEnvironment() {
@@ -91,7 +110,14 @@ class ProductionSafetyEnvironmentPostProcessorTest {
                 .withProperty(
                         "spring.datasource.password",
                         "test-only-database-password")
-                .withProperty("zeroon.auth.local-verification-code", "729184");
+                .withProperty("spring.data.redis.host", "shared-redis.internal")
+                .withProperty("spring.data.redis.password", "test-only-redis-password")
+                .withProperty(
+                        "zeroon.auth.verification-code-sender-url",
+                        "https://sms.example.test/send")
+                .withProperty(
+                        "zeroon.auth.verification-code-sender-token",
+                        "test-only-sender-token");
         environment.setActiveProfiles("prod");
         return environment;
     }

@@ -158,15 +158,46 @@ development/example value:
 
 - `ZEROON_ACCESS_TOKEN_SECRET`: at least 32 characters;
 - `POSTGRES_PASSWORD`: at least 12 characters;
-- `ZEROON_LOCAL_VERIFICATION_CODE`: six non-default characters during the
-  temporary pre-SMS stage.
+- `REDIS_HOST`: a shared host rather than loopback;
+- `REDIS_PASSWORD`: at least 12 non-placeholder characters;
+- `ZEROON_VERIFICATION_CODE_SENDER_URL`: an HTTPS delivery endpoint;
+- `ZEROON_VERIFICATION_CODE_SENDER_TOKEN`: at least 16 characters.
 
 The validator reports only the environment variable name and never logs its
 value. Local and test profiles retain the documented development defaults.
 
-The verification-code setting is temporary. Sprint 08 authentication work must
-replace the production fixed-code path with a real sender, random one-time
-codes, shared storage, throttling, and attempt limits before public release.
+### Verification-code environment boundary
+
+The default/local/test profile deliberately keeps the fixed `000000` code,
+in-memory state, and code logging for developer convenience. None of those
+beans are active under `prod`.
+
+Production uses a cryptographically secure six-digit generator, Redis-backed
+atomic one-time consumption, and an HTTPS sender adapter. Mobile identifiers
+are SHA-256 digested before entering Redis keys; codes expire after 10 minutes
+and are deleted after success or five failed attempts.
+
+Default abuse controls are:
+
+- one code request per mobile every 60 seconds;
+- five code requests per mobile per hour;
+- twenty code requests per source IP per hour;
+- ten login attempts per device per 15 minutes;
+- thirty login attempts per source IP per 15 minutes.
+
+The API returns `429` with `Retry-After` when a limit is reached. Redis or
+sender failures fail closed with `503`; the service never falls back to a
+fixed code or process-local state in production.
+
+Source-IP limits use the servlet remote address. If ZEROON runs behind a load
+balancer, set `SERVER_FORWARD_HEADERS_STRATEGY=NATIVE` only after the edge has
+removed untrusted forwarded headers and supplies a canonical client address.
+Do not expose the application port directly when proxy headers are trusted.
+
+Provider procurement remains an operational dependency: the configured sender
+must accept an authenticated JSON `POST` containing `mobile` and `code`, and
+return a 2xx response. Token values and verification codes must not be logged
+by production infrastructure.
 
 ---
 

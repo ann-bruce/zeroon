@@ -18,3 +18,8 @@ zeroon:
     access-token-ttl-minutes: 30
     refresh-token-ttl-days: 30
     local-verification-code: "000000"
+    verification-code-request-cooldown-seconds: 0
+    verification-code-mobile-hourly-limit: 10000
+    verification-code-ip-hourly-limit: 10000
+    verification-code-device-login-limit: 10000
+    verification-code-ip-login-limit: 10000

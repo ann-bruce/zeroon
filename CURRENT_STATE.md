@@ -62,10 +62,16 @@ Key product guardrails:
   403. Production admin provisioning and future mutation audit remain
   operational follow-ups.
 - Sprint 08 S8-02 production fail-fast is complete: the `prod` profile rejects
-  missing, short, development, or example JWT, PostgreSQL password, and
-  verification-code values before the Spring application context is created.
-  Focused tests, an expected unsafe-prod startup failure, and the full quality
-  gate passed. S8-03 remains required before public authentication.
+  missing, short, development, or example JWT and PostgreSQL password values
+  before the Spring application context is created. Focused tests, an expected
+  unsafe-prod startup failure, and the full quality gate passed.
+- Sprint 08 S8-03 verification-code environment boundary is complete:
+  development keeps fixed logged codes and in-memory state, while `prod` uses
+  secure random codes, Redis-backed atomic one-time state, an HTTPS sender,
+  mobile/IP/device throttling, and a five-failure cap. Redis/sender safety is
+  fail-fast, dependency outages return 503, and limits return 429 with
+  `Retry-After`. SMS-provider onboarding and a real delivery smoke remain
+  operational release blockers; S8-04 is the next engineering item.
 
 ## Recent Completed Work
 

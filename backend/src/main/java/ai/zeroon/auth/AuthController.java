@@ -5,6 +5,7 @@ import ai.zeroon.auth.AuthDtos.CodeRequest;
 import ai.zeroon.auth.AuthDtos.LoginRequest;
 import ai.zeroon.auth.AuthDtos.RefreshRequest;
 import ai.zeroon.security.UserPrincipal;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,13 +27,14 @@ public class AuthController {
 
     @PostMapping("/codes")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    void requestCode(@Valid @RequestBody CodeRequest request) {
-        authService.requestCode(request.mobile());
+    void requestCode(@Valid @RequestBody CodeRequest request, HttpServletRequest httpRequest) {
+        authService.requestCode(request.mobile(), httpRequest.getRemoteAddr());
     }
 
     @PostMapping("/login")
-    AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request.mobile(), request.code(), request.deviceId());
+    AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        return authService.login(
+                request.mobile(), request.code(), request.deviceId(), httpRequest.getRemoteAddr());
     }
 
     @PostMapping("/refresh")

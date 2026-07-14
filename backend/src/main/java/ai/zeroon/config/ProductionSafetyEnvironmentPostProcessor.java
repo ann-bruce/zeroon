@@ -14,7 +14,7 @@ public class ProductionSafetyEnvironmentPostProcessor implements EnvironmentPost
     static final String EXAMPLE_ACCESS_TOKEN_SECRET =
             "replace-with-at-least-32-random-bytes";
     static final String DEVELOPMENT_DATABASE_PASSWORD = "change-me";
-    static final String DEVELOPMENT_VERIFICATION_CODE = "000000";
+    static final String DEVELOPMENT_REDIS_PASSWORD = "change-me";
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
@@ -33,10 +33,37 @@ public class ProductionSafetyEnvironmentPostProcessor implements EnvironmentPost
                 12,
                 Set.of(DEVELOPMENT_DATABASE_PASSWORD));
         validateSecret(
-                "ZEROON_LOCAL_VERIFICATION_CODE",
-                environment.getProperty("zeroon.auth.local-verification-code"),
-                6,
-                Set.of(DEVELOPMENT_VERIFICATION_CODE));
+                "REDIS_PASSWORD",
+                environment.getProperty("spring.data.redis.password"),
+                12,
+                Set.of(DEVELOPMENT_REDIS_PASSWORD));
+        validateSharedRedisHost(environment.getProperty("spring.data.redis.host"));
+        validateHttpsUrl(
+                "ZEROON_VERIFICATION_CODE_SENDER_URL",
+                environment.getProperty("zeroon.auth.verification-code-sender-url"));
+        validateSecret(
+                "ZEROON_VERIFICATION_CODE_SENDER_TOKEN",
+                environment.getProperty("zeroon.auth.verification-code-sender-token"),
+                16,
+                Set.of());
+    }
+
+    private void validateSharedRedisHost(String value) {
+        if (value == null || value.isBlank()) {
+            throw unsafe("REDIS_HOST", "is required");
+        }
+        if (Set.of("localhost", "127.0.0.1", "::1").contains(value.trim().toLowerCase())) {
+            throw unsafe("REDIS_HOST", "must identify shared production storage");
+        }
+    }
+
+    private void validateHttpsUrl(String environmentName, String value) {
+        if (value == null || value.isBlank()) {
+            throw unsafe(environmentName, "is required");
+        }
+        if (!value.startsWith("https://")) {
+            throw unsafe(environmentName, "must use HTTPS");
+        }
     }
 
     private void validateSecret(String environmentName, String value, int minimumLength, Set<String> disallowed) {

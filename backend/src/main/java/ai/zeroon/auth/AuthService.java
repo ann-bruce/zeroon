@@ -33,13 +33,13 @@ public class AuthService {
         this.tokenService = tokenService;
     }
 
-    public void requestCode(String mobile) {
-        verificationCodeService.requestCode(mobile);
+    public void requestCode(String mobile, String clientIp) {
+        verificationCodeService.requestCode(mobile, clientIp);
     }
 
     @Transactional
-    public AuthResponse login(String mobile, String code, String deviceId) {
-        if (!verificationCodeService.verify(mobile, code)) {
+    public AuthResponse login(String mobile, String code, String deviceId, String clientIp) {
+        if (!verificationCodeService.verify(mobile, code, deviceId, clientIp)) {
             throw new BadCredentialsException("Invalid verification code");
         }
         UserEntity user = userRepository.findByMobile(mobile)

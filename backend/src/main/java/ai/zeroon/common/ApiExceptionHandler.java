@@ -1,8 +1,13 @@
 package ai.zeroon.common;
 
+import ai.zeroon.auth.RateLimitExceededException;
+import ai.zeroon.auth.VerificationCodeDeliveryException;
+import ai.zeroon.auth.VerificationCodeInfrastructureException;
 import java.util.Map;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -13,6 +18,25 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    ResponseEntity<Map<String, String>> rateLimited(RateLimitExceededException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(ex.getRetryAfterSeconds()))
+                .body(Map.of("error", ex.getError(), "message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(VerificationCodeDeliveryException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    Map<String, String> verificationCodeDelivery(VerificationCodeDeliveryException ex) {
+        return Map.of("error", "verification_delivery_unavailable", "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(VerificationCodeInfrastructureException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    Map<String, String> verificationCodeInfrastructure(VerificationCodeInfrastructureException ex) {
+        return Map.of("error", "verification_service_unavailable", "message", ex.getMessage());
+    }
 
     @ExceptionHandler(AuthenticationException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)

@@ -5,6 +5,13 @@ spring:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/zeroon}
     username: ${POSTGRES_USER:zeroon}
     password: ${POSTGRES_PASSWORD:change-me}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:change-me}
+      repositories:
+        enabled: false
   jpa:
     open-in-view: false
     hibernate:
@@ -24,6 +31,7 @@ management:
 
 server:
   shutdown: graceful
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:NONE}
 
 zeroon:
   auth:
@@ -32,6 +40,15 @@ zeroon:
     refresh-token-ttl-days: ${ZEROON_REFRESH_TOKEN_TTL_DAYS:30}
     local-verification-code: ${ZEROON_LOCAL_VERIFICATION_CODE:000000}
     verification-code-ttl-minutes: ${ZEROON_VERIFICATION_CODE_TTL_MINUTES:10}
+    verification-code-request-cooldown-seconds: ${ZEROON_VERIFICATION_CODE_REQUEST_COOLDOWN_SECONDS:60}
+    verification-code-mobile-hourly-limit: ${ZEROON_VERIFICATION_CODE_MOBILE_HOURLY_LIMIT:5}
+    verification-code-ip-hourly-limit: ${ZEROON_VERIFICATION_CODE_IP_HOURLY_LIMIT:20}
+    verification-code-device-login-limit: ${ZEROON_VERIFICATION_CODE_DEVICE_LOGIN_LIMIT:10}
+    verification-code-ip-login-limit: ${ZEROON_VERIFICATION_CODE_IP_LOGIN_LIMIT:30}
+    verification-code-login-window-minutes: ${ZEROON_VERIFICATION_CODE_LOGIN_WINDOW_MINUTES:15}
+    verification-code-max-failed-attempts: ${ZEROON_VERIFICATION_CODE_MAX_FAILED_ATTEMPTS:5}
+    verification-code-sender-url: ${ZEROON_VERIFICATION_CODE_SENDER_URL:}
+    verification-code-sender-token: ${ZEROON_VERIFICATION_CODE_SENDER_TOKEN:}
   ai:
     provider: ${ZEROON_LLM_PROVIDER:openai-compatible}
     base-url: ${LLM_BASE_URL:}
