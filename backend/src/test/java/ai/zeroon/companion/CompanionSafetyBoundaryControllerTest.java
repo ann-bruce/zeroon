@@ -46,8 +46,20 @@ class CompanionSafetyBoundaryControllerTest {
 
         var logs = aiUsageLogRepository.findByUserIdOrderByCreatedAtDesc(1L);
         org.assertj.core.api.Assertions.assertThat(logs).hasSize(1);
-        org.assertj.core.api.Assertions.assertThat(logs.get(0).getOutcome()).isEqualTo(AiUsageOutcome.REFUSAL);
-        org.assertj.core.api.Assertions.assertThat(logs.get(0).isFallbackUsed()).isTrue();
+        var usage = logs.get(0);
+        org.assertj.core.api.Assertions.assertThat(usage.getOutcome()).isEqualTo(AiUsageOutcome.REFUSAL);
+        org.assertj.core.api.Assertions.assertThat(usage.isFallbackUsed()).isTrue();
+        org.assertj.core.api.Assertions.assertThat(usage.getProvider()).isEqualTo("safety-boundary");
+        org.assertj.core.api.Assertions.assertThat(usage.getModel()).isNull();
+        org.assertj.core.api.Assertions.assertThat(usage.getDurationMs()).isNotNegative();
+        org.assertj.core.api.Assertions.assertThat(usage.getPromptTemplateCode()).isNull();
+        org.assertj.core.api.Assertions.assertThat(usage.getPromptTemplateVersion()).isNull();
+        org.assertj.core.api.Assertions.assertThat(usage.getInputChars()).isPositive();
+        org.assertj.core.api.Assertions.assertThat(usage.getOutputChars()).isPositive();
+        org.assertj.core.api.Assertions.assertThat(usage.getInputTokens()).isNull();
+        org.assertj.core.api.Assertions.assertThat(usage.getOutputTokens()).isNull();
+        org.assertj.core.api.Assertions.assertThat(usage.getErrorCode())
+                .isEqualTo("MEDICAL");
     }
 
     private String login(String mobile) throws Exception {

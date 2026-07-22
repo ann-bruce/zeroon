@@ -71,7 +71,14 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
             if (content == null || content.isBlank()) {
                 throw new LlmProviderUnavailableException("LLM provider returned an empty response");
             }
-            return new LlmResponse(content, PROVIDER_NAME, properties.model(), finishReason);
+            JsonNode usage = root.path("usage");
+            return new LlmResponse(
+                    content,
+                    PROVIDER_NAME,
+                    properties.model(),
+                    finishReason,
+                    nonNegativeInteger(usage.path("prompt_tokens")),
+                    nonNegativeInteger(usage.path("completion_tokens")));
         } catch (LlmProviderUnavailableException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -92,5 +99,13 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
             return properties.timeout();
         }
         return requestTimeout;
+    }
+
+    private Integer nonNegativeInteger(JsonNode node) {
+        if (!node.isIntegralNumber() || !node.canConvertToInt()) {
+            return null;
+        }
+        int value = node.intValue();
+        return value < 0 ? null : value;
     }
 }

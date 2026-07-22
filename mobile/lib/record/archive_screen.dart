@@ -82,13 +82,6 @@ class _ArchiveList extends StatelessWidget {
             final day = _dateOnly(record.createdAt.toLocal());
             return day == selectedDate;
           }).toList();
-    final visiblePage = RecordPage(
-      items: visibleItems,
-      page: page.page,
-      size: page.size,
-      totalElements: visibleItems.length,
-    );
-
     if (visibleItems.isEmpty) {
       return ListView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
@@ -166,7 +159,7 @@ class _ArchiveList extends StatelessWidget {
       );
       if (currentDay != day) {
         if (currentDay != null && !insertedObservation) {
-          children.add(_ArchiveObservationCard(page: visiblePage));
+          children.add(const _ArchiveObservationCard());
           insertedObservation = true;
         }
         currentDay = day;
@@ -175,7 +168,7 @@ class _ArchiveList extends StatelessWidget {
       children.add(_RecordMemoryCard(record: record));
     }
     if (!insertedObservation) {
-      children.add(_ArchiveObservationCard(page: visiblePage));
+      children.add(const _ArchiveObservationCard());
     }
 
     return ListView.separated(
@@ -373,9 +366,7 @@ class _RecordMemoryCard extends StatelessWidget {
 }
 
 class _ArchiveObservationCard extends ConsumerStatefulWidget {
-  const _ArchiveObservationCard({required this.page});
-
-  final RecordPage page;
+  const _ArchiveObservationCard();
 
   @override
   ConsumerState<_ArchiveObservationCard> createState() =>
@@ -402,7 +393,7 @@ class _ArchiveObservationCardState
     try {
       final response = await ref.read(companionRepositoryProvider).sendMessage(
             CompanionMessageRequest(
-              message: _observationPrompt(widget.page),
+              message: _observationPrompt(),
             ),
           );
       if (!mounted) {
@@ -417,7 +408,7 @@ class _ArchiveObservationCardState
         return;
       }
       setState(() {
-        _error = 'ZEROON 观察暂时不可用。';
+        _error = '这一次没能回看。你的记录仍然好好保存在这里。';
         _loading = false;
       });
     }
@@ -455,7 +446,7 @@ class _ArchiveObservationCardState
           const SizedBox(height: 8),
           if (_loading)
             const Text(
-              '正在回看最近的归零记录...',
+              'ZEROON 正在回看你允许用于陪伴回应的记忆…',
               style: TextStyle(color: zeroonIvory, height: 1.6),
             )
           else if (_hasText(_error)) ...[
@@ -466,7 +457,7 @@ class _ArchiveObservationCardState
             const SizedBox(height: 8),
             OutlinedButton(
               onPressed: _loadObservation,
-              child: const Text('重试观察'),
+              child: const Text('再试一次'),
             ),
           ] else
             Text(
@@ -479,7 +470,7 @@ class _ArchiveObservationCardState
             ),
           const SizedBox(height: 10),
           Text(
-            '基于最近 ${widget.page.items.take(3).length} 条归零记录',
+            '只参考你允许用于陪伴回应的记忆',
             style: TextStyle(
               color: zeroonIvory.withValues(alpha: 0.45),
               fontSize: 9,
@@ -524,22 +515,11 @@ class _DateLabel extends StatelessWidget {
   }
 }
 
-String _observationPrompt(RecordPage page) {
-  final recentRecords = page.items.take(3).map((record) {
-    final parts = <String>[
-      record.state,
-      if (_hasText(record.goal)) '小进展：${record.goal!.trim()}',
-      if (_hasText(record.content)) '记录：${record.content!.trim()}',
-    ];
-    return '- ${parts.join(' | ')}';
-  }).join('\n');
-
+String _observationPrompt() {
   return [
-    '请基于我的 Archive 最近归零记录，给一段简短、温和的 ZEROON 观察。',
+    '请只基于系统提供的、我已经允许用于 AI 的记忆，给一段简短、温和的 ZEROON 观察。',
     '只指出可被用户自己确认的轻微趋势，不做标签化判断，不给指令式建议。',
-    '累计记录：${page.totalElements}',
-    '最近记录：',
-    recentRecords,
+    '如果没有可用记忆，请坦诚说明暂时没有足够内容，不要猜测。',
   ].join('\n');
 }
 

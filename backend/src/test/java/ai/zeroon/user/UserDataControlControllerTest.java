@@ -62,6 +62,14 @@ class UserDataControlControllerTest {
                     user_id, type, summary, source_type, source_id
                 ) VALUES (?, 'ZERO_RECORD', 'owner memory summary', 'ZERO_RECORD', 9001)
                 """, owner.getId());
+        jdbcTemplate.update("""
+                INSERT INTO ai_usage_logs (
+                    user_id, provider, model, operation, outcome, fallback_used,
+                    duration_ms, prompt_template_code, prompt_template_version,
+                    input_chars, output_chars, input_tokens, output_tokens
+                ) VALUES (?, 'test', 'test-model', 'COMPANION_REFLECTION', 'SUCCESS', FALSE,
+                    18, 'COMPANION_REFLECTION', 7, 120, 40, 37, 9)
+                """, owner.getId());
 
         String accessToken = ownerSession.path("accessToken").asText();
         mockMvc.perform(put("/api/v1/me/profile")
@@ -95,6 +103,10 @@ class UserDataControlControllerTest {
                 .andExpect(jsonPath("$.memoryEntries[0].enabled").value(true))
                 .andExpect(jsonPath("$.memoryEntries[0].aiContextEnabled").value(false))
                 .andExpect(jsonPath("$.memoryEntries[0].updatedAt").isNotEmpty())
+                .andExpect(jsonPath("$.aiUsage[0].durationMs").value(18))
+                .andExpect(jsonPath("$.aiUsage[0].promptTemplateVersion").value(7))
+                .andExpect(jsonPath("$.aiUsage[0].inputTokens").value(37))
+                .andExpect(jsonPath("$.aiUsage[0].outputTokens").value(9))
                 .andExpect(jsonPath("$.sessions[0].deviceId").value("data-control-owner"))
                 .andReturn()
                 .getResponse()

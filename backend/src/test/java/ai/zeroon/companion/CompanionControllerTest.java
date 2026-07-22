@@ -3,6 +3,7 @@ package ai.zeroon.companion;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.blankOrNullString;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -13,9 +14,14 @@ import ai.zeroon.ai.LlmRequest;
 import ai.zeroon.ai.LlmResponse;
 import ai.zeroon.ai.AiUsageLogRepository;
 import ai.zeroon.ai.AiUsageOutcome;
+import ai.zeroon.prompt.PromptTemplateEntity;
+import ai.zeroon.prompt.PromptTemplateRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +31,9 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -43,6 +51,9 @@ class CompanionControllerTest {
     @Autowired
     private CapturingLlmProvider capturingLlmProvider;
 
+    @Autowired
+    private PromptTemplateRepository promptTemplateRepository;
+
     @BeforeEach
     void clearCapturedRequest() {
         capturingLlmProvider.clear();
@@ -52,6 +63,12 @@ class CompanionControllerTest {
     void companionMessageReturnsReflection() throws Exception {
         String accessToken = login("13800138101");
         createRecord(accessToken);
+        promptTemplateRepository.save(new PromptTemplateEntity(
+                "COMPANION_REFLECTION",
+                "Transaction-safe companion prompt",
+                "You are ZEROON, a long-term companion. Reply calmly.",
+                true,
+                7));
 
         mockMvc.perform(post("/api/v1/companion/messages")
                         .header("Authorization", "Bearer " + accessToken)
@@ -72,12 +89,37 @@ class CompanionControllerTest {
                 .doesNotContain("I completed one task.")
                 .doesNotContain("finish one thing")
                 .doesNotContain("User-allowed memory context");
+        assertThat(capturingLlmProvider.wasTransactionActive()).isFalse();
+        assertThat(capturingLlmProvider.wasUserMessageCommitted()).isTrue();
 
         var logs = aiUsageLogRepository.findByUserIdOrderByCreatedAtDesc(1L);
-        org.assertj.core.api.Assertions.assertThat(logs).hasSize(1);
-        org.assertj.core.api.Assertions.assertThat(logs.get(0).getOutcome()).isEqualTo(AiUsageOutcome.SUCCESS);
-        org.assertj.core.api.Assertions.assertThat(logs.get(0).isFallbackUsed()).isFalse();
-        org.assertj.core.api.Assertions.assertThat(logs.get(0).getInputChars()).isGreaterThan(0);
+        assertThat(logs).hasSize(1);
+        var usage = logs.get(0);
+        assertThat(usage.getOutcome()).isEqualTo(AiUsageOutcome.SUCCESS);
+        assertThat(usage.isFallbackUsed()).isFalse();
+        assertThat(usage.getProvider()).isEqualTo("test");
+        assertThat(usage.getModel()).isEqualTo("test-model");
+        assertThat(usage.getDurationMs()).isPositive();
+        assertThat(usage.getPromptTemplateCode()).isEqualTo("COMPANION_REFLECTION");
+        assertThat(usage.getPromptTemplateVersion()).isEqualTo(7);
+        assertThat(usage.getInputChars()).isGreaterThan(0);
+        assertThat(usage.getOutputChars()).isEqualTo("You made a small clear step.".length());
+        assertThat(usage.getInputTokens()).isEqualTo(37);
+        assertThat(usage.getOutputTokens()).isEqualTo(9);
+        assertThat(usage.getErrorCode()).isNull();
+
+        String exportBody = mockMvc.perform(get("/api/v1/me/export")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String exportedUsage = objectMapper.readTree(exportBody).path("aiUsage").path(0).toString();
+        assertThat(exportedUsage)
+                .contains("\"inputTokens\":37")
+                .contains("\"outputTokens\":9")
+                .doesNotContain("What should I notice today?")
+                .doesNotContain("You made a small clear step.");
     }
 
     @Test
@@ -190,19 +232,39 @@ class CompanionControllerTest {
 
         @Bean
         @Primary
-        CapturingLlmProvider testLlmProvider() {
-            return new CapturingLlmProvider();
+        CapturingLlmProvider testLlmProvider(JdbcTemplate jdbcTemplate) {
+            return new CapturingLlmProvider(jdbcTemplate);
         }
     }
 
     static class CapturingLlmProvider implements LlmProvider {
 
         private final AtomicReference<LlmRequest> lastRequest = new AtomicReference<>();
+        private final AtomicBoolean transactionActive = new AtomicBoolean();
+        private final AtomicBoolean userMessageCommitted = new AtomicBoolean();
+        private final JdbcTemplate jdbcTemplate;
+
+        CapturingLlmProvider(JdbcTemplate jdbcTemplate) {
+            this.jdbcTemplate = jdbcTemplate;
+        }
 
         @Override
         public LlmResponse generate(LlmRequest request) {
+            transactionActive.set(TransactionSynchronizationManager.isActualTransactionActive());
+            Long storedMessages = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM messages WHERE content = ?",
+                    Long.class,
+                    "What should I notice today?");
+            userMessageCommitted.set(storedMessages != null && storedMessages > 0);
+            LockSupport.parkNanos(Duration.ofMillis(10).toNanos());
             lastRequest.set(request);
-            return new LlmResponse("You made a small clear step.", "test", "test-model", "stop");
+            return new LlmResponse(
+                    "You made a small clear step.",
+                    "test",
+                    "test-model",
+                    "stop",
+                    37,
+                    9);
         }
 
         LlmRequest requireRequest() {
@@ -215,6 +277,16 @@ class CompanionControllerTest {
 
         void clear() {
             lastRequest.set(null);
+            transactionActive.set(false);
+            userMessageCommitted.set(false);
+        }
+
+        boolean wasTransactionActive() {
+            return transactionActive.get();
+        }
+
+        boolean wasUserMessageCommitted() {
+            return userMessageCommitted.get();
         }
     }
 }

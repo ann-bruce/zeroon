@@ -225,7 +225,7 @@ public class UserDataControlService {
         return jdbcTemplate.query("""
                 SELECT provider, model, operation, outcome, fallback_used, duration_ms,
                        prompt_template_code, prompt_template_version, input_chars, output_chars,
-                       error_code, created_at
+                       input_tokens, output_tokens, error_code, created_at
                 FROM ai_usage_logs WHERE user_id = ? ORDER BY created_at
                 """, (rs, row) -> new AiUsageExport(
                 rs.getString("provider"),
@@ -238,6 +238,8 @@ public class UserDataControlService {
                 nullableInteger(rs, "prompt_template_version"),
                 rs.getInt("input_chars"),
                 rs.getInt("output_chars"),
+                nullableInteger(rs, "input_tokens"),
+                nullableInteger(rs, "output_tokens"),
                 rs.getString("error_code"),
                 instant(rs, "created_at")), userId);
     }

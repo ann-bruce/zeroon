@@ -126,6 +126,8 @@ public final class UserDataDtos {
             Integer promptTemplateVersion,
             int inputChars,
             int outputChars,
+            Integer inputTokens,
+            Integer outputTokens,
             String errorCode,
             Instant createdAt) {
     }

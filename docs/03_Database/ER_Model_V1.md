@@ -1,6 +1,8 @@
 # ER Model V1
 
-The canonical executable schema is `Init_SQL_V1.sql`.
+`Init_SQL_V1.sql` is the original baseline. Flyway migrations under
+`backend/src/main/resources/db/migration/` are the canonical executable schema
+evolution.
 
 ## Identity
 
@@ -19,6 +21,8 @@ The canonical executable schema is `Init_SQL_V1.sql`.
 ## Operations
 
 - `prompt_templates`: immutable prompt versions
+- `ai_usage_logs`: provider outcome, latency, prompt version, character counts,
+  and optional provider-reported token counts without prompt or response text
 - `system_configs`: runtime configuration
 - `audit_events`: authentication and admin mutation audit trail
 
@@ -45,4 +49,3 @@ records preserve the event while nulling a deleted actor reference.
 - Conversation messages are indexed by `conversation_id, created_at`.
 - List APIs sort newest-first and use bounded pagination.
 - Cross-user reads are forbidden outside reviewed admin services.
-

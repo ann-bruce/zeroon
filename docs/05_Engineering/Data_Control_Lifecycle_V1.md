@@ -63,8 +63,9 @@ becomes unusable.
 The following operational rows may remain only in deidentified form:
 
 - AI usage rows retain provider/model, outcome, latency, template version,
-  character counts, and error code; `user_id` and `conversation_id` become
-  null, and these rows never contain prompt or message text;
+  character counts, optional provider-reported token counts, and error code;
+  `user_id` and `conversation_id` become null, and these rows never contain
+  prompt, Memory, record, message, or reply text;
 - audit events may remain for security/accountability with `actor_user_id`
   null; private record or message bodies must not be placed in audit metadata;
 - administrator-created prompt templates may remain with `created_by` null.

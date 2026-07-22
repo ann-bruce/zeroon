@@ -159,7 +159,7 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
 
   String get _quoteText {
     if (_loadingQuote) {
-      return '“ZEROON 正在把这一刻轻轻收好。”';
+      return '“这一刻已经收好。ZEROON 正在轻轻回应。”';
     }
     return '“${_quote ?? _fallbackQuote}”';
   }
@@ -175,7 +175,7 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
     try {
       final response = await ref.read(companionRepositoryProvider).sendMessage(
             CompanionMessageRequest(
-              message: _completionPrompt(widget.record),
+              message: _completionPrompt(),
             ),
           );
       if (!mounted) {
@@ -206,13 +206,9 @@ String _formatTime(DateTime value) {
   return '$hour:$minute';
 }
 
-String _completionPrompt(ZeroRecord record) {
-  final parts = <String>[
-    '请基于我刚完成的一次归零记录，给一句简短、温和、像 ZEROON 说的话。',
-    '不要诊断，不要建议过多，只确认这一刻已经被保存。',
-    '状态：${stateLabel(record.state)}',
-    if (_hasText(record.goal)) '目标：${record.goal!.trim()}',
-    if (_hasText(record.content)) '记录：${record.content!.trim()}',
-  ];
-  return parts.join('\n');
+String _completionPrompt() {
+  return [
+    '请基于我刚完成一次归零这个动作，给一句简短、温和、像 ZEROON 说的话。',
+    '只确认这一刻已经被保存，不要猜测记录内容，不要诊断，也不要给过多建议。',
+  ].join('\n');
 }

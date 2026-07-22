@@ -76,11 +76,13 @@ provider.
 
 Companion continuity context is assembled only from that allowed Memory path.
 Raw recent Zero Record `goal`/`content` must not be appended unconditionally to
-provider prompts, because Memory summaries are derived from those fields and
-unconditional record injection would bypass pause, AI-permission, and deletion
-controls. When a Memory is paused (`enabled = false`), mobile may still store
-the AI preference, but copy and feedback must state that the entry will not be
-used until it is re-enabled.
+provider prompts by either backend assembly or client-generated user messages,
+because Memory summaries are derived from those fields and unconditional record
+injection would bypass pause, AI-permission, and deletion controls. Mobile
+completion and Archive observation requests remain abstract; Archive relies on
+the server-side consent-aware context path. When a Memory is paused
+(`enabled = false`), mobile may still store the AI preference, but copy and
+feedback must state that the entry will not be used until it is re-enabled.
 
 ## Invariants
 

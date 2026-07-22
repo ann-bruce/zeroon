@@ -55,6 +55,8 @@ class OpenAiCompatibleLlmProviderTest {
         assertThat(response.provider()).isEqualTo("openai-compatible");
         assertThat(response.model()).isEqualTo("test-model");
         assertThat(response.finishReason()).isEqualTo("stop");
+        assertThat(response.inputTokens()).isEqualTo(37);
+        assertThat(response.outputTokens()).isEqualTo(9);
     }
 
     private void handleChatCompletion(HttpExchange exchange) throws IOException {
@@ -72,7 +74,12 @@ class OpenAiCompatibleLlmProviderTest {
                       "message": {"content": "A calm reflection."},
                       "finish_reason": "stop"
                     }
-                  ]
+                  ],
+                  "usage": {
+                    "prompt_tokens": 37,
+                    "completion_tokens": 9,
+                    "total_tokens": 46
+                  }
                 }
                 """.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().add("Content-Type", "application/json");

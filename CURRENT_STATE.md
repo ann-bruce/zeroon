@@ -1,6 +1,6 @@
 # ZEROON Current State
 
-Last updated: 2026-07-14
+Last updated: 2026-07-22
 
 This file is the short handoff for new Codex threads. Read it before scanning long docs or old sessions.
 
@@ -13,25 +13,29 @@ This file is the short handoff for new Codex threads. Read it before scanning lo
 ## Current Branch
 
 ```text
-feature/s9-05-consent-aware-memory-context
+feature/s9-06-provider-transaction-observability
 ```
 
 ## Current Focus
 
 90-day product validation: Phase 2 controllable memory and real AI.
 
-Sprint 08 trust-foundation engineering is complete. Sprint 09 now turns the
-existing read-only Memory placeholder into user-controlled reflective
-continuity before a real provider is expanded.
+Sprint 08 trust-foundation engineering, Sprint 09 controllable-memory
+engineering, the approved real-provider success smoke, and the mobile latency
+and consent-path audit are complete. The final S9-06 quality gate and branch
+integration review are also complete. The branch is ready for an explicitly
+authorized commit, push, and mainline integration.
 
 Immediate execution order:
 
-- accept the Memory V1 source, ownership, activation, AI-use, and deletion model;
-- create an idempotent record-to-memory production path;
-- add owner-only enable, AI-use, and hard-delete controls;
-- expose those controls in mobile without pressure or personality labels;
-- assemble only explicitly allowed memory into AI context;
-- move provider calls out of long database transactions and verify observability.
+- commit only the reviewed S9-06 project files, excluding the user-owned
+  `PROJECT_STRATEGIC_ANALYSIS.md`, when explicitly authorized.
+- push the feature branch and integrate it into `main` after the commit is
+  available remotely.
+- keep the approved provider model identifier exact and case-sensitive; the
+  verified DeepSeek API identifier is `deepseek-v4-flash`.
+- preserve the existing fallback/refusal and content-free observability
+  boundaries while tuning the experience.
 
 Key product guardrails:
 
@@ -119,7 +123,18 @@ Key product guardrails:
   bounds, and Record→Memory control bypass regression. Private Memory text is
   excluded from usage metadata. Mobile exposes an editable `aiContextEnabled`
   switch with honest paused-state copy and local success/failure feedback.
-  S9-06 provider transaction and observability is next.
+  Mobile completion and Archive observation prompts also stay abstract instead
+  of rebuilding Record state/goal/content; Widget tests cover both request paths
+  plus the Archive loading and recoverable retry states.
+- Sprint 09 S9-06 provider transaction and observability is complete.
+  Companion now commits user-message preparation, performs consent-aware reads,
+  calls `LlmProvider.generate` with no active Spring transaction, then persists
+  the assistant message and usage row in a short completion transaction.
+  Transaction-aware tests cover success and fallback, refusal still bypasses
+  the provider, and V10 adds optional provider-reported input/output token
+  counts without storing prompt, Memory, record, message, reply, or exception
+  body text. Sprint 09 engineering is complete; approved real-provider
+  credential smoke remains operational follow-up.
 
 ## Recent Completed Work
 

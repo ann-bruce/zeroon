@@ -122,6 +122,20 @@ prompt_template
 
 No hardcoded prompt in controller.
 
+Companion provider calls use an orchestration boundary rather than a database
+transaction. `CompanionTurnPersistenceService` commits the user message,
+assembles current consent-aware context in a short read transaction, and later
+persists the assistant message plus usage metadata in a short completion
+transaction. `LlmProvider.generate` must observe no active Spring transaction.
+
+AI usage metadata may contain provider/model, outcome, latency, prompt code and
+version, character counts, optional provider-reported token counts, and a
+bounded technical error code. It must never contain prompt, Profile, Memory,
+record, user-message, assistant-reply, provider request, or exception body text.
+Mobile-generated companion requests must not rebuild Zero Record state, goal,
+or content. Record-derived context enters the provider only through the
+server-side, consent-aware Memory path.
+
 ---
 
 ## Documentation Rules

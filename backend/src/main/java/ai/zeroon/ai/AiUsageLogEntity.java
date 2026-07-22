@@ -62,6 +62,12 @@ public class AiUsageLogEntity {
     @Column(name = "output_chars", nullable = false)
     private int outputChars;
 
+    @Column(name = "input_tokens")
+    private Integer inputTokens;
+
+    @Column(name = "output_tokens")
+    private Integer outputTokens;
+
     @Column(name = "error_code", length = 100)
     private String errorCode;
 
@@ -84,6 +90,8 @@ public class AiUsageLogEntity {
             Integer promptTemplateVersion,
             int inputChars,
             int outputChars,
+            Integer inputTokens,
+            Integer outputTokens,
             String errorCode) {
         this.user = user;
         this.conversation = conversation;
@@ -97,6 +105,8 @@ public class AiUsageLogEntity {
         this.promptTemplateVersion = promptTemplateVersion;
         this.inputChars = inputChars;
         this.outputChars = outputChars;
+        this.inputTokens = inputTokens;
+        this.outputTokens = outputTokens;
         this.errorCode = errorCode;
     }
 
@@ -118,5 +128,33 @@ public class AiUsageLogEntity {
 
     public int getOutputChars() {
         return outputChars;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public int getDurationMs() {
+        return durationMs;
+    }
+
+    public String getPromptTemplateCode() {
+        return promptTemplateCode;
+    }
+
+    public Integer getPromptTemplateVersion() {
+        return promptTemplateVersion;
+    }
+
+    public Integer getInputTokens() {
+        return inputTokens;
+    }
+
+    public Integer getOutputTokens() {
+        return outputTokens;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
     }
 }

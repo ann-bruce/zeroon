@@ -1150,6 +1150,16 @@ components:
         outputChars:
           type: integer
           minimum: 0
+        inputTokens:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Provider-reported input token count when available.
+        outputTokens:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Provider-reported output token count when available.
         errorCode:
           type: string
           nullable: true

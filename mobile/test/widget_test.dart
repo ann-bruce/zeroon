@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -296,6 +298,7 @@ void main() {
   testWidgets('reset screen opens completion after record is saved', (
     tester,
   ) async {
+    final companionRepository = _FakeCompanionRepository();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -304,7 +307,7 @@ void main() {
           ),
           recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
           companionRepositoryProvider.overrideWithValue(
-            _FakeCompanionRepository(),
+            companionRepository,
           ),
         ],
         child: const MaterialApp(home: ResetScreen()),
@@ -327,6 +330,10 @@ void main() {
     expect(find.text('“你已经把这一刻安放下来了。”'), findsOneWidget);
     expect(find.text('today I paused'), findsOneWidget);
     expect(find.text('再归零一次'), findsNothing);
+    expect(companionRepository.lastMessage, isNotNull);
+    expect(companionRepository.lastMessage, isNot(contains('today I paused')));
+    expect(companionRepository.lastMessage, isNot(contains('first step')));
+    expect(companionRepository.lastMessage, isNot(contains('CALM')));
 
     await tester.drag(find.byType(ListView), const Offset(0, -220));
     await tester.pumpAndSettle();
@@ -364,6 +371,45 @@ void main() {
     expect(companionRepository.lastMessage, isNot(contains('医疗')));
     expect(companionRepository.lastMessage, isNot(contains('法律')));
     expect(companionRepository.lastMessage, isNot(contains('心理诊断')));
+    expect(companionRepository.lastMessage, isNot(contains('today I paused')));
+    expect(companionRepository.lastMessage, isNot(contains('first step')));
+    expect(companionRepository.lastMessage, isNot(contains('CALM')));
+    expect(find.text('只参考你允许用于陪伴回应的记忆'), findsOneWidget);
+  });
+
+  testWidgets('archive observation keeps a gentle local loading state', (
+    tester,
+  ) async {
+    final companionRepository = _DelayedCompanionRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          companionRepositoryProvider.overrideWithValue(companionRepository),
+        ],
+        child: const MaterialApp(home: HomeShell(session: _session)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('缓存'));
+    await tester.pump();
+
+    expect(
+      find.text('ZEROON 正在回看你允许用于陪伴回应的记忆…'),
+      findsOneWidget,
+    );
+    expect(find.text('再试一次'), findsNothing);
+    expect(companionRepository.callCount, 1);
+
+    companionRepository.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
+    expect(companionRepository.callCount, 1);
   });
 
   testWidgets('archive observation shows unavailable state and retry', (
@@ -388,8 +434,8 @@ void main() {
     await tester.tap(find.text('缓存'));
     await tester.pumpAndSettle();
 
-    expect(find.text('ZEROON 观察暂时不可用。'), findsOneWidget);
-    await tester.tap(find.text('重试观察'));
+    expect(find.text('这一次没能回看。你的记录仍然好好保存在这里。'), findsOneWidget);
+    await tester.tap(find.text('再试一次'));
     await tester.pumpAndSettle();
 
     expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
@@ -471,7 +517,8 @@ void main() {
     expect(find.text('这条记忆已经删除。'), findsOneWidget);
   });
 
-  testWidgets('paused memory shows honest AI permission semantics', (tester) async {
+  testWidgets('paused memory shows honest AI permission semantics',
+      (tester) async {
     final memoryRepository = _FakeMemoryRepository(
       enabled: false,
       aiContextEnabled: true,
@@ -819,6 +866,32 @@ class _FakeCompanionRepository extends CompanionRepository {
       messageId: 2,
       reply: '你已经把这一刻安放下来了。',
       safetyNotice: 'ZEROON 不能替代医疗、法律、财务或心理咨询。',
+    );
+  }
+}
+
+class _DelayedCompanionRepository extends CompanionRepository {
+  _DelayedCompanionRepository() : super(Dio());
+
+  final _response = Completer<CompanionMessageResponse>();
+  var callCount = 0;
+
+  @override
+  Future<CompanionMessageResponse> sendMessage(
+    CompanionMessageRequest request,
+  ) {
+    callCount += 1;
+    return _response.future;
+  }
+
+  void complete() {
+    _response.complete(
+      const CompanionMessageResponse(
+        conversationId: 1,
+        messageId: 2,
+        reply: '你已经把这一刻安放下来了。',
+        safetyNotice: 'ZEROON 不能替代医疗、法律、财务或心理咨询。',
+      ),
     );
   }
 }

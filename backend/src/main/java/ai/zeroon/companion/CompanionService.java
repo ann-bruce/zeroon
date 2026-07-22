@@ -4,18 +4,14 @@ import ai.zeroon.ai.LlmProvider;
 import ai.zeroon.ai.LlmProviderUnavailableException;
 import ai.zeroon.ai.LlmRequest;
 import ai.zeroon.ai.LlmResponse;
-import ai.zeroon.ai.AiUsageLogService;
+import ai.zeroon.ai.AiUsageDetails;
+import ai.zeroon.ai.AiUsageOutcome;
 import ai.zeroon.companion.CompanionDtos.ChatResponse;
+import ai.zeroon.companion.CompanionTurnPersistenceService.StartedTurn;
 import ai.zeroon.prompt.PromptTemplateSelection;
 import ai.zeroon.prompt.PromptTemplateService;
-import ai.zeroon.memory.MemoryAiContextAssembler;
-import ai.zeroon.profile.ProfileAiContextAssembler;
-import ai.zeroon.user.UserEntity;
-import ai.zeroon.user.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import java.time.Duration;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CompanionService {
@@ -28,101 +24,89 @@ public class CompanionService {
                     + "ZEROON 会先安静保存它们，再陪你一点一点看清楚。";
 
     private final LlmProvider llmProvider;
-    private final UserRepository userRepository;
-    private final ConversationRepository conversationRepository;
-    private final MessageRepository messageRepository;
     private final PromptTemplateService promptTemplateService;
-    private final AiUsageLogService aiUsageLogService;
     private final SafetyBoundaryService safetyBoundaryService;
-    private final ProfileAiContextAssembler profileAiContextAssembler;
-    private final MemoryAiContextAssembler memoryAiContextAssembler;
+    private final CompanionTurnPersistenceService turnPersistenceService;
 
     public CompanionService(
             LlmProvider llmProvider,
-            UserRepository userRepository,
-            ConversationRepository conversationRepository,
-            MessageRepository messageRepository,
             PromptTemplateService promptTemplateService,
-            AiUsageLogService aiUsageLogService,
             SafetyBoundaryService safetyBoundaryService,
-            ProfileAiContextAssembler profileAiContextAssembler,
-            MemoryAiContextAssembler memoryAiContextAssembler) {
+            CompanionTurnPersistenceService turnPersistenceService) {
         this.llmProvider = llmProvider;
-        this.userRepository = userRepository;
-        this.conversationRepository = conversationRepository;
-        this.messageRepository = messageRepository;
         this.promptTemplateService = promptTemplateService;
-        this.aiUsageLogService = aiUsageLogService;
         this.safetyBoundaryService = safetyBoundaryService;
-        this.profileAiContextAssembler = profileAiContextAssembler;
-        this.memoryAiContextAssembler = memoryAiContextAssembler;
+        this.turnPersistenceService = turnPersistenceService;
     }
 
-    @Transactional
     public ChatResponse sendMessage(Long userId, Long conversationId, String message) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        ConversationEntity conversation = resolveConversation(user, conversationId);
-        messageRepository.save(new MessageEntity(conversation, MessageRole.USER, message.trim(), null));
-
-        String reply = generateReply(user, conversation, message.trim());
-        MessageEntity assistantMessage = messageRepository.save(new MessageEntity(
-                conversation,
-                MessageRole.ASSISTANT,
-                reply,
-                "COMPANION_REFLECTION"));
-        conversation.touch();
-
-        return new ChatResponse(conversation.getId(), assistantMessage.getId(), reply, SAFETY_NOTICE);
-    }
-
-    private ConversationEntity resolveConversation(UserEntity user, Long conversationId) {
-        if (conversationId == null) {
-            return conversationRepository.save(new ConversationEntity(user, "ZEROON Reflection"));
-        }
-        return conversationRepository.findByIdAndUserId(conversationId, user.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Conversation not found"));
-    }
-
-    private String generateReply(UserEntity user, ConversationEntity conversation, String message) {
+        String normalizedMessage = message.trim();
+        StartedTurn turn = turnPersistenceService.begin(userId, conversationId, normalizedMessage);
         long startedAt = System.nanoTime();
-        SafetyBoundaryResult boundary = safetyBoundaryService.evaluate(message);
+        SafetyBoundaryResult boundary = safetyBoundaryService.evaluate(normalizedMessage);
         if (boundary.blocked()) {
-            aiUsageLogService.logRefusal(
-                    user,
-                    conversation,
-                    boundary.label(),
-                    message.length(),
-                    boundary.reply().length(),
-                    elapsedMillis(startedAt));
-            return boundary.reply();
+            return turnPersistenceService.complete(
+                    turn,
+                    boundary.reply(),
+                    SAFETY_NOTICE,
+                    new AiUsageDetails(
+                            "safety-boundary",
+                            null,
+                            AiUsageOutcome.REFUSAL,
+                            true,
+                            elapsedMillis(startedAt),
+                            null,
+                            null,
+                            normalizedMessage.length(),
+                            boundary.reply().length(),
+                            null,
+                            null,
+                            boundary.label()));
         }
 
         PromptTemplateSelection prompt = promptTemplateService.companionReflectionPrompt();
-        String userPrompt = userPrompt(user, message);
+        String userPrompt = turnPersistenceService.assembleUserPrompt(userId, normalizedMessage);
+        long providerStartedAt = System.nanoTime();
         try {
             LlmResponse response = llmProvider.generate(new LlmRequest(
                     prompt.content(),
                     userPrompt,
                     Duration.ofSeconds(8)));
-            aiUsageLogService.logSuccess(
-                    user,
-                    conversation,
-                    response,
-                    prompt,
-                    userPrompt.length(),
-                    elapsedMillis(startedAt));
-            return response.content();
+            return turnPersistenceService.complete(
+                    turn,
+                    response.content(),
+                    SAFETY_NOTICE,
+                    new AiUsageDetails(
+                            response.provider(),
+                            response.model(),
+                            AiUsageOutcome.SUCCESS,
+                            false,
+                            elapsedMillis(providerStartedAt),
+                            prompt.code(),
+                            prompt.version(),
+                            userPrompt.length(),
+                            safeLength(response.content()),
+                            response.inputTokens(),
+                            response.outputTokens(),
+                            null));
         } catch (LlmProviderUnavailableException ex) {
-            aiUsageLogService.logFallback(
-                    user,
-                    conversation,
-                    prompt,
-                    userPrompt.length(),
-                    FALLBACK_REPLY.length(),
-                    elapsedMillis(startedAt),
-                    ex.getClass().getSimpleName());
-            return FALLBACK_REPLY;
+            return turnPersistenceService.complete(
+                    turn,
+                    FALLBACK_REPLY,
+                    SAFETY_NOTICE,
+                    new AiUsageDetails(
+                            "openai-compatible",
+                            null,
+                            AiUsageOutcome.FALLBACK,
+                            true,
+                            elapsedMillis(providerStartedAt),
+                            prompt.code(),
+                            prompt.version(),
+                            userPrompt.length(),
+                            FALLBACK_REPLY.length(),
+                            null,
+                            null,
+                            ex.getClass().getSimpleName()));
         }
     }
 
@@ -130,17 +114,7 @@ public class CompanionService {
         return (System.nanoTime() - startedAt) / 1_000_000;
     }
 
-    private String userPrompt(UserEntity user, String message) {
-        // Continuity context comes only from consent-aware Memory assembly.
-        // Raw Zero Record goal/content must not bypass Memory enablement or
-        // per-entry AI permission by being appended as unconditional "recent records".
-        StringBuilder prompt = new StringBuilder();
-        profileAiContextAssembler.assemble(user.getId())
-                .ifPresent(profileContext -> prompt.append(profileContext).append("\n\n"));
-        memoryAiContextAssembler.assemble(user.getId())
-                .ifPresent(memoryContext -> prompt.append(memoryContext).append("\n\n"));
-        prompt.append("Current state: ").append(user.getCurrentState().name()).append('\n');
-        prompt.append("User message: ").append(message).append('\n');
-        return prompt.toString();
+    private int safeLength(String value) {
+        return value == null ? 0 : value.length();
     }
 }

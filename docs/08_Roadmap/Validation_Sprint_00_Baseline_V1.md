@@ -113,20 +113,21 @@ restart was required for that tooling-only change.
 | RB-03 | Engineering closed in S8-03 | Verification code path was local-only and abuse-prone | Prod now uses random one-time codes, Redis atomic state, HTTPS sender boundary, mobile/IP/device throttling, and five-attempt deletion; local-only beans are profile-isolated | Public authentication remains blocked until an SMS provider is onboarded and production delivery smoke passes | Controller/service/store tests, real Redis cross-instance test, safe prod-profile startup, and full quality gate passed |
 | RB-04 | P0 | Public anthropomorphic-service compliance path is incomplete | No complete age/minor, overuse, escalation, complaint, filing, or assessment workflow | Public China release is blocked pending professional review | Product, engineering, operations, and legal readiness checklist signed off |
 | RB-05 | Closed in S8-04 | AI profile permission was stored but not applied to companion context | Companion now reads consent on every request and assembles only nickname, age range, occupation/identity, and self-description; avatar and inferred traits are excluded | AI-context beta claim is supported for the documented Profile fields | Capturing fake-provider test proves off/on/off behavior, immediate disable, whitelist inclusion, and excluded fields; full quality gate passed |
-| RB-06 | P1; S9 active | Long-term memory control loop is incomplete | ADR 004/V9 define controls; S9-02 creates source-linked Memory; S9-03 adds owner-only lifecycle APIs; S9-04 adds mobile source navigation, activation, deletion, and AI permission UI; S9-05 assembles only allowed Memory into companion context with bounds and capturing-provider tests; S9-06 provider transaction/observability remains open | Long-term-memory value claim needs S9-06 real-provider transaction closure after consent-aware assembly | Source-linked memory can be created, viewed, deleted, disabled, excluded from AI, and included only when explicitly allowed |
-| RB-07 | P1 | External LLM call occurs inside companion transaction | `CompanionService.send` is transactional and calls provider | Real-provider scale is blocked | Provider timeout does not hold a long DB transaction; fallback persists correctly |
+| RB-06 | Closed in S9-06 | Long-term memory control loop was incomplete | S9-01 through S9-05 establish visible, source-linked, owner-controlled Memory and consent-aware context; S9-06 closes provider transaction and observability boundaries | The engineering and configured-provider control loop is complete; mobile latency experience review remains | Full quality gate, PostgreSQL V10 migration, fallback/refusal smoke, and authenticated DeepSeek success smoke with exported content-free token metadata |
+| RB-07 | Closed in S9-06 | External LLM call occurred inside companion transaction | Companion orchestration now commits preparation, calls the provider with no active Spring transaction, then persists assistant/log completion in a short transaction | Provider timeout no longer holds a database transaction | Transaction-aware success/fallback tests, persisted fallback, metadata assertions, and full regression pass |
 | RB-08 | Closed in S8-05 | Data export/account deletion contract and implementation were not aligned | `/me`, versioned JSON export, synchronous idempotent hard deletion, session revocation, mobile controls, and explicit deidentified-retention rules are implemented | Data-control engineering blocker is closed; jurisdiction-specific compliance review remains separate | Ownership isolation, credential exclusion, cascade deletion, retained-metadata deidentification, repeated deletion, logout ownership, mobile controller, Widget, OpenAPI, and full quality-gate tests pass |
 | RB-09 | P2 | Admin Hook warnings and large bundle remain | Lint warnings and Vite chunk warning | Does not block private beta | Warnings resolved; route-based code split evaluated |
 
 ## 8. Next Action
 
-Sprint 08 trust foundation is complete. Continue Sprint 09 in this order:
-
-1. Memory V1 ADR and data foundation;
-2. idempotent record-to-memory production;
-3. owner-only activation, AI-use, and deletion controls;
-4. mobile Memory management;
-5. consent-aware context assembly and real-provider transaction closure.
+Sprint 09 controllable-memory engineering and operational provider verification
+are complete. On 2026-07-22 an authenticated `deepseek-v4-flash` request
+returned `SUCCESS` without fallback; export contained provider/model, 1495 ms
+duration, character counts, and provider-reported 80 input / 81 output tokens,
+with no prompt or reply body in the usage object. The temporary account was
+hard-deleted with HTTP 204. The next bounded step is mobile loading and retry
+experience review at measured real-provider latency without changing the
+consent model.
 
 Public release remains blocked by RB-03 provider onboarding and RB-04
 professional compliance review; neither blocker authorizes widening Memory
