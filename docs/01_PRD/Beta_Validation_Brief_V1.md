@@ -142,4 +142,7 @@ This brief is ready for recruitment when:
 - the app can calculate activation without collecting private text;
 - consent, deletion, fallback, and support paths are testable;
 - a beta notice explains product stage, AI boundaries, data use, and contact;
+- Sprint 11 contact acceptance proves users can reach the real team before
+  login and during API outage, and signed-in requests are private, trackable,
+  and handled without automatically attaching unrelated private content;
 - the first cohort is recruited for product behavior, not plush interest.

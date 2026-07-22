@@ -143,6 +143,9 @@ Target cohort: 50-100 invited users.
 - Make AI loading, fallback, refusal, and retry states understandable.
 - Make memory sources and delete/disable controls visible.
 - Review Growth navigation and reduce streak pressure.
+- Establish a complete Simplified Chinese/English locale foundation before a
+  bilingual beta cohort; language choice must not translate private history or
+  create mixed-language AI safety states.
 
 ### Admin and operations
 
@@ -229,10 +232,14 @@ Exit criteria:
 
 Priority:
 
-1. Invite the first 20 users, observe activation, and fix blocking defects.
-2. Expand toward 50-100 users only after the first cohort is stable.
-3. Conduct interviews across retained, inactive, and privacy-concerned users.
-4. Review metrics weekly without changing the core promise mid-cohort.
+1. Complete Sprint 10 language and locale acceptance before inviting any
+   English-language participants.
+2. Complete Sprint 11 help, contact, feedback, complaint, and operator-response
+   acceptance before inviting the first cohort.
+3. Invite the first 20 users, observe activation, and fix blocking defects.
+4. Expand toward 50-100 users only after the first cohort is stable.
+5. Conduct interviews across retained, inactive, and privacy-concerned users.
+6. Review metrics weekly without changing the core promise mid-cohort.
 
 Exit criteria:
 
@@ -269,6 +276,24 @@ Exit criteria:
 | V00-05 | Define event dictionary | backend/mobile analytics, privacy | Required events have purpose, properties, and prohibited private fields |
 | V00-06 | Create release-blocker matrix | security, AI, data, compliance, operations | Every blocker has severity, owner, verification, and release consequence |
 | V00-07 | Prepare Sprint 08 trust-foundation plan | all affected surfaces | Ordered implementation tasks and acceptance criteria are ready |
+
+### Sprint 10 Language and Locale Foundation
+
+The accepted plan is
+`docs/07_Sprints/Sprint_10_Language_Locale_Foundation_V1.md`. It occupies
+Sprint 10; previously discussed but undocumented Sprint 10 scope moves to
+Sprint 12. Language work is complete only when mobile UI, companion behavior,
+fallback, refusal, and safety paths are coherent while original private content
+remains untranslated.
+
+### Sprint 11 Help, Contact, and Feedback Foundation
+
+The accepted plan is
+`docs/07_Sprints/Sprint_11_Help_Contact_Feedback_Foundation_V1.md`. It is a
+separate closed-beta gate after language foundation. Users must be able to find
+a real-team contact path before login and during API outage; signed-in users
+must receive a private, trackable request and real operator response without
+automatically attaching unrelated private content.
 
 ## 7. Operating Rhythm
 

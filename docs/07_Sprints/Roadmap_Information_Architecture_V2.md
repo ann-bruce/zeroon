@@ -99,6 +99,25 @@ capability is validated.
 - User profile settings for optional self-introduction
 - AI permission to use profile context
 
+### Sprint 10
+
+- Language and Locale Foundation
+- Follow System, Simplified Chinese, and English
+- Complete mobile, companion fallback/refusal, and safety-language consistency
+- Original user content remains untranslated
+
+### Sprint 11
+
+- Help, Contact, and Feedback Foundation
+- Reachable before login and during API outage
+- Private, trackable requests with real operator replies and admin audit
+- No automatic attachment of Record, Memory, conversation, or log content
+
+### Sprint 12
+
+- Reserved for the scope previously discussed as Sprint 10
+- Formal scope requires its own product decision and acceptance document
+
 ### V1.2
 
 - Record templates

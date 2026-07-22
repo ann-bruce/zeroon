@@ -13,29 +13,33 @@ This file is the short handoff for new Codex threads. Read it before scanning lo
 ## Current Branch
 
 ```text
-feature/s9-06-provider-transaction-observability
+main
 ```
 
 ## Current Focus
 
-90-day product validation: Phase 2 controllable memory and real AI.
+90-day product validation: Sprint 10 language and locale foundation.
 
 Sprint 08 trust-foundation engineering, Sprint 09 controllable-memory
 engineering, the approved real-provider success smoke, and the mobile latency
-and consent-path audit are complete. The final S9-06 quality gate and branch
-integration review are also complete. The branch is ready for an explicitly
-authorized commit, push, and mainline integration.
+and consent-path audit are complete and integrated into `main` at `93b6a44`.
+Sprint 10 now establishes a complete Simplified Chinese/English interaction
+language foundation before further user-facing expansion. Sprint 11 separately
+establishes reachable, private, trackable contact and feedback with real
+operator handling. Previously discussed but undocumented Sprint 10 scope is
+reserved as Sprint 12.
 
 Immediate execution order:
 
-- commit only the reviewed S9-06 project files, excluding the user-owned
-  `PROJECT_STRATEGIC_ANALYSIS.md`, when explicitly authorized.
-- push the feature branch and integrate it into `main` after the commit is
-  available remotely.
-- keep the approved provider model identifier exact and case-sensitive; the
-  verified DeepSeek API identifier is `deepseek-v4-flash`.
-- preserve the existing fallback/refusal and content-free observability
-  boundaries while tuning the experience.
+- complete S10-01 locale architecture and string inventory before code edits;
+- establish Flutter localization and deterministic locale resolution;
+- add explicit account preference without mixing it with Profile AI consent;
+- localize mobile, provider instruction, fallback, refusal, and safety paths;
+- prove original Record, Memory, Profile, and conversation content is never
+  translated or used to infer identity.
+- after Sprint 10 acceptance, implement Sprint 11 contact paths that remain
+  reachable before login and during API outage without automatic private-content
+  attachment.
 
 Key product guardrails:
 
@@ -51,7 +55,7 @@ Key product guardrails:
 - 90-day validation plan: `docs/08_Roadmap/ZEROON_90_Day_Product_Validation_Plan_V1.md`
 - Validation baseline: `docs/08_Roadmap/Validation_Sprint_00_Baseline_V1.md`
 - Beta brief: `docs/01_PRD/Beta_Validation_Brief_V1.md`
-- Current engineering sprint: `docs/07_Sprints/Sprint_09_Controllable_Memory_V1.md`
+- Current engineering sprint: `docs/07_Sprints/Sprint_10_Language_Locale_Foundation_V1.md`
 - Memory decision: `docs/02_Architecture/ADR_004_Memory_V1.md`
 - Phase 2 target window: 2026-08-11 to 2026-08-31; engineering began early
   after Sprint 08 closure.
@@ -133,13 +137,21 @@ Key product guardrails:
   Transaction-aware tests cover success and fallback, refusal still bypasses
   the provider, and V10 adds optional provider-reported input/output token
   counts without storing prompt, Memory, record, message, reply, or exception
-  body text. Sprint 09 engineering is complete; approved real-provider
-  credential smoke remains operational follow-up.
+  body text. Sprint 09 engineering and the approved real-provider credential
+  smoke are complete and integrated into `main` at `93b6a44`.
+- Sprint 10 Language and Locale Foundation is planned. It supports Follow
+  System, Simplified Chinese, and English across mobile and bounded companion
+  behavior, while preserving all user-authored content in its original form.
+  Sprint 11 Help, Contact, and Feedback Foundation follows as a separate Beta
+  gate with real operator handling, receipt/status tracking, privacy-safe
+  diagnostics, and pre-auth/outage fallback contact. Any previously discussed
+  but undocumented Sprint 10 scope moves to Sprint 12.
 
 ## Recent Completed Work
 
 Recent commits on `main`:
 
+- `93b6a44 Harden companion provider boundaries and observability`
 - `b823660 Add mobile profile settings screen`
 - `0285d59 Add user profile API foundation`
 - `3b1b82f Decide sprint five settings entry`
@@ -189,6 +201,8 @@ scripts/zeroon-verify.sh all
 - 90-day validation plan: `docs/08_Roadmap/ZEROON_90_Day_Product_Validation_Plan_V1.md`
 - Sprint 06 plan: `docs/07_Sprints/Sprint_06_My_ZEROON_Companion_V1.md`
 - Sprint 07 draft: `docs/07_Sprints/Sprint_07_AI_Provider_Integration_V1.md`
+- Sprint 10 plan: `docs/07_Sprints/Sprint_10_Language_Locale_Foundation_V1.md`
+- Sprint 11 plan: `docs/07_Sprints/Sprint_11_Help_Contact_Feedback_Foundation_V1.md`
 - Roadmap IA: `docs/07_Sprints/Roadmap_Information_Architecture_V2.md`
 - API contract: `docs/04_API/OpenAPI_V1.yaml`
 - Engineering guide: `docs/05_Engineering/Development_Guide_V1.md`
