@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../common/zeroon_design.dart';
+import '../l10n/l10n_extensions.dart';
 import 'record_controller.dart';
 import 'record_complete_screen.dart';
 import 'record_models.dart';
@@ -39,11 +40,15 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
         children: [
-          const ZeroonHeader(mark: 'ZERO RECORD', title: '归零', center: true),
+          ZeroonHeader(
+            mark: 'ZERO RECORD',
+            title: context.l10n.resetTitle,
+            center: true,
+          ),
           const SizedBox(height: 28),
           currentState.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stackTrace) => Text('状态读取失败：$error'),
+            error: (error, stackTrace) => Text(context.l10n.stateLoadFailed),
             data: (snapshot) => _LockedStateCard(snapshot: snapshot),
           ),
           const SizedBox(height: 22),
@@ -51,9 +56,9 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
             controller: _contentController,
             maxLines: 4,
             maxLength: 5000,
-            decoration: const InputDecoration(
-              labelText: '留下一句话',
-              hintText: '今天发生了什么？',
+            decoration: InputDecoration(
+              labelText: context.l10n.recordSomethingLabel,
+              hintText: context.l10n.recordSomethingHint,
               alignLabelWithHint: true,
             ),
           ),
@@ -61,14 +66,14 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
           TextField(
             controller: _goalController,
             maxLength: 1000,
-            decoration: const InputDecoration(
-              labelText: '今天想完成什么',
-              hintText: '完成一个很小的进展',
+            decoration: InputDecoration(
+              labelText: context.l10n.smallProgressLabel,
+              hintText: context.l10n.smallProgressHint,
             ),
           ),
           const SizedBox(height: 8),
           ZeroonPrimaryButton(
-            label: '保存这次归零',
+            label: context.l10n.saveReset,
             loading: _saving,
             onPressed: _save,
           ),
@@ -84,7 +89,7 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
   Future<void> _save() async {
     final snapshot = ref.read(currentStateProvider).valueOrNull;
     if (snapshot == null || !snapshot.hasActiveSession) {
-      setState(() => _message = '请先回到此刻，选择一个当前状态。');
+      setState(() => _message = context.l10n.chooseStateFromNow);
       return;
     }
     final request = CreateRecordRequest(
@@ -92,7 +97,7 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
       content: _contentController.text,
     );
     if (!request.hasContent) {
-      setState(() => _message = '至少写下一点感受、进展或内容。');
+      setState(() => _message = context.l10n.recordContentValidation);
       return;
     }
 
@@ -120,11 +125,11 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
           ),
         ),
       );
-    } catch (error) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _saving = false;
-          _message = '保存失败：$error';
+          _message = context.l10n.recordSaveFailed;
         });
       }
     }
@@ -176,21 +181,25 @@ class _LockedStateCardState extends State<_LockedStateCard> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            active ? '正在归零的状态' : '还没有选择此刻状态',
+            active
+                ? context.l10n.currentResetState
+                : context.l10n.noStateSelected,
             style: const TextStyle(color: zeroonMuted, fontSize: 10),
           ),
           const SizedBox(height: 14),
           StateCore(size: 118, state: snapshot.state),
           const SizedBox(height: 14),
           Text(
-            active ? stateLabel(snapshot.state) : '请先回到此刻选择状态',
+            active
+                ? localizedStateLabel(context, snapshot.state)
+                : context.l10n.chooseStateFromNow,
             style: zeroonSerif(context, size: 24),
           ),
           const SizedBox(height: 6),
           Text(
             active
-                ? _durationText(_elapsedSeconds(snapshot))
-                : 'ZEROON 会从选择状态开始记录持续时间。',
+                ? _durationText(context, _elapsedSeconds(snapshot))
+                : context.l10n.resetDurationHint,
             textAlign: TextAlign.center,
           ),
         ],
@@ -222,18 +231,18 @@ int _elapsedSeconds(StateSnapshot snapshot) {
       : snapshot.elapsedSeconds;
 }
 
-String _durationText(int seconds) {
+String _durationText(BuildContext context, int seconds) {
   if (seconds < 60) {
-    return '刚刚开始停留';
+    return context.l10n.justStarted;
   }
   final minutes = seconds ~/ 60;
   if (minutes < 60) {
-    return '停留了约 $minutes 分钟';
+    return context.l10n.minutesStayed(minutes);
   }
   final hours = minutes ~/ 60;
   final restMinutes = minutes % 60;
   if (restMinutes == 0) {
-    return '停留了约 $hours 小时';
+    return context.l10n.hoursStayed(hours);
   }
-  return '停留了约 $hours 小时 $restMinutes 分钟';
+  return context.l10n.hoursMinutesStayed(hours, restMinutes);
 }

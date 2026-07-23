@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../auth/auth_models.dart';
 import '../common/zeroon_design.dart';
 import '../growth/growth_controller.dart';
+import '../l10n/l10n_extensions.dart';
 import '../profile/profile_screen.dart';
 import '../record/record_controller.dart';
 import '../record/archive_screen.dart';
@@ -34,15 +36,16 @@ class NowScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SectionMark('TODAY · ZEROON'),
+                  SectionMark(context.l10n.todayZeroon),
                   const SizedBox(height: 4),
-                  Text('晚上好，${_displayName(session)}',
+                  Text('${context.l10n.greeting} ${_displayName(session)}',
                       style: Theme.of(context).textTheme.titleLarge),
                 ],
               ),
               const Spacer(),
               ZeroonIconButton(
                 dark: true,
+                semanticLabel: context.l10n.openProfile,
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const ProfileScreen()),
                 ),
@@ -80,7 +83,6 @@ class _StateHero extends ConsumerWidget {
     return currentState.when(
       loading: () => const _StateLoading(),
       error: (error, stackTrace) => _StateError(
-        message: error.toString(),
         onRetry: () => ref.invalidate(currentStateProvider),
       ),
       data: (snapshot) => _StatePanel(
@@ -116,8 +118,8 @@ class _StatePanel extends ConsumerWidget {
       children: [
         Column(
           children: [
-            const Text(
-              '今天的 ZEROON',
+            Text(
+              context.l10n.todayZeroon,
               style: TextStyle(
                 color: zeroonMuted,
                 fontSize: 10,
@@ -129,20 +131,23 @@ class _StatePanel extends ConsumerWidget {
                 state: snapshot.hasActiveSession ? snapshot.state : 'IDLE'),
             const SizedBox(height: 12),
             Text(
-              snapshot.hasActiveSession ? stateLabel(snapshot.state) : '选择此刻状态',
+              snapshot.hasActiveSession
+                  ? localizedStateLabel(context, snapshot.state)
+                  : context.l10n.chooseCurrentState,
               style: zeroonSerif(context, size: 26),
             ),
             const SizedBox(height: 3),
             if (snapshot.hasActiveSession)
               Column(
                 children: [
-                  Text(_stateHint(snapshot.state), textAlign: TextAlign.center),
+                  Text(_stateHint(context, snapshot.state),
+                      textAlign: TextAlign.center),
                   _LiveDurationText(snapshot: snapshot),
                 ],
               )
             else
-              const Text(
-                '先选择一个最接近的状态，ZEROON 会从这一刻开始记录。',
+              Text(
+                context.l10n.chooseStateFirst,
                 textAlign: TextAlign.center,
               ),
           ],
@@ -172,7 +177,9 @@ class _StatePanel extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         ZeroonPrimaryButton(
-          label: snapshot.hasActiveSession ? '开始一次归零' : '先选择此刻状态',
+          label: snapshot.hasActiveSession
+              ? context.l10n.startReset
+              : context.l10n.chooseCurrentState,
           onPressed: snapshot.hasActiveSession ? onStartReset : null,
         ),
         const SizedBox(height: 9),
@@ -200,13 +207,13 @@ class _StatePanel extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '今日山海缓存',
+                    Text(
+                      context.l10n.todayArchive,
                       style: TextStyle(color: Color(0xFF9A8D75), fontSize: 10),
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      _todayArchiveText(latestTodayRecord),
+                      _todayArchiveText(context, latestTodayRecord),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: zeroonInk, fontSize: 12),
@@ -222,14 +229,14 @@ class _StatePanel extends ConsumerWidget {
     );
   }
 
-  String _stateHint(String state) {
+  String _stateHint(BuildContext context, String state) {
     return switch (state) {
-      'FOCUS' => '今天适合安静地完成一件重要的事。',
-      'CREATE' => '把浮现出来的想法先放在这里。',
-      'TIRED' => '可以慢一点，只保留最小的一步。',
-      'OVERLOAD' => '先把负荷放下来，不急着解决全部。',
-      'CONFUSED' => '混乱也可以被看见，然后慢慢归零。',
-      _ => '这里没有需要证明的事，先看见此刻。',
+      'FOCUS' => context.l10n.stateHintFocus,
+      'CREATE' => context.l10n.stateHintCreate,
+      'TIRED' => context.l10n.stateHintTired,
+      'OVERLOAD' => context.l10n.stateHintOverload,
+      'CONFUSED' => context.l10n.stateHintConfused,
+      _ => context.l10n.stateHintDefault,
     };
   }
 }
@@ -261,20 +268,22 @@ class _ResetTrackCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '连续归零',
+                    Text(
+                      context.l10n.continuousReset,
                       style: TextStyle(color: zeroonMuted, fontSize: 10),
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      _continuousResetText(continuousResetDays),
+                      continuousResetDays == null
+                          ? '--'
+                          : context.l10n.dayCount(continuousResetDays!),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ],
                 ),
               ),
-              const Text(
-                '点亮日期可回看',
+              Text(
+                context.l10n.tapDateToReview,
                 style: TextStyle(color: zeroonMuted, fontSize: 10),
               ),
             ],
@@ -345,7 +354,7 @@ class _ResetTrackDay extends StatelessWidget {
           ),
           const SizedBox(height: 3),
           Text(
-            _weekdayLabel(date),
+            DateFormat.E(context.localeName).format(date),
             style: const TextStyle(color: zeroonMuted, fontSize: 8),
           ),
         ],
@@ -389,7 +398,7 @@ class _LiveDurationTextState extends State<_LiveDurationText> {
 
   @override
   Widget build(BuildContext context) {
-    return Text(_durationText(_elapsedSeconds(widget.snapshot)));
+    return Text(_durationText(context, _elapsedSeconds(widget.snapshot)));
   }
 
   void _startTimer() {
@@ -413,16 +422,9 @@ int _elapsedSeconds(StateSnapshot snapshot) {
       : snapshot.elapsedSeconds;
 }
 
-String _continuousResetText(int? days) {
-  if (days == null) {
-    return '-- 天';
-  }
-  return '$days 天';
-}
-
-String _todayArchiveText(ZeroRecord? record) {
+String _todayArchiveText(BuildContext context, ZeroRecord? record) {
   if (record == null) {
-    return '今天还没有新的山海缓存。';
+    return context.l10n.noArchiveToday;
   }
   return '“${recordPreview(record)}”';
 }
@@ -453,10 +455,6 @@ List<DateTime> _recentSevenDays() {
 
 DateTime _dateOnly(DateTime value) {
   return DateTime(value.year, value.month, value.day);
-}
-
-String _weekdayLabel(DateTime date) {
-  return ['一', '二', '三', '四', '五', '六', '日'][date.weekday - 1];
 }
 
 class _StateChoice extends StatelessWidget {
@@ -502,7 +500,7 @@ class _StateChoice extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             Text(
-              stateLabel(state),
+              localizedStateLabel(context, state),
               style: TextStyle(
                 color: selected ? zeroonIvory : zeroonInk,
                 fontSize: 12,
@@ -516,20 +514,20 @@ class _StateChoice extends StatelessWidget {
   }
 }
 
-String _durationText(int seconds) {
+String _durationText(BuildContext context, int seconds) {
   if (seconds < 60) {
-    return '刚刚开始停留';
+    return context.l10n.justStarted;
   }
   final minutes = seconds ~/ 60;
   if (minutes < 60) {
-    return '停留了约 $minutes 分钟';
+    return context.l10n.minutesStayed(minutes);
   }
   final hours = minutes ~/ 60;
   final restMinutes = minutes % 60;
   if (restMinutes == 0) {
-    return '停留了约 $hours 小时';
+    return context.l10n.hoursStayed(hours);
   }
-  return '停留了约 $hours 小时 $restMinutes 分钟';
+  return context.l10n.hoursMinutesStayed(hours, restMinutes);
 }
 
 class _StateLoading extends StatelessWidget {
@@ -545,9 +543,7 @@ class _StateLoading extends StatelessWidget {
 }
 
 class _StateError extends StatelessWidget {
-  const _StateError({required this.message, required this.onRetry});
-
-  final String message;
+  const _StateError({required this.onRetry});
   final VoidCallback onRetry;
 
   @override
@@ -558,11 +554,13 @@ class _StateError extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('状态读取失败', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(message),
+            Text(context.l10n.stateLoadFailed,
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
-            OutlinedButton(onPressed: onRetry, child: const Text('重试')),
+            OutlinedButton(
+              onPressed: onRetry,
+              child: Text(context.l10n.retry),
+            ),
           ],
         ),
       ),

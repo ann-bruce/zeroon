@@ -2,6 +2,7 @@ package ai.zeroon.companion;
 
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.blankOrNullString;
+import static org.hamcrest.Matchers.containsString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -72,16 +73,22 @@ class CompanionControllerTest {
 
         mockMvc.perform(post("/api/v1/companion/messages")
                         .header("Authorization", "Bearer " + accessToken)
+                        .header("Accept-Language", "en")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"message\":\"What should I notice today?\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.conversationId").isNumber())
                 .andExpect(jsonPath("$.messageId").isNumber())
                 .andExpect(jsonPath("$.reply").value("You made a small clear step."))
-                .andExpect(jsonPath("$.safetyNotice", not(blankOrNullString())));
+                .andExpect(jsonPath("$.safetyNotice").value(
+                        "ZEROON offers non-diagnostic companion reflection. "
+                                + "It cannot replace medical, legal, financial, or mental health professionals."));
 
         LlmRequest request = capturingLlmProvider.requireRequest();
-        assertThat(request.systemPrompt()).contains("long-term companion");
+        assertThat(request.systemPrompt())
+                .contains("long-term companion")
+                .contains("Respond in English")
+                .contains("Do not infer language from Profile, Memory, Records, conversation history");
         assertThat(request.userPrompt())
                 .contains("Current state: CALM")
                 .contains("What should I notice today?")
@@ -131,6 +138,65 @@ class CompanionControllerTest {
     }
 
     @Test
+    void companionLanguageUsesHeaderThenAccountThenChineseFallbackWithoutTranslatingContent()
+            throws Exception {
+        String englishAccountToken = login("13800138105");
+        updateLanguage(englishAccountToken, "EN");
+
+        String originalChinese = "原文保持不变。";
+        mockMvc.perform(post("/api/v1/companion/messages")
+                        .header("Authorization", "Bearer " + englishAccountToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(java.util.Map.of("message", originalChinese))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reply").value("You made a small clear step."))
+                .andExpect(jsonPath("$.safetyNotice", containsString("non-diagnostic companion reflection")));
+        assertThat(capturingLlmProvider.requireRequest().systemPrompt()).contains("Respond in English");
+        assertThat(capturingLlmProvider.requireRequest().userPrompt()).contains("User message: " + originalChinese);
+
+        String originalEnglish = "Keep this exact sentence.";
+        mockMvc.perform(post("/api/v1/companion/messages")
+                        .header("Authorization", "Bearer " + englishAccountToken)
+                        .header("Accept-Language", "fr;q=1, zh-CN;q=0.8, en;q=0.5")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(java.util.Map.of("message", originalEnglish))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reply").value("你迈出了清晰的一小步。"))
+                .andExpect(jsonPath("$.safetyNotice", containsString("非诊断性的陪伴式反思")));
+        assertThat(capturingLlmProvider.requireRequest().systemPrompt())
+                .contains("Respond in Simplified Chinese");
+        assertThat(capturingLlmProvider.requireRequest().userPrompt())
+                .contains("User message: " + originalEnglish);
+
+        mockMvc.perform(post("/api/v1/companion/messages")
+                        .header("Authorization", "Bearer " + englishAccountToken)
+                        .header("Accept-Language", "fr-FR, zh-Hant")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"Unsupported headers use the account preference.\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reply").value("You made a small clear step."));
+        assertThat(capturingLlmProvider.requireRequest().systemPrompt()).contains("Respond in English");
+
+        String export = mockMvc.perform(get("/api/v1/me/export")
+                        .header("Authorization", "Bearer " + englishAccountToken))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(export).contains(originalChinese).contains(originalEnglish);
+
+        String followSystemToken = login("13800138106");
+        mockMvc.perform(post("/api/v1/companion/messages")
+                        .header("Authorization", "Bearer " + followSystemToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"English text must not be used to infer language.\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reply").value("你迈出了清晰的一小步。"));
+        assertThat(capturingLlmProvider.requireRequest().systemPrompt())
+                .contains("Respond in Simplified Chinese");
+    }
+
+    @Test
     void profileContextFollowsCurrentConsentAndUsesOnlyAllowedFields() throws Exception {
         String accessToken = login("13800138104");
 
@@ -177,6 +243,14 @@ class CompanionControllerTest {
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"message\":\"" + message + "\"}"))
+                .andExpect(status().isOk());
+    }
+
+    private void updateLanguage(String accessToken, String preference) throws Exception {
+        mockMvc.perform(put("/api/v1/me/preferences/language")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"languagePreference\":\"" + preference + "\"}"))
                 .andExpect(status().isOk());
     }
 
@@ -258,8 +332,11 @@ class CompanionControllerTest {
             userMessageCommitted.set(storedMessages != null && storedMessages > 0);
             LockSupport.parkNanos(Duration.ofMillis(10).toNanos());
             lastRequest.set(request);
+            String reply = request.systemPrompt().contains("Respond in Simplified Chinese")
+                    ? "你迈出了清晰的一小步。"
+                    : "You made a small clear step.";
             return new LlmResponse(
-                    "You made a small clear step.",
+                    reply,
                     "test",
                     "test-model",
                     "stop",

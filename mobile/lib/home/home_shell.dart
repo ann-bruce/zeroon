@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../auth/auth_models.dart';
 import '../common/zeroon_design.dart';
 import '../growth/growth_screen.dart';
+import '../l10n/l10n_extensions.dart';
 import '../record/archive_screen.dart';
 import '../record/reset_screen.dart';
 import 'now_screen.dart';
@@ -45,19 +46,19 @@ class _HomeShellState extends State<HomeShell> {
           children: [
             _NavItem(
               icon: Icons.radio_button_checked,
-              label: '此刻',
+              label: context.l10n.navNow,
               selected: _selectedIndex == 0,
               onTap: () => setState(() => _selectedIndex = 0),
             ),
             _NavItem(
               icon: Icons.inventory_2_outlined,
-              label: '缓存',
+              label: context.l10n.navArchive,
               selected: _selectedIndex == 1,
               onTap: () => setState(() => _selectedIndex = 1),
             ),
             _NavItem(
               icon: Icons.auto_graph,
-              label: '成长',
+              label: context.l10n.navGrowth,
               selected: _selectedIndex == 2,
               onTap: () => setState(() => _selectedIndex = 2),
             ),

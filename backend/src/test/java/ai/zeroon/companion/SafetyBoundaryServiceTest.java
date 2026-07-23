@@ -10,19 +10,24 @@ class SafetyBoundaryServiceTest {
 
     @Test
     void blocksMedicalLegalFinancialAndPsychologicalDiagnosisRequests() {
-        assertThat(safetyBoundaryService.evaluate("Can you diagnose my illness?").label())
+        assertThat(safetyBoundaryService.evaluate(
+                        "Can you diagnose my illness?", CompanionLanguage.ENGLISH).label())
                 .isEqualTo("MEDICAL");
-        assertThat(safetyBoundaryService.evaluate("我要不要起诉他？").label())
+        assertThat(safetyBoundaryService.evaluate(
+                        "我要不要起诉他？", CompanionLanguage.SIMPLIFIED_CHINESE).label())
                 .isEqualTo("LEGAL");
-        assertThat(safetyBoundaryService.evaluate("Should I buy bitcoin?").label())
+        assertThat(safetyBoundaryService.evaluate(
+                        "Should I buy bitcoin?", CompanionLanguage.ENGLISH).label())
                 .isEqualTo("FINANCIAL");
-        assertThat(safetyBoundaryService.evaluate("我是不是抑郁症？").label())
+        assertThat(safetyBoundaryService.evaluate(
+                        "我是不是抑郁症？", CompanionLanguage.SIMPLIFIED_CHINESE).label())
                 .isEqualTo("PSYCHOLOGICAL_DIAGNOSIS");
     }
 
     @Test
     void allowsOrdinaryReflectionRequests() {
-        assertThat(safetyBoundaryService.evaluate("Help me reflect on today's small progress").blocked())
+        assertThat(safetyBoundaryService.evaluate(
+                        "Help me reflect on today's small progress", CompanionLanguage.ENGLISH).blocked())
                 .isFalse();
     }
 }

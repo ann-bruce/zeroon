@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../common/zeroon_design.dart';
+import '../l10n/l10n_extensions.dart';
 import 'record_controller.dart';
 import 'record_models.dart';
 
@@ -15,7 +15,7 @@ class RecordDetailScreen extends ConsumerWidget {
     final record = ref.watch(recordDetailProvider(recordId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('记录详情')),
+      appBar: AppBar(title: Text(context.l10n.recordDetailTitle)),
       body: SafeArea(
         child: record.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -24,14 +24,13 @@ class RecordDetailScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('读取失败', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Text(error.toString()),
+                Text(context.l10n.recordLoadFailed,
+                    style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 12),
                 OutlinedButton(
                   onPressed: () =>
                       ref.invalidate(recordDetailProvider(recordId)),
-                  child: const Text('重试'),
+                  child: Text(context.l10n.retry),
                 ),
               ],
             ),
@@ -41,28 +40,38 @@ class RecordDetailScreen extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Text('Archive 记忆',
+                  Text(context.l10n.archiveMemoryMark,
                       style: Theme.of(context).textTheme.labelLarge),
                   const Spacer(),
-                  const Chip(label: Text('私密记录')),
+                  Chip(label: Text(context.l10n.privateRecord)),
                 ],
               ),
               const SizedBox(height: 24),
               Text(recordPreview(item),
                   style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 12),
-              Text('记录编号 #${item.id}'),
+              Text('${context.l10n.recordNumber} #${item.id}'),
               const SizedBox(height: 4),
-              Text('归零状态：${stateLabel(item.state)}'),
+              Text(context.l10n.resetStateValue(
+                localizedStateLabel(context, item.state),
+              )),
               const SizedBox(height: 4),
-              Text('记录时间：${_formatRecordTimeRange(item)}'),
+              Text(context.l10n.recordTimeValue(
+                _formatRecordTimeRange(context, item),
+              )),
               const SizedBox(height: 24),
               if (item.goal != null)
-                _DetailBlock(title: '今天的小进展', content: item.goal!),
+                _DetailBlock(
+                    title: context.l10n.smallProgressTitle,
+                    content: item.goal!),
               if (item.content != null)
-                _DetailBlock(title: '想记录的话', content: item.content!),
+                _DetailBlock(
+                    title: context.l10n.recordWordsTitle,
+                    content: item.content!),
               if (item.aiSummary != null)
-                _DetailBlock(title: 'ZEROON 回声', content: item.aiSummary!),
+                _DetailBlock(
+                    title: context.l10n.zeroonEchoTitle,
+                    content: item.aiSummary!),
             ],
           ),
         ),
@@ -71,19 +80,13 @@ class RecordDetailScreen extends ConsumerWidget {
   }
 }
 
-String _formatRecordTimeRange(ZeroRecord record) {
+String _formatRecordTimeRange(BuildContext context, ZeroRecord record) {
   final startedAt = record.stateStartedAt?.toLocal();
   final endedAt = record.stateEndedAt?.toLocal();
   if (startedAt != null && endedAt != null) {
-    return '${_formatTime(startedAt)} - ${_formatTime(endedAt)}';
+    return '${localizedTime(context, startedAt)} – ${localizedTime(context, endedAt)}';
   }
-  return _formatTime(record.createdAt.toLocal());
-}
-
-String _formatTime(DateTime value) {
-  final hour = value.hour.toString().padLeft(2, '0');
-  final minute = value.minute.toString().padLeft(2, '0');
-  return '$hour:$minute';
+  return localizedTime(context, record.createdAt);
 }
 
 class _DetailBlock extends StatelessWidget {

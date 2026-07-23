@@ -1,6 +1,6 @@
 # Sprint 10 Language and Locale Foundation V1
 
-Status: Planned
+Status: Complete
 Prepared: 2026-07-22
 
 ## Sprint Goal
@@ -64,14 +64,96 @@ sessions. Login must remain usable before account preferences are available.
 
 | Item | Status | Done when |
 |---|---|---|
-| S10-01 Locale architecture and inventory | Planned | Locale resolution, supported identifiers, account/device precedence, prohibited inference, affected strings, and API/data decision are documented before implementation |
-| S10-02 Mobile localization foundation | Planned | Flutter localization generation, Simplified Chinese and English resources, locale controller, pre-auth persistence, and no-flash startup behavior exist |
-| S10-03 Account preference contract | Planned | An authenticated user can read and update an explicit locale preference with migration, test schema, ownership, export, OpenAPI, and device-sync behavior aligned |
-| S10-04 Settings and complete mobile copy | Planned | Login exposes a discoverable language entry; Settings switches immediately; all current user-facing mobile success, empty, loading, error, retry, confirmation, and safety copy is localized |
-| S10-05 Companion language consistency | Planned | Provider prompt instruction, success response expectation, fallback, refusal, and safety notice follow the resolved preference without using Profile or Memory consent as a shortcut |
-| S10-06 Regression and runtime acceptance | Planned | Widget/backend tests cover resolution, persistence, immediate switching, restart/login behavior, fallback/refusal, original-content preservation, and both locale runtime smokes |
+| S10-01 Locale architecture and inventory | Complete | Locale resolution, supported identifiers, account/device precedence, prohibited inference, affected strings, and API/data decision are documented in ADR 005 and the Sprint 10 string inventory |
+| S10-02 Mobile localization foundation | Complete | Flutter gen-l10n, Simplified Chinese and English ARB resources, deterministic locale resolution, Riverpod locale state, SharedPreferences pre-auth persistence, storage-failure state, and pre-runApp restoration exist with focused and full mobile tests |
+| S10-03 Account preference contract | Complete | V11 persists the owned account preference; login/refresh/current-user, GET/PUT preference API, export V2, OpenAPI, test schema, Accept-Language propagation, pending-device-wins/account-wins synchronization, authorization, validation, PostgreSQL migration, and runtime API acceptance align |
+| S10-04 Settings and complete mobile copy | Complete | Login exposes a language-neutral globe entry; Profile/Settings switches immediately with honest pending-sync feedback; all current user-facing mobile success, empty, loading, error, retry, confirmation, AI-boundary, privacy-control, date, time, and accessibility copy is localized in Simplified Chinese and English |
+| S10-05 Companion language consistency | Complete | Weighted supported Accept-Language ranges, concrete account preference, and deterministic Chinese fallback select the Provider instruction, fallback, refusal, and safety notice without inspecting private content or weakening Provider bypass |
+| S10-06 Regression and runtime acceptance | Complete | Widget/backend tests cover resolution, persistence, immediate switching, restart/login behavior, fallback/refusal, original-content preservation, and both locale runtime smokes |
 
 ## S10-01 Architecture Questions
+
+Resolved by `docs/02_Architecture/ADR_005_Language_Locale_V1.md` and
+`docs/07_Sprints/Sprint_10_String_Inventory_V1.md` on 2026-07-22.
+
+## S10-04 Verification
+
+Completed on 2026-07-22:
+
+- Login exposes a language-neutral globe control before authentication, and
+  Profile/Settings exposes language independently from AI Profile consent.
+- Switching applies immediately; local persistence failure and delayed account
+  synchronization have localized, non-destructive feedback.
+- Login, Encounter, Now, Reset, completion, Archive, Record detail, Memory,
+  Growth, Profile, shared loading/retry, destructive confirmation, and AI
+  boundary surfaces use typed generated localization resources.
+- Raw client and server exception text is no longer rendered on localized
+  mobile failure surfaces.
+- State names, dates, times, durations, and dynamic count/value copy are
+  locale-aware while user-authored Record, Memory, Profile, and provider reply
+  text remains untouched.
+- `ZEROON`, `MY ZEROON`, `ZERO RECORD`, `ARCHIVE`, and related uppercase
+  SectionMark captions remain reviewed language-neutral visual marks; every
+  adjacent title, explanation, action, and accessibility label is localized.
+- Flutter analyze passes; all 28 mobile tests pass, including immediate Login
+  switching, first-frame English restoration, error redaction, Record/Memory
+  controls, and honest paused-memory AI semantics.
+- Runtime review at desktop and 390×844 mobile width confirms the Chinese
+  picker and English Login layout have no clipping, overlap, or mixed-language
+  product copy.
+
+## S10-05 Verification
+
+Completed on 2026-07-23:
+
+- Companion resolves the first supported `Accept-Language` range by quality
+  weight, then a concrete `EN` or `ZH_CN` account preference, then Simplified
+  Chinese for `FOLLOW_SYSTEM`, missing, malformed, or unsupported inputs.
+- `en` and English regional ranges resolve to English; `zh`, `zh-CN`, and
+  `zh-Hans` resolve to Simplified Chinese. Unsupported Traditional Chinese is
+  ignored rather than silently claimed as supported.
+- The active versioned system prompt is composed with a reviewed language
+  instruction. It asks for the resolved interaction language unless the
+  current message explicitly requests another one, and prohibits inference
+  from Profile, Memory, Records, history, location, nationality, or identity.
+- Provider failure fallback, deterministic safety refusal, and `safetyNotice`
+  are selected from reviewed server-owned Chinese and English copy.
+- Chinese and English safety terms share the same authority and category
+  labels; deterministic refusals still persist the user turn, bypass the
+  Provider, and record content-free bounded usage metadata.
+- Tests cover weighted ranges, malformed/unsupported headers, header/account/
+  fallback precedence, both Provider instructions, both fallback/refusal/
+  safety paths, Provider bypass, and byte-for-byte original message/export
+  preservation.
+- A temporary PostgreSQL-backed runtime account proved account `EN` fallback
+  without a header and immediate `zh-CN` header override on safety paths; the
+  account was then hard-deleted successfully.
+
+## S10-06 Verification
+
+Completed on 2026-07-23:
+
+- Focused regressions prove logout clears credentials without resetting the
+  device locale, and an immediate language switch on Reset preserves the
+  current route and unsaved text while refreshing visible copy.
+- The full mobile suite passes with 29 tests. Existing coverage also proves
+  first-frame restoration, account/device precedence, stale-response
+  protection, original Record/Memory/Profile/conversation export content,
+  localized fallback/refusal, and equivalent Chinese/English safety bypass.
+- A real provider success smoke returned an English reply and safety notice for
+  `en-US`, then a Chinese reply and safety notice for `zh-CN`. The synthetic
+  temporary account and its private data were hard-deleted with HTTP 204.
+- At 390×844, real web runtime review covers Chinese Login, the language
+  picker, English Login, English authenticated Now and Profile, authenticated
+  switching back to Chinese, and Chinese retention after logout. No clipping,
+  overlap, mixed-language product state, or broken hierarchy was observed.
+- PostgreSQL 16.14 validates all 11 migrations and reports schema version 11.
+  Backend tests, Flutter analyze/tests, admin lint/build, OpenAPI lint, health
+  smoke, and `git diff --check` all pass. Two pre-existing non-blocking admin
+  React Hook warnings and the known Vite chunk-size warning remain.
+- Runtime backend output contains no synthetic companion request or reply body;
+  automated usage-log assertions continue to limit observability to bounded,
+  content-free metadata.
 
 Before code changes, decide and document:
 

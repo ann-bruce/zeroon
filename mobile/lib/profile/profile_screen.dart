@@ -7,29 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_controller.dart';
 import '../common/zeroon_design.dart';
 import '../data_control/data_control_repository.dart';
+import '../l10n/l10n_extensions.dart';
+import '../locale/language_picker.dart';
 import '../my_zeroon/my_zeroon_controller.dart';
 import '../my_zeroon/my_zeroon_models.dart';
 import 'profile_controller.dart';
 import 'profile_models.dart';
-
-const _avatarPresets = [
-  _ProfileOption('ZEROON_DEFAULT', '默认'),
-  _ProfileOption('MOON', '月光'),
-  _ProfileOption('MOUNTAIN', '山'),
-  _ProfileOption('SEA', '海'),
-  _ProfileOption('LIGHT', '光'),
-  _ProfileOption('SEED', '种子'),
-];
-
-const _ageRanges = [
-  _ProfileOption('UNDER_18', '18 岁以下'),
-  _ProfileOption('18_24', '18 - 24'),
-  _ProfileOption('25_34', '25 - 34'),
-  _ProfileOption('35_44', '35 - 44'),
-  _ProfileOption('45_54', '45 - 54'),
-  _ProfileOption('55_PLUS', '55 岁以上'),
-  _ProfileOption('PREFER_NOT_TO_SAY', '暂不说明'),
-];
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -68,11 +51,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         data: (profile) {
           _syncFromProfile(profile);
           if (previous?.isLoading == true) {
-            setState(() => _message = '已经保存。');
+            setState(() => _message = context.l10n.profileSaved);
           }
         },
         error: (error, stackTrace) {
-          setState(() => _message = '保存失败：$error');
+          setState(() => _message = context.l10n.profileSaveFailed);
         },
       );
     });
@@ -81,7 +64,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: profileState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _ProfileError(
-          message: error.toString(),
           onRetry: () => ref.invalidate(profileProvider),
         ),
         data: (profile) {
@@ -158,11 +140,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ClipboardData(text: const JsonEncoder.withIndent('  ').convert(data)),
       );
       if (mounted) {
-        setState(() => _message = '你的数据副本已复制为 JSON。');
+        setState(() => _message = context.l10n.dataCopied);
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _message = '暂时无法准备数据副本，请稍后再试。');
+        setState(() => _message = context.l10n.dataExportFailed);
       }
     } finally {
       if (mounted) {
@@ -175,19 +157,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('删除账户与全部数据？'),
-        content: const Text(
-          '你的资料、记录、对话、Memory 和登录会话会立即删除，无法恢复。'
-          '去标识化的运行统计可能按隐私说明保留。',
-        ),
+        title: Text(context.l10n.deleteAccountTitle),
+        content: Text(context.l10n.deleteAccountBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('先保留'),
+            child: Text(context.l10n.keepForNow),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('确认删除'),
+            child: Text(context.l10n.confirmDelete),
           ),
         ],
       ),
@@ -207,7 +186,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _message = '删除没有完成，你的数据仍然保留。请稍后再试。');
+        setState(() => _message = context.l10n.deleteAccountFailed);
       }
     } finally {
       if (mounted) {
@@ -267,9 +246,10 @@ class _ProfileForm extends StatelessWidget {
       children: [
         ZeroonHeader(
           mark: 'MY ZEROON',
-          title: '我与 ZEROON',
+          title: context.l10n.profileTitle,
           center: true,
           leading: ZeroonIconButton(
+            semanticLabel: context.l10n.back,
             child: const Icon(Icons.chevron_left),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
@@ -279,38 +259,40 @@ class _ProfileForm extends StatelessWidget {
           state: myZeroonState,
           onRetry: onRetryMyZeroon,
         ),
+        const SizedBox(height: 12),
+        const LanguageSettingCard(),
         const SizedBox(height: 18),
         const _ProfileSectionIntro(),
         const SizedBox(height: 12),
         TextField(
           controller: nicknameController,
           maxLength: 30,
-          decoration: const InputDecoration(
-            labelText: '昵称',
-            hintText: 'ZEROON 可以怎样称呼你',
+          decoration: InputDecoration(
+            labelText: context.l10n.nickname,
+            hintText: context.l10n.nicknameHint,
           ),
         ),
         const SizedBox(height: 8),
         _ProfileDropdown(
-          label: '头像预设',
+          label: context.l10n.avatarPreset,
           value: avatarPreset,
-          options: _avatarPresets,
+          options: _avatarPresets(context),
           onChanged: onAvatarChanged,
         ),
         const SizedBox(height: 14),
         _ProfileDropdown(
-          label: '年龄段',
+          label: context.l10n.ageRange,
           value: ageRange,
-          options: _ageRanges,
+          options: _ageRanges(context),
           onChanged: onAgeRangeChanged,
         ),
         const SizedBox(height: 14),
         TextField(
           controller: occupationController,
           maxLength: 40,
-          decoration: const InputDecoration(
-            labelText: '职业 / 身份',
-            hintText: '学生、设计师、创业者，或其他你愿意留下的身份',
+          decoration: InputDecoration(
+            labelText: context.l10n.occupation,
+            hintText: context.l10n.occupationHint,
           ),
         ),
         const SizedBox(height: 8),
@@ -319,9 +301,9 @@ class _ProfileForm extends StatelessWidget {
           maxLength: 120,
           minLines: 2,
           maxLines: 3,
-          decoration: const InputDecoration(
-            labelText: '一句话自我描述',
-            hintText: '你希望 ZEROON 怎样理解你',
+          decoration: InputDecoration(
+            labelText: context.l10n.selfDescription,
+            hintText: context.l10n.selfDescriptionHint,
             alignLabelWithHint: true,
           ),
         ),
@@ -330,16 +312,16 @@ class _ProfileForm extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 13, 12, 13),
           child: Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('允许 ZEROON 使用我的信息',
-                        style: TextStyle(fontWeight: FontWeight.w700)),
-                    SizedBox(height: 6),
+                    Text(context.l10n.allowProfileContext,
+                        style: const TextStyle(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 6),
                     Text(
-                      '开启后，ZEROON 只会参考你主动填写的昵称、年龄段、职业 / 身份和自我描述。关闭后，下一次回应起就不再使用。',
-                      style: TextStyle(color: zeroonMuted, fontSize: 11),
+                      context.l10n.allowProfileContextHint,
+                      style: const TextStyle(color: zeroonMuted, fontSize: 11),
                     ),
                   ],
                 ),
@@ -353,7 +335,7 @@ class _ProfileForm extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         ZeroonPrimaryButton(
-          label: '保存我的信息',
+          label: context.l10n.saveProfile,
           loading: saving,
           onPressed: onSave,
         ),
@@ -394,11 +376,11 @@ class _DataControlSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionMark('DATA & PRIVACY'),
+        SectionMark(context.l10n.dataControlTitle),
         const SizedBox(height: 7),
-        const Text(
-          '你可以带走自己的数据，也可以随时离开。',
-          style: TextStyle(color: zeroonMuted, height: 1.45),
+        Text(
+          context.l10n.dataControlBody,
+          style: const TextStyle(color: zeroonMuted, height: 1.45),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -406,14 +388,16 @@ class _DataControlSection extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: exporting || deleting ? null : onExport,
             icon: const Icon(Icons.content_copy_outlined, size: 18),
-            label: Text(exporting ? '正在准备数据副本...' : '复制我的数据副本'),
+            label: Text(exporting
+                ? context.l10n.exportingData
+                : context.l10n.exportData),
           ),
         ),
         Align(
           alignment: Alignment.center,
           child: TextButton(
             onPressed: deleting ? null : onLogout,
-            child: const Text('退出登录'),
+            child: Text(context.l10n.logout),
           ),
         ),
         Align(
@@ -423,7 +407,9 @@ class _DataControlSection extends StatelessWidget {
             style: TextButton.styleFrom(
               foregroundColor: const Color(0xFF9A4D4D),
             ),
-            child: Text(deleting ? '正在删除...' : '删除账户与数据'),
+            child: Text(deleting
+                ? context.l10n.deletingAccount
+                : context.l10n.deleteAccount),
           ),
         ),
       ],
@@ -448,7 +434,6 @@ class _MyZeroonCard extends StatelessWidget {
       child: state.when(
         loading: () => const _MyZeroonLoadingCard(),
         error: (error, stackTrace) => _MyZeroonErrorCard(
-          message: error.toString(),
           onRetry: onRetry,
         ),
         data: (companion) {
@@ -474,10 +459,11 @@ class _MyZeroonNotMetCard extends StatelessWidget {
         const SizedBox(height: 8),
         const SectionMark('MY ZEROON'),
         const SizedBox(height: 10),
-        Text('还没有与 ZEROON 相遇', style: zeroonSerif(context, size: 23)),
+        Text(context.l10n.companionNotMetTitle,
+            style: zeroonSerif(context, size: 23)),
         const SizedBox(height: 8),
-        const Text(
-          '首次登录后会先完成相遇，再启用 ZEROON 的记录和回看功能。',
+        Text(
+          context.l10n.companionNotMetBody,
           textAlign: TextAlign.center,
         ),
       ],
@@ -499,15 +485,16 @@ class _MyZeroonMetCard extends StatelessWidget {
         const SizedBox(height: 8),
         const SectionMark('MY ZEROON'),
         const SizedBox(height: 10),
-        Text('你的 ZEROON 已经在这里', style: zeroonSerif(context, size: 23)),
+        Text(context.l10n.companionHereTitle,
+            style: zeroonSerif(context, size: 23)),
         const SizedBox(height: 8),
-        const Text(
-          '我在这里。以后你留下的此刻，我都会陪你一起回看。',
+        Text(
+          context.l10n.companionHereBody,
           textAlign: TextAlign.center,
         ),
         if (companion.nameplateSerial != null) ...[
           const SizedBox(height: 14),
-          const SectionMark('NAMEPLATE'),
+          SectionMark(context.l10n.nameplate),
           const SizedBox(height: 7),
           Text(
             companion.nameplateSerial!,
@@ -566,14 +553,14 @@ class _ProfileSectionIntro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionMark('LET ZEROON KNOW YOU'),
-        SizedBox(height: 7),
+        const SectionMark('LET ZEROON KNOW YOU'),
+        const SizedBox(height: 7),
         Text(
-          '让 ZEROON 更懂你。以下信息都可以留空，只用于帮助它理解你留下的记录。',
-          style: TextStyle(color: zeroonMuted, height: 1.45),
+          context.l10n.profileIntro,
+          style: const TextStyle(color: zeroonMuted, height: 1.45),
         ),
       ],
     );
@@ -585,24 +572,22 @@ class _MyZeroonLoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       children: [
-        SizedBox(
+        const SizedBox(
           width: 18,
           height: 18,
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
-        SizedBox(width: 12),
-        Text('正在确认你的 ZEROON...'),
+        const SizedBox(width: 12),
+        Text(context.l10n.companionChecking),
       ],
     );
   }
 }
 
 class _MyZeroonErrorCard extends StatelessWidget {
-  const _MyZeroonErrorCard({required this.message, required this.onRetry});
-
-  final String message;
+  const _MyZeroonErrorCard({required this.onRetry});
   final VoidCallback onRetry;
 
   @override
@@ -612,11 +597,16 @@ class _MyZeroonErrorCard extends StatelessWidget {
       children: [
         const SectionMark('MY ZEROON'),
         const SizedBox(height: 8),
-        Text('暂时没有见到 ZEROON', style: zeroonSerif(context, size: 22)),
+        Text(context.l10n.encounterUnavailableTitle,
+            style: zeroonSerif(context, size: 22)),
         const SizedBox(height: 6),
-        Text(message, style: const TextStyle(color: zeroonMuted)),
+        Text(context.l10n.encounterUnavailableBody,
+            style: const TextStyle(color: zeroonMuted)),
         const SizedBox(height: 12),
-        OutlinedButton(onPressed: onRetry, child: const Text('再试一次')),
+        OutlinedButton(
+          onPressed: onRetry,
+          child: Text(context.l10n.retryShort),
+        ),
       ],
     );
   }
@@ -641,9 +631,9 @@ class _ProfileDropdown extends StatelessWidget {
       initialValue: value,
       decoration: InputDecoration(labelText: label),
       items: [
-        const DropdownMenuItem<String>(
+        DropdownMenuItem<String>(
           value: null,
-          child: Text('暂不填写'),
+          child: Text(context.l10n.optionalNone),
         ),
         for (final option in options)
           DropdownMenuItem<String>(
@@ -657,9 +647,7 @@ class _ProfileDropdown extends StatelessWidget {
 }
 
 class _ProfileError extends StatelessWidget {
-  const _ProfileError({required this.message, required this.onRetry});
-
-  final String message;
+  const _ProfileError({required this.onRetry});
   final VoidCallback onRetry;
 
   @override
@@ -667,11 +655,10 @@ class _ProfileError extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text('我的信息读取失败', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Text(message),
+        Text(context.l10n.profileLoadFailed,
+            style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 12),
-        OutlinedButton(onPressed: onRetry, child: const Text('重试')),
+        OutlinedButton(onPressed: onRetry, child: Text(context.l10n.retry)),
       ],
     );
   }
@@ -683,6 +670,25 @@ class _ProfileOption {
   final String value;
   final String label;
 }
+
+List<_ProfileOption> _avatarPresets(BuildContext context) => [
+      _ProfileOption('ZEROON_DEFAULT', context.l10n.avatarDefault),
+      _ProfileOption('MOON', context.l10n.avatarMoon),
+      _ProfileOption('MOUNTAIN', context.l10n.avatarMountain),
+      _ProfileOption('SEA', context.l10n.avatarSea),
+      _ProfileOption('LIGHT', context.l10n.avatarLight),
+      _ProfileOption('SEED', context.l10n.avatarSeed),
+    ];
+
+List<_ProfileOption> _ageRanges(BuildContext context) => [
+      _ProfileOption('UNDER_18', context.l10n.ageUnder18),
+      _ProfileOption('18_24', context.l10n.age18To24),
+      _ProfileOption('25_34', context.l10n.age25To34),
+      _ProfileOption('35_44', context.l10n.age35To44),
+      _ProfileOption('45_54', context.l10n.age45To54),
+      _ProfileOption('55_PLUS', context.l10n.age55Plus),
+      _ProfileOption('PREFER_NOT_TO_SAY', context.l10n.agePreferNot),
+    ];
 
 String? _blankToNull(String value) {
   final trimmed = value.trim();

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:zeroon_mobile/auth/auth_models.dart';
 import 'package:zeroon_mobile/auth/login_screen.dart';
 import 'package:zeroon_mobile/auth/token_store.dart';
@@ -15,6 +16,10 @@ import 'package:zeroon_mobile/growth/growth_models.dart';
 import 'package:zeroon_mobile/growth/growth_repository.dart';
 import 'package:zeroon_mobile/home/home_shell.dart';
 import 'package:zeroon_mobile/home/now_screen.dart';
+import 'package:zeroon_mobile/l10n/app_localizations.dart';
+import 'package:zeroon_mobile/locale/locale_controller.dart';
+import 'package:zeroon_mobile/locale/locale_preference.dart';
+import 'package:zeroon_mobile/locale/locale_preference_store.dart';
 import 'package:zeroon_mobile/main.dart';
 import 'package:zeroon_mobile/memory/memory_models.dart';
 import 'package:zeroon_mobile/memory/memory_repository.dart';
@@ -34,7 +39,10 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [tokenStoreProvider.overrideWithValue(_FakeTokenStore())],
+        overrides: [
+          tokenStoreProvider.overrideWithValue(_FakeTokenStore()),
+          initialLocaleStateProvider.overrideWithValue(_zhLocaleState),
+        ],
         child: const ZeroonApp(),
       ),
     );
@@ -43,6 +51,43 @@ void main() {
     expect(find.text('ZEROON'), findsOneWidget);
     expect(find.text('欢迎回来。'), findsOneWidget);
     expect(find.text('获取验证码'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('切换语言 / Change language'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('login language entry switches the app immediately', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tokenStoreProvider.overrideWithValue(_FakeTokenStore()),
+          initialLocaleStateProvider.overrideWithValue(
+            const LocaleState(
+              preference: LocalePreference.simplifiedChinese,
+              pendingAccountSync: false,
+              deviceStorageAvailable: true,
+            ),
+          ),
+          localePreferenceStoreProvider.overrideWithValue(
+            VolatileLocalePreferenceStore(),
+          ),
+        ],
+        child: const ZeroonApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.language));
+    await tester.pumpAndSettle();
+    expect(find.text('简体中文'), findsOneWidget);
+    expect(find.text('English'), findsOneWidget);
+
+    await tester.tap(find.text('English'));
+    await tester.pumpAndSettle();
+    expect(find.text('Welcome back.'), findsOneWidget);
   });
 
   testWidgets('renders current session on the Now screen', (tester) async {
@@ -68,16 +113,16 @@ void main() {
           ),
           growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
         ],
-        child: MaterialApp(
-          home: NowScreen(session: session, onStartReset: () {}),
+        child: _localizedApp(
+          NowScreen(session: session, onStartReset: () {}),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('今天的 ZEROON'), findsOneWidget);
+    expect(find.text('今天的 ZEROON'), findsWidgets);
     expect(find.text('平静'), findsWidgets);
-    expect(find.text('晚上好，8000'), findsOneWidget);
+    expect(find.text('见到你了， 8000'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('7 天'), findsOneWidget);
@@ -88,15 +133,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [tokenStoreProvider.overrideWithValue(_FakeTokenStore())],
-        child: const MaterialApp(
-          home: LoginScreen(initialError: 'session expired'),
+        child: _localizedApp(
+          const LoginScreen(initialError: 'session expired'),
         ),
       ),
     );
 
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('session expired'), findsOneWidget);
+    expect(find.text('暂时无法登录。语言选择仍保存在这台设备上。'), findsOneWidget);
+    expect(find.text('session expired'), findsNothing);
   });
 
   testWidgets('authenticated user meets ZEROON before entering the app', (
@@ -114,6 +160,7 @@ void main() {
           ),
           recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
           growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          initialLocaleStateProvider.overrideWithValue(_zhLocaleState),
         ],
         child: const ZeroonApp(),
       ),
@@ -130,7 +177,7 @@ void main() {
     await tester.tap(find.text('进入 ZEROON'));
     await tester.pumpAndSettle();
 
-    expect(find.text('今天的 ZEROON'), findsOneWidget);
+    expect(find.text('今天的 ZEROON'), findsWidgets);
   });
 
   testWidgets('home shell navigates between Now Archive and Growth', (
@@ -149,12 +196,12 @@ void main() {
           profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
           growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
         ],
-        child: const MaterialApp(home: HomeShell(session: _session)),
+        child: _localizedApp(const HomeShell(session: _session)),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('今天的 ZEROON'), findsOneWidget);
+    expect(find.text('今天的 ZEROON'), findsWidgets);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('7 天'), findsOneWidget);
@@ -244,7 +291,7 @@ void main() {
             _FakeMyZeroonRepository(initialMet: true),
           ),
         ],
-        child: const MaterialApp(home: HomeShell(session: _session)),
+        child: _localizedApp(const HomeShell(session: _session)),
       ),
     );
     await tester.pumpAndSettle();
@@ -257,6 +304,10 @@ void main() {
     expect(find.text('ZR-20260703-A8K2'), findsOneWidget);
     expect(find.text('这是我的 ZEROON'), findsNothing);
     expect(find.textContaining('让 ZEROON 更懂你'), findsOneWidget);
+    await tester.drag(find.byType(ListView).last, const Offset(0, -350));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byType(TextField).first);
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'Bruce');
     await tester.drag(find.byType(ListView).last, const Offset(0, -700));
     await tester.pumpAndSettle();
@@ -310,7 +361,7 @@ void main() {
             companionRepository,
           ),
         ],
-        child: const MaterialApp(home: ResetScreen()),
+        child: _localizedApp(const ResetScreen()),
       ),
     );
     await tester.pumpAndSettle();
@@ -343,6 +394,51 @@ void main() {
     expect(find.byIcon(Icons.chevron_left), findsNothing);
   });
 
+  testWidgets('language switch keeps the Reset screen and unsaved draft', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          initialLocaleStateProvider.overrideWithValue(_zhLocaleState),
+          localePreferenceStoreProvider.overrideWithValue(
+            VolatileLocalePreferenceStore(),
+          ),
+        ],
+        child: const _ReactiveLocalizedApp(home: ResetScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('归零'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, '还没有保存的一句话');
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ResetScreen)),
+    );
+
+    await container
+        .read(localeControllerProvider.notifier)
+        .selectDevicePreference(LocalePreference.english);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ResetScreen), findsOneWidget);
+    expect(find.text('Reset'), findsOneWidget);
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      '还没有保存的一句话',
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byType(TextField).first)
+          .decoration
+          ?.labelText,
+      'Leave a few words',
+    );
+  });
+
   testWidgets('archive screen shows observation card for cached records', (
     tester,
   ) async {
@@ -356,7 +452,7 @@ void main() {
           recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
           companionRepositoryProvider.overrideWithValue(companionRepository),
         ],
-        child: const MaterialApp(home: HomeShell(session: _session)),
+        child: _localizedApp(const HomeShell(session: _session)),
       ),
     );
     await tester.pumpAndSettle();
@@ -390,7 +486,7 @@ void main() {
           recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
           companionRepositoryProvider.overrideWithValue(companionRepository),
         ],
-        child: const MaterialApp(home: HomeShell(session: _session)),
+        child: _localizedApp(const HomeShell(session: _session)),
       ),
     );
     await tester.pumpAndSettle();
@@ -426,7 +522,7 @@ void main() {
             _FlakyCompanionRepository(),
           ),
         ],
-        child: const MaterialApp(home: HomeShell(session: _session)),
+        child: _localizedApp(const HomeShell(session: _session)),
       ),
     );
     await tester.pumpAndSettle();
@@ -435,7 +531,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('这一次没能回看。你的记录仍然好好保存在这里。'), findsOneWidget);
-    await tester.tap(find.text('再试一次'));
+    await tester.tap(find.text('重试'));
     await tester.pumpAndSettle();
 
     expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
@@ -457,7 +553,7 @@ void main() {
           ),
           memoryRepositoryProvider.overrideWithValue(memoryRepository),
         ],
-        child: const MaterialApp(home: HomeShell(session: _session)),
+        child: _localizedApp(const HomeShell(session: _session)),
       ),
     );
     await tester.pumpAndSettle();
@@ -478,7 +574,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('记录详情'), findsOneWidget);
     expect(find.text('记录编号 #1'), findsOneWidget);
-    await tester.pageBack();
+    Navigator.of(tester.element(find.text('记录详情'))).pop();
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('允许用于回应参考'));
@@ -535,7 +631,7 @@ void main() {
           ),
           memoryRepositoryProvider.overrideWithValue(memoryRepository),
         ],
-        child: const MaterialApp(home: HomeShell(session: _session)),
+        child: _localizedApp(const HomeShell(session: _session)),
       ),
     );
     await tester.pumpAndSettle();
@@ -592,8 +688,40 @@ const _session = AuthSession(
   ),
 );
 
+const _zhLocaleState = LocaleState(
+  preference: LocalePreference.simplifiedChinese,
+  pendingAccountSync: false,
+  deviceStorageAvailable: true,
+);
+
 final _testRecordCreatedAt = DateTime.now();
 final _testRecordDateLabel = _formatTestDate(_testRecordCreatedAt);
+
+Widget _localizedApp(Widget home, {Locale locale = const Locale('zh', 'CN')}) {
+  return MaterialApp(
+    locale: locale,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: home,
+  );
+}
+
+class _ReactiveLocalizedApp extends ConsumerWidget {
+  const _ReactiveLocalizedApp({required this.home});
+
+  final Widget home;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeControllerProvider);
+    return MaterialApp(
+      locale: locale.materialLocale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: home,
+    );
+  }
+}
 
 class _FakeCurrentStateController extends CurrentStateController {
   @override
@@ -804,7 +932,8 @@ class _FakeDataControlRepository extends DataControlRepository {
   Future<Map<String, dynamic>> exportData() async {
     exportCalls += 1;
     return {
-      'schemaVersion': 'zeroon-beta-export-v1',
+      'schemaVersion': 'zeroon-beta-export-v2',
+      'account': {'languagePreference': 'FOLLOW_SYSTEM'},
       'records': [
         {'content': 'today I paused'},
       ],
@@ -897,7 +1026,7 @@ class _DelayedCompanionRepository extends CompanionRepository {
 }
 
 String _formatTestDate(DateTime date) {
-  return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+  return DateFormat.yMMMd('zh_CN').format(date);
 }
 
 class _FlakyCompanionRepository extends CompanionRepository {

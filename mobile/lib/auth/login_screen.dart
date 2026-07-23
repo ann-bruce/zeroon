@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../common/zeroon_design.dart';
+import '../l10n/l10n_extensions.dart';
+import '../locale/language_picker.dart';
 import 'auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -30,7 +32,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.isLoading || _requestingCode;
-    final error = widget.initialError ?? authState.error?.toString();
+    final hasError = widget.initialError != null || authState.hasError;
+    final l10n = context.l10n;
 
     return ZeroonScreen(
       child: ListView(
@@ -40,10 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Wordmark(),
-              ZeroonIconButton(
-                child: const Text('?', style: TextStyle(fontSize: 13)),
-                onPressed: () {},
-              ),
+              const LanguagePickerButton(),
             ],
           ),
           const SizedBox(height: 62),
@@ -78,17 +78,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const SectionMark('归零 / ZEROON'),
+          SectionMark(l10n.loginMark),
           const SizedBox(height: 10),
-          Text('欢迎回来。', style: zeroonSerif(context, size: 30)),
+          Text(l10n.loginWelcome, style: zeroonSerif(context, size: 30)),
           const SizedBox(height: 8),
-          const Text('这里没有需要证明的事。\n先从此刻开始。'),
+          Text(l10n.loginBody),
           const SizedBox(height: 28),
           TextField(
             controller: _mobileController,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: '手机号',
+            decoration: InputDecoration(
+              labelText: l10n.mobileNumber,
               prefixText: '+86  ',
             ),
           ),
@@ -97,22 +97,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             controller: _codeController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              labelText: '验证码',
+              labelText: l10n.verificationCode,
               suffixIcon: TextButton(
                 onPressed: isLoading ? null : _requestCode,
-                child: const Text('获取验证码'),
+                child: Text(l10n.requestCode),
               ),
             ),
           ),
           const SizedBox(height: 18),
           ZeroonPrimaryButton(
-            label: '进入 ZEROON',
+            label: l10n.enterZeroon,
             loading: isLoading,
             onPressed: _login,
           ),
           const SizedBox(height: 10),
-          const Text(
-            '登录即代表同意《用户协议》与《隐私政策》',
+          Text(
+            l10n.loginAgreement,
             textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xFF9F9E9B), fontSize: 9),
           ),
@@ -120,10 +120,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const SizedBox(height: 16),
             Text(_message!, style: const TextStyle(color: Color(0xFF2F6F78))),
           ],
-          if (error != null) ...[
+          if (hasError) ...[
             const SizedBox(height: 16),
             Text(
-              error,
+              l10n.loginUnavailable,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ],
@@ -141,9 +141,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(authControllerProvider.notifier)
           .requestCode(_mobileController.text.trim());
-      setState(() => _message = '本地验证码已生成，开发环境默认使用 000000。');
-    } catch (error) {
-      setState(() => _message = '验证码请求失败：$error');
+      if (mounted) {
+        setState(() => _message = context.l10n.localCodeReady);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _message = context.l10n.codeRequestFailed);
+      }
     } finally {
       if (mounted) {
         setState(() => _requestingCode = false);

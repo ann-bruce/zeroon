@@ -43,6 +43,11 @@ class UserDataControlControllerTest {
     @Test
     void dataControlEndpointsRequireAuthentication() throws Exception {
         mockMvc.perform(get("/api/v1/me")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/me/preferences/language")).andExpect(status().isUnauthorized());
+        mockMvc.perform(put("/api/v1/me/preferences/language")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"languagePreference\":\"EN\"}"))
+                .andExpect(status().isUnauthorized());
         mockMvc.perform(get("/api/v1/me/export")).andExpect(status().isUnauthorized());
         mockMvc.perform(delete("/api/v1/me/deletion")).andExpect(status().isUnauthorized());
     }
@@ -72,6 +77,12 @@ class UserDataControlControllerTest {
                 """, owner.getId());
 
         String accessToken = ownerSession.path("accessToken").asText();
+        mockMvc.perform(put("/api/v1/me/preferences/language")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"languagePreference\":\"EN\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.languagePreference").value("EN"));
         mockMvc.perform(put("/api/v1/me/profile")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -89,15 +100,17 @@ class UserDataControlControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.uid").value(owner.getUid()))
                 .andExpect(jsonPath("$.mobile").value("13700805001"))
-                .andExpect(jsonPath("$.roles[0]").value("USER"));
+                .andExpect(jsonPath("$.roles[0]").value("USER"))
+                .andExpect(jsonPath("$.languagePreference").value("EN"));
 
         String export = mockMvc.perform(get("/api/v1/me/export")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(header().string(
                         "Content-Disposition", "attachment; filename=zeroon-data-export.json"))
-                .andExpect(jsonPath("$.schemaVersion").value("zeroon-beta-export-v1"))
+                .andExpect(jsonPath("$.schemaVersion").value("zeroon-beta-export-v2"))
                 .andExpect(jsonPath("$.account.mobile").value("13700805001"))
+                .andExpect(jsonPath("$.account.languagePreference").value("EN"))
                 .andExpect(jsonPath("$.profile.nickname").value("River"))
                 .andExpect(jsonPath("$.records[0].content").value("owner private content"))
                 .andExpect(jsonPath("$.memoryEntries[0].enabled").value(true))
@@ -117,6 +130,55 @@ class UserDataControlControllerTest {
                 .doesNotContain("refreshToken")
                 .doesNotContain("tokenHash");
         assertThat(otherSession.path("accessToken").asText()).isNotBlank();
+    }
+
+    @Test
+    void languagePreferenceIsIdempotentOwnerScopedAndValidated() throws Exception {
+        JsonNode ownerSession = login("13700805011", "language-owner");
+        JsonNode otherSession = login("13700805012", "language-other");
+        String ownerToken = ownerSession.path("accessToken").asText();
+        String otherToken = otherSession.path("accessToken").asText();
+
+        mockMvc.perform(get("/api/v1/me/preferences/language")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.languagePreference").value("FOLLOW_SYSTEM"));
+
+        for (int attempt = 0; attempt < 2; attempt++) {
+            mockMvc.perform(put("/api/v1/me/preferences/language")
+                            .header("Authorization", "Bearer " + ownerToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"languagePreference\":\"ZH_CN\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.languagePreference").value("ZH_CN"));
+        }
+
+        mockMvc.perform(get("/api/v1/me/preferences/language")
+                        .header("Authorization", "Bearer " + otherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.languagePreference").value("FOLLOW_SYSTEM"));
+
+        mockMvc.perform(put("/api/v1/me/preferences/language")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"languagePreference\":\"UNKNOWN\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("bad_request"));
+
+        mockMvc.perform(put("/api/v1/me/preferences/language")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("bad_request"));
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\""
+                                + ownerSession.path("refreshToken").asText()
+                                + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.languagePreference").value("ZH_CN"));
     }
 
     @Test

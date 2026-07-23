@@ -21,9 +21,10 @@ current behavior.
 
 ## Beta Export Scope
 
-`zeroon-beta-export-v1` includes:
+`zeroon-beta-export-v2` includes:
 
-- account identity, state, status, roles, and creation time;
+- account identity, state, status, roles, explicit language preference, and
+  creation time;
 - optional Profile and AI-context permission;
 - the user's private ZEROON companion;
 - device/session metadata without credentials;
@@ -39,6 +40,10 @@ content, and records belonging to another user. The Beta mobile client copies
 the JSON data copy to the system clipboard; the API also supplies an attachment
 filename for clients that support file downloads.
 
+V2 adds only the explicit `languagePreference` account field while preserving
+all V1 property names. It never exports a language inferred from Profile,
+Record, Memory, conversation, or other private text.
+
 This product export is not a substitute for jurisdiction-specific data-access
 or records-of-processing obligations.
 
@@ -48,6 +53,7 @@ Deletion is immediate, authenticated, owner-scoped, and idempotent. The first
 successful request deletes the user row; database foreign keys then remove:
 
 - roles and refresh sessions;
+- the account language preference stored on the deleted user row;
 - Profile and private ZEROON companion;
 - state history and state sessions;
 - Zero Records;

@@ -6,11 +6,24 @@ import 'auth/auth_models.dart';
 import 'auth/login_screen.dart';
 import 'common/zeroon_design.dart';
 import 'home/home_shell.dart';
+import 'l10n/app_localizations.dart';
+import 'locale/locale_controller.dart';
+import 'locale/locale_preference.dart';
 import 'my_zeroon/encounter_screen.dart';
 import 'my_zeroon/my_zeroon_controller.dart';
 
-void main() {
-  runApp(const ProviderScope(child: ZeroonApp()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final localeBootstrap = await bootstrapLocale();
+  runApp(
+    ProviderScope(
+      overrides: [
+        initialLocaleStateProvider.overrideWithValue(localeBootstrap.state),
+        localePreferenceStoreProvider.overrideWithValue(localeBootstrap.store),
+      ],
+      child: const ZeroonApp(),
+    ),
+  );
 }
 
 class ZeroonApp extends ConsumerWidget {
@@ -19,10 +32,16 @@ class ZeroonApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sessionState = ref.watch(authControllerProvider);
+    final localeState = ref.watch(localeControllerProvider);
 
     return MaterialApp(
-      title: 'ZEROON',
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
+      locale: localeState.materialLocale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localeListResolutionCallback: (systemLocales, supportedLocales) =>
+          resolveSupportedSystemLocale(systemLocales, supportedLocales),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: zeroonCyan,

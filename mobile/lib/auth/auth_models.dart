@@ -1,3 +1,5 @@
+import '../locale/locale_preference.dart';
+
 class AuthSession {
   const AuthSession({
     required this.accessToken,
@@ -28,6 +30,15 @@ class AuthSession {
       'user': user.toJson(),
     };
   }
+
+  AuthSession copyWith({ZeroonUser? user}) {
+    return AuthSession(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      expiresIn: expiresIn,
+      user: user ?? this.user,
+    );
+  }
 }
 
 class ZeroonUser {
@@ -35,21 +46,43 @@ class ZeroonUser {
     required this.uid,
     required this.mobile,
     required this.currentState,
+    this.languagePreference,
   });
 
   final String uid;
   final String? mobile;
   final String currentState;
+  final LocalePreference? languagePreference;
 
   factory ZeroonUser.fromJson(Map<String, dynamic> json) {
     return ZeroonUser(
       uid: json['uid'] as String,
       mobile: json['mobile'] as String?,
       currentState: json['currentState'] as String,
+      languagePreference: json.containsKey('languagePreference')
+          ? LocalePreference.fromWireValue(
+              json['languagePreference'] as String?,
+            )
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'uid': uid, 'mobile': mobile, 'currentState': currentState};
+    return {
+      'uid': uid,
+      'mobile': mobile,
+      'currentState': currentState,
+      if (languagePreference != null)
+        'languagePreference': languagePreference!.wireValue,
+    };
+  }
+
+  ZeroonUser copyWith({LocalePreference? languagePreference}) {
+    return ZeroonUser(
+      uid: uid,
+      mobile: mobile,
+      currentState: currentState,
+      languagePreference: languagePreference ?? this.languagePreference,
+    );
   }
 }

@@ -6,7 +6,8 @@ evolution.
 
 ## Identity
 
-- `users`: profile, current state, lifecycle status
+- `users`: identity, current state, lifecycle status, and explicit
+  `language_preference` (`FOLLOW_SYSTEM`, `ZH_CN`, or `EN`)
 - `user_roles`: `USER` and `ADMIN` authorization
 - `refresh_sessions`: hashed rotating refresh tokens by device
 
@@ -42,6 +43,10 @@ users
 
 All private product tables delete with their owning user. Operational audit
 records preserve the event while nulling a deleted actor reference.
+
+`language_preference` is an account interaction preference introduced by V11.
+It is not stored in `user_profiles`, does not grant AI context consent, and is
+removed with the user row.
 
 ## Query Baseline
 

@@ -38,6 +38,10 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     private UserStatus status = UserStatus.ACTIVE;
 
+    @Column(name = "language_preference", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    private LanguagePreference languagePreference = LanguagePreference.FOLLOW_SYSTEM;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role", nullable = false, length = 20)
@@ -84,6 +88,10 @@ public class UserEntity {
         return status;
     }
 
+    public LanguagePreference getLanguagePreference() {
+        return languagePreference;
+    }
+
     public Set<UserRole> getRoles() {
         return Set.copyOf(roles);
     }
@@ -99,6 +107,11 @@ public class UserEntity {
 
     public void changeState(UserState state) {
         this.currentState = state;
+        this.updatedAt = Instant.now();
+    }
+
+    public void changeLanguagePreference(LanguagePreference languagePreference) {
+        this.languagePreference = languagePreference;
         this.updatedAt = Instant.now();
     }
 }

@@ -52,6 +52,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.accessToken", not(blankOrNullString())))
                 .andExpect(jsonPath("$.refreshToken", not(blankOrNullString())))
                 .andExpect(jsonPath("$.user.mobile").value("13800138000"))
+                .andExpect(jsonPath("$.user.languagePreference").value("FOLLOW_SYSTEM"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -65,6 +66,7 @@ class AuthControllerTest {
                         .content("{\"refreshToken\":\"" + refreshToken + "\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.refreshToken", not(blankOrNullString())))
+                .andExpect(jsonPath("$.user.languagePreference").value("FOLLOW_SYSTEM"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();

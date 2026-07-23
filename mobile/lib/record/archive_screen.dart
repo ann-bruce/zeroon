@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../companion/companion_models.dart';
 import '../companion/companion_repository.dart';
 import '../common/zeroon_design.dart';
+import '../l10n/l10n_extensions.dart';
 import '../memory/memory_screen.dart';
 import 'record_controller.dart';
 import 'record_detail_screen.dart';
@@ -33,19 +34,18 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
           error: (error, stackTrace) => ListView(
             padding: const EdgeInsets.all(24),
             children: [
-              const ZeroonHeader(
+              ZeroonHeader(
                 mark: 'ARCHIVE',
-                title: '山海缓存',
-                leading: SizedBox.shrink(),
+                title: context.l10n.archiveTitle,
+                leading: const SizedBox.shrink(),
               ),
               const SizedBox(height: 36),
-              Text('读取失败', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              Text(error.toString()),
+              Text(context.l10n.genericLoadFailed,
+                  style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: () => ref.invalidate(recordListProvider),
-                child: const Text('重试'),
+                child: Text(context.l10n.retry),
               ),
             ],
           ),
@@ -94,14 +94,16 @@ class _ArchiveList extends StatelessWidget {
           ),
           const SizedBox(height: 52),
           Text(
-            selectedDate == null ? '还没有归零记录。' : '这一天还没有山海缓存。',
+            selectedDate == null
+                ? context.l10n.archiveEmpty
+                : context.l10n.archiveEmptyFiltered,
             style: zeroonSerif(context, size: 26),
           ),
           const SizedBox(height: 8),
           Text(
             selectedDate == null
-                ? '完成一次 Reset 后，这里会出现你的记录。'
-                : '换一天看看，也许有别的东西被保存下来。',
+                ? context.l10n.archiveEmptyHint
+                : context.l10n.archiveEmptyFilteredHint,
           ),
         ],
       );
@@ -128,18 +130,18 @@ class _ArchiveList extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Expanded(
-                child: Text('属于你的记录，不公开，也不喧哗。'),
+              Expanded(
+                child: Text(context.l10n.archivePrivate),
               ),
               Text(
                 '${visibleItems.length}',
                 style: zeroonSerif(context, size: 28),
               ),
               const SizedBox(width: 4),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(bottom: 5),
-                child: Text('条沉淀',
-                    style: TextStyle(color: zeroonMuted, fontSize: 10)),
+                child: Text(context.l10n.archiveCountSuffix,
+                    style: const TextStyle(color: zeroonMuted, fontSize: 10)),
               ),
             ],
           ),
@@ -197,7 +199,7 @@ class _ArchiveHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return ZeroonHeader(
       mark: 'ARCHIVE',
-      title: '山海缓存',
+      title: context.l10n.archiveTitle,
       leading: const SizedBox.shrink(),
       action: Row(
         mainAxisSize: MainAxisSize.min,
@@ -206,7 +208,7 @@ class _ArchiveHeader extends StatelessWidget {
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const MemoryScreen()),
             ),
-            child: const Text('记忆'),
+            child: Text(context.l10n.memoryEntry),
           ),
           TextButton(
             onPressed: () {
@@ -223,7 +225,9 @@ class _ArchiveHeader extends StatelessWidget {
                 onSelectDate: onSelectDate,
               );
             },
-            child: Text(selectedDate == null ? '筛选' : '全部'),
+            child: Text(selectedDate == null
+                ? context.l10n.filter
+                : context.l10n.allDates),
           ),
         ],
       ),
@@ -250,14 +254,14 @@ void _showDateFilterSheet({
             const SectionMark('ARCHIVE FILTER'),
             const SizedBox(height: 10),
             Text(
-              '选择一天回看',
+              sheetContext.l10n.chooseReviewDay,
               style: Theme.of(sheetContext).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             for (final date in dates)
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(_formatDate(date)),
+                title: Text(localizedDate(sheetContext, date)),
                 trailing: const Icon(Icons.chevron_right, size: 18),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
@@ -289,7 +293,7 @@ class _DateFilterChip extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            '筛选：${_formatDate(date)}',
+            context.l10n.filterDate(localizedDate(context, date)),
             style: const TextStyle(color: zeroonInk, fontSize: 12),
           ),
           const Spacer(),
@@ -333,12 +337,12 @@ class _RecordMemoryCard extends StatelessWidget {
               ),
               const SizedBox(width: 7),
               Text(
-                stateLabel(record.state),
+                localizedStateLabel(context, record.state),
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const Spacer(),
               Text(
-                _formatTime(record.createdAt),
+                localizedTime(context, record.createdAt),
                 style: const TextStyle(color: zeroonMuted, fontSize: 10),
               ),
             ],
@@ -353,7 +357,7 @@ class _RecordMemoryCard extends StatelessWidget {
           if (_hasText(record.goal)) ...[
             const SizedBox(height: 8),
             Text(
-              '目标 · ${record.goal!.trim()}',
+              '${context.l10n.recordGoalPrefix} ${record.goal!.trim()}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: zeroonMuted, fontSize: 10),
@@ -393,7 +397,7 @@ class _ArchiveObservationCardState
     try {
       final response = await ref.read(companionRepositoryProvider).sendMessage(
             CompanionMessageRequest(
-              message: _observationPrompt(),
+              message: context.l10n.observationPrompt,
             ),
           );
       if (!mounted) {
@@ -408,7 +412,7 @@ class _ArchiveObservationCardState
         return;
       }
       setState(() {
-        _error = '这一次没能回看。你的记录仍然好好保存在这里。';
+        _error = context.l10n.observationFailed;
         _loading = false;
       });
     }
@@ -434,9 +438,9 @@ class _ArchiveObservationCardState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'ZEROON 观察',
-            style: TextStyle(
+          Text(
+            context.l10n.zeroonObservation,
+            style: const TextStyle(
               color: zeroonGold,
               fontSize: 10,
               fontWeight: FontWeight.w700,
@@ -445,9 +449,9 @@ class _ArchiveObservationCardState
           ),
           const SizedBox(height: 8),
           if (_loading)
-            const Text(
-              'ZEROON 正在回看你允许用于陪伴回应的记忆…',
-              style: TextStyle(color: zeroonIvory, height: 1.6),
+            Text(
+              context.l10n.observationLoading,
+              style: const TextStyle(color: zeroonIvory, height: 1.6),
             )
           else if (_hasText(_error)) ...[
             Text(
@@ -457,7 +461,7 @@ class _ArchiveObservationCardState
             const SizedBox(height: 8),
             OutlinedButton(
               onPressed: _loadObservation,
-              child: const Text('再试一次'),
+              child: Text(context.l10n.retryShort),
             ),
           ] else
             Text(
@@ -470,7 +474,7 @@ class _ArchiveObservationCardState
             ),
           const SizedBox(height: 10),
           Text(
-            '只参考你允许用于陪伴回应的记忆',
+            context.l10n.observationConsentNote,
             style: TextStyle(
               color: zeroonIvory.withValues(alpha: 0.45),
               fontSize: 9,
@@ -494,33 +498,23 @@ class _DateLabel extends StatelessWidget {
     final isToday = local.year == today.year &&
         local.month == today.month &&
         local.day == today.day;
-    final month = local.month.toString().padLeft(2, '0');
-    final day = local.day.toString().padLeft(2, '0');
     return Padding(
       padding: const EdgeInsets.fromLTRB(3, 0, 3, 2),
       child: Row(
         children: [
           Text(
-            isToday ? '今天' : '$month.$day',
+            isToday ? context.l10n.today : localizedShortDate(context, local),
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const Spacer(),
           Text(
-            '$month.$day',
+            localizedShortDate(context, local),
             style: const TextStyle(color: zeroonMuted, fontSize: 9),
           ),
         ],
       ),
     );
   }
-}
-
-String _observationPrompt() {
-  return [
-    '请只基于系统提供的、我已经允许用于 AI 的记忆，给一段简短、温和的 ZEROON 观察。',
-    '只指出可被用户自己确认的轻微趋势，不做标签化判断，不给指令式建议。',
-    '如果没有可用记忆，请坦诚说明暂时没有足够内容，不要猜测。',
-  ].join('\n');
 }
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
@@ -538,18 +532,4 @@ DateTime? _dateOnly(DateTime? value) {
     return null;
   }
   return DateTime(value.year, value.month, value.day);
-}
-
-String _formatDate(DateTime value) {
-  final year = value.year.toString().padLeft(4, '0');
-  final month = value.month.toString().padLeft(2, '0');
-  final day = value.day.toString().padLeft(2, '0');
-  return '$year.$month.$day';
-}
-
-String _formatTime(DateTime value) {
-  final local = value.toLocal();
-  final hour = local.hour.toString().padLeft(2, '0');
-  final minute = local.minute.toString().padLeft(2, '0');
-  return '$hour:$minute';
 }

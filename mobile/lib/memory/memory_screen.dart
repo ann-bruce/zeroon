@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../common/zeroon_design.dart';
+import '../l10n/l10n_extensions.dart';
 import '../record/record_detail_screen.dart';
 import 'memory_controller.dart';
 import 'memory_models.dart';
@@ -24,15 +25,15 @@ class MemoryScreen extends ConsumerWidget {
               const _MemoryHeader(),
               const SizedBox(height: 42),
               Text(
-                '暂时没能读到这些记忆。',
+                context.l10n.memoryLoadFailedTitle,
                 style: zeroonSerif(context, size: 25),
               ),
               const SizedBox(height: 8),
-              const Text('你的记录还在。可以稍后再回来看看。'),
+              Text(context.l10n.memoryLoadFailedBody),
               const SizedBox(height: 16),
               OutlinedButton(
                 onPressed: () => ref.invalidate(memoryListProvider),
-                child: const Text('重试'),
+                child: Text(context.l10n.retry),
               ),
             ],
           ),
@@ -63,8 +64,9 @@ class _MemoryHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return ZeroonHeader(
       mark: 'MEMORY',
-      title: 'ZEROON 记住的',
+      title: context.l10n.memoryTitle,
       leading: ZeroonIconButton(
+        semanticLabel: context.l10n.back,
         onPressed: () => Navigator.of(context).pop(),
         child: const Icon(Icons.chevron_left),
       ),
@@ -77,19 +79,19 @@ class _MemoryIntroduction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _MemoryHeader(),
-        SizedBox(height: 24),
-        Text('这些内容来自你的记录，只属于你。'),
-        SizedBox(height: 6),
+        const _MemoryHeader(),
+        const SizedBox(height: 24),
+        Text(context.l10n.memoryIntro),
+        const SizedBox(height: 6),
         Text(
-          '你可以暂停一条记忆，也可以把它从 ZEROON 中删除。',
-          style: TextStyle(color: zeroonMuted, fontSize: 11),
+          context.l10n.memoryIntroControl,
+          style: const TextStyle(color: zeroonMuted, fontSize: 11),
         ),
-        SizedBox(height: 8),
-        Divider(color: zeroonLine),
+        const SizedBox(height: 8),
+        const Divider(color: zeroonLine),
       ],
     );
   }
@@ -105,9 +107,10 @@ class _MemoryEmptyState extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('这里还很安静。', style: zeroonSerif(context, size: 25)),
+          Text(context.l10n.memoryEmptyTitle,
+              style: zeroonSerif(context, size: 25)),
           const SizedBox(height: 8),
-          const Text('完成一次 Reset 后，ZEROON 会把来源清楚的记忆放在这里。'),
+          Text(context.l10n.memoryEmptyBody),
         ],
       ),
     );
@@ -139,7 +142,7 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
               _StatusPill(enabled: entry.enabled),
               const Spacer(),
               Text(
-                _formatDate(entry.createdAt.toLocal()),
+                localizedDate(context, entry.createdAt),
                 style: const TextStyle(color: zeroonMuted, fontSize: 10),
               ),
             ],
@@ -158,8 +161,8 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
             color: Colors.transparent,
             child: SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
-              title: const Text('保留在连续记忆中'),
-              subtitle: const Text('暂停后仍可在这里看到，但不会参与后续回应。'),
+              title: Text(context.l10n.keepInMemory),
+              subtitle: Text(context.l10n.keepInMemoryHint),
               value: entry.enabled,
               onChanged: _busy ? null : _setEnabled,
             ),
@@ -168,9 +171,9 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
             color: Colors.transparent,
             child: SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
-              title: const Text('允许用于回应参考'),
+              title: Text(context.l10n.allowResponseReference),
               subtitle: Text(
-                _aiPermissionSubtitle(entry),
+                _aiPermissionSubtitle(context, entry),
                 style: const TextStyle(color: zeroonMuted, fontSize: 11),
               ),
               value: entry.aiContextEnabled,
@@ -193,7 +196,9 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
                 foregroundColor: const Color(0xFF9C3D3D),
               ),
               icon: const Icon(Icons.delete_outline, size: 17),
-              label: Text(_busy ? '正在处理...' : '删除这条记忆'),
+              label: Text(_busy
+                  ? context.l10n.memoryProcessing
+                  : context.l10n.deleteMemory),
             ),
           ),
         ],
@@ -213,7 +218,7 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
           );
     } catch (_) {
       if (mounted) {
-        setState(() => _error = '暂时没有改动。请稍后再试。');
+        setState(() => _error = context.l10n.memoryChangeFailed);
       }
     } finally {
       if (mounted) {
@@ -235,17 +240,17 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
       if (mounted) {
         final paused = !widget.entry.enabled;
         final message = !aiContextEnabled
-            ? '已关闭回应参考权限。'
+            ? context.l10n.memoryAiDisabledReceipt
             : paused
-                ? '已保存权限偏好。重新加入连续记忆后才会用于回应。'
-                : '已允许用于回应参考。';
+                ? context.l10n.memoryAiPausedReceipt
+                : context.l10n.memoryAiEnabledReceipt;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
         );
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _error = '暂时没有改动权限。请稍后再试。');
+        setState(() => _error = context.l10n.memoryPermissionFailed);
       }
     } finally {
       if (mounted) {
@@ -254,33 +259,31 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
     }
   }
 
-  String _aiPermissionSubtitle(MemoryEntry entry) {
+  String _aiPermissionSubtitle(BuildContext context, MemoryEntry entry) {
     if (!entry.enabled) {
       return entry.aiContextEnabled
-          ? '当前不会用于回应。重新加入连续记忆后，此权限才会生效。'
-          : '当前已暂停。即使开启此权限，重新加入连续记忆前也不会用于回应。';
+          ? context.l10n.memoryPausedPermissionOn
+          : context.l10n.memoryPausedPermissionOff;
     }
     return entry.aiContextEnabled
-        ? '开启后，这条记忆可在下一次回应中作为上下文使用。'
-        : '默认关闭。开启后才会进入 ZEROON 的回应。';
+        ? context.l10n.memoryActivePermissionOn
+        : context.l10n.memoryActivePermissionOff;
   }
 
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('删除这条记忆？'),
-        content: const Text(
-          'ZEROON 保存的这份记忆会被立即删除。原始 Zero Record 仍会留在山海缓存中。',
-        ),
+        title: Text(context.l10n.deleteMemoryTitle),
+        content: Text(context.l10n.deleteMemoryBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('先保留'),
+            child: Text(context.l10n.keepForNow),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('确认删除'),
+            child: Text(context.l10n.confirmDelete),
           ),
         ],
       ),
@@ -296,12 +299,12 @@ class _MemoryCardState extends ConsumerState<_MemoryCard> {
       await ref.read(memoryListProvider.notifier).delete(widget.entry.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('这条记忆已经删除。')),
+          SnackBar(content: Text(context.l10n.memoryDeleted)),
         );
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _error = '暂时没能删除。请稍后再试。');
+        setState(() => _error = context.l10n.memoryDeleteFailed);
       }
     } finally {
       if (mounted) {
@@ -321,10 +324,10 @@ class _SourceRow extends StatelessWidget {
     if (entry.sourceType == 'ZERO_RECORD' && entry.sourceId != null) {
       return Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
-              '来源 · 一次 Zero Record',
-              style: TextStyle(color: zeroonMuted, fontSize: 11),
+              context.l10n.memorySourceRecord,
+              style: const TextStyle(color: zeroonMuted, fontSize: 11),
             ),
           ),
           TextButton(
@@ -333,14 +336,14 @@ class _SourceRow extends StatelessWidget {
                 builder: (_) => RecordDetailScreen(recordId: entry.sourceId!),
               ),
             ),
-            child: const Text('查看来源'),
+            child: Text(context.l10n.viewSource),
           ),
         ],
       );
     }
-    return const Text(
-      '来源暂时不可查看',
-      style: TextStyle(color: zeroonMuted, fontSize: 11),
+    return Text(
+      context.l10n.sourceUnavailable,
+      style: const TextStyle(color: zeroonMuted, fontSize: 11),
     );
   }
 }
@@ -361,7 +364,7 @@ class _StatusPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        enabled ? '记忆中' : '已暂停',
+        enabled ? context.l10n.memoryActive : context.l10n.memoryPaused,
         style: TextStyle(
           color: enabled ? const Color(0xFF397887) : zeroonMuted,
           fontSize: 10,
@@ -370,10 +373,6 @@ class _StatusPill extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatDate(DateTime value) {
-  return '${value.year}.${value.month.toString().padLeft(2, '0')}.${value.day.toString().padLeft(2, '0')}';
 }
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;

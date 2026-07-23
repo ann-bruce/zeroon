@@ -5,6 +5,8 @@ import ai.zeroon.companion.CompanionDtos.ChatResponse;
 import ai.zeroon.security.UserPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,7 +25,9 @@ public class CompanionController {
     @PostMapping("/messages")
     ChatResponse sendMessage(
             @AuthenticationPrincipal UserPrincipal principal,
+            @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage,
             @Valid @RequestBody ChatRequest request) {
-        return companionService.sendMessage(principal.userId(), request.conversationId(), request.message());
+        return companionService.sendMessage(
+                principal.userId(), request.conversationId(), request.message(), acceptLanguage);
     }
 }

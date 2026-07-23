@@ -33,6 +33,7 @@ public final class AuthDtos {
             Long id,
             String uid,
             String mobile,
-            String currentState) {
+            String currentState,
+            String languagePreference) {
     }
 }

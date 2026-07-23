@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_extensions.dart';
+
 class AiReflectionCard extends StatelessWidget {
   const AiReflectionCard({
     super.key,
@@ -43,7 +45,7 @@ class AiReflectionCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 OutlinedButton(
                   onPressed: onRetry,
-                  child: Text(retryLabel ?? '重试'),
+                  child: Text(retryLabel ?? context.l10n.retry),
                 ),
               ],
             ] else ...[
@@ -53,7 +55,7 @@ class AiReflectionCard extends StatelessWidget {
                 const Divider(height: 1),
                 const SizedBox(height: 8),
                 Text(
-                  '边界说明：$notice',
+                  '${context.l10n.boundaryNoticePrefix} $notice',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

@@ -1,6 +1,6 @@
 # ZEROON Current State
 
-Last updated: 2026-07-22
+Last updated: 2026-07-23
 
 This file is the short handoff for new Codex threads. Read it before scanning long docs or old sessions.
 
@@ -18,26 +18,32 @@ main
 
 ## Current Focus
 
-90-day product validation: Sprint 10 language and locale foundation.
+90-day product validation: Sprint 11 help, contact, and feedback foundation.
 
 Sprint 08 trust-foundation engineering, Sprint 09 controllable-memory
 engineering, the approved real-provider success smoke, and the mobile latency
 and consent-path audit are complete and integrated into `main` at `93b6a44`.
-Sprint 10 now establishes a complete Simplified Chinese/English interaction
-language foundation before further user-facing expansion. Sprint 11 separately
-establishes reachable, private, trackable contact and feedback with real
-operator handling. Previously discussed but undocumented Sprint 10 scope is
-reserved as Sprint 12.
+Sprint 10 has closed with a complete Simplified Chinese/English interaction
+language foundation. Sprint 11 now establishes reachable, private, trackable
+contact and feedback with real operator handling. Previously discussed but
+undocumented Sprint 10 scope remains reserved as Sprint 12.
 
 Immediate execution order:
 
-- complete S10-01 locale architecture and string inventory before code edits;
-- establish Flutter localization and deterministic locale resolution;
-- add explicit account preference without mixing it with Profile AI consent;
-- localize mobile, provider instruction, fallback, refusal, and safety paths;
-- prove original Record, Memory, Profile, and conversation content is never
-  translated or used to infer identity.
-- after Sprint 10 acceptance, implement Sprint 11 contact paths that remain
+- S10-01 locale architecture and string inventory are complete in ADR 005 and
+  the accepted Sprint 10 inventory;
+- S10-02 Flutter localization, deterministic locale resolution, pre-auth
+  persistence, and no-flash startup behavior are complete;
+- S10-03 explicit account preference, migration, API, export V2, and device
+  synchronization are complete without mixing language with Profile AI consent;
+- S10-04 discoverable Login/Settings controls and complete mobile copy
+  localization are complete;
+- S10-05 provider instruction, fallback, refusal, and safety-path localization
+  is complete;
+- S10-06 full regression and two-locale runtime acceptance are complete;
+- original Record, Memory, Profile, and conversation content remains unchanged
+  and is never used to infer identity or interaction language;
+- next implement Sprint 11 contact paths that remain
   reachable before login and during API outage without automatic private-content
   attachment.
 
@@ -55,7 +61,7 @@ Key product guardrails:
 - 90-day validation plan: `docs/08_Roadmap/ZEROON_90_Day_Product_Validation_Plan_V1.md`
 - Validation baseline: `docs/08_Roadmap/Validation_Sprint_00_Baseline_V1.md`
 - Beta brief: `docs/01_PRD/Beta_Validation_Brief_V1.md`
-- Current engineering sprint: `docs/07_Sprints/Sprint_10_Language_Locale_Foundation_V1.md`
+- Current engineering sprint: `docs/07_Sprints/Sprint_11_Help_Contact_Feedback_Foundation_V1.md`
 - Memory decision: `docs/02_Architecture/ADR_004_Memory_V1.md`
 - Phase 2 target window: 2026-08-11 to 2026-08-31; engineering began early
   after Sprint 08 closure.
@@ -139,13 +145,60 @@ Key product guardrails:
   counts without storing prompt, Memory, record, message, reply, or exception
   body text. Sprint 09 engineering and the approved real-provider credential
   smoke are complete and integrated into `main` at `93b6a44`.
-- Sprint 10 Language and Locale Foundation is planned. It supports Follow
+- Sprint 10 Language and Locale Foundation is complete. It supports Follow
   System, Simplified Chinese, and English across mobile and bounded companion
   behavior, while preserving all user-authored content in its original form.
   Sprint 11 Help, Contact, and Feedback Foundation follows as a separate Beta
   gate with real operator handling, receipt/status tracking, privacy-safe
   diagnostics, and pre-auth/outage fallback contact. Any previously discussed
   but undocumented Sprint 10 scope moves to Sprint 12.
+- S10-01 is complete. ADR 005 fixes the canonical preferences, device/account
+  synchronization, `Accept-Language` request boundary, `users` persistence,
+  dedicated `/me/preferences/language` contract, export V2 decision, and
+  original-content boundary. The accepted string inventory maps every current
+  mobile, formatter, error, accessibility, prompt, fallback, refusal, and safety
+  surface before localization implementation begins.
+- S10-02 is complete. Flutter now generates typed `zh`, `zh_CN`, and `en`
+  resources, restores the non-sensitive device preference before `runApp`,
+  resolves only effective `zh-CN` or `en`, exposes immediate Riverpod locale
+  state, persists pending account synchronization through SharedPreferences,
+  and keeps the selected session locale when device persistence fails. Focused
+  first-frame, resolution, persistence, and failure tests pass with the full
+  mobile suite.
+- S10-03 is complete. PostgreSQL V11 adds the constrained account preference;
+  login, refresh, `GET /me`, owned `GET/PUT /me/preferences/language`, and export
+  V2 expose the same enum. Mobile applies pending-device-wins/account-wins
+  synchronization with stale-response protection and sends only resolved
+  `zh-CN` or `en` in `Accept-Language`. Full backend/mobile tests, OpenAPI lint,
+  real PostgreSQL migration, and a temporary-account update/read/export/delete
+  runtime smoke pass.
+- S10-04 is complete. A language-neutral Login globe and independent
+  Profile/Settings preference switch the device immediately while preserving
+  pending account synchronization. All shipped mobile screens, shared states,
+  privacy controls, AI boundary copy, dates, times, durations, and dynamic
+  values now use typed Simplified Chinese and English resources; raw technical
+  errors are mapped to recoverable product copy. Flutter analyze and all 28
+  mobile tests pass, and desktop plus 390×844 runtime review confirms the
+  Chinese picker and English Login layout do not clip or overlap. User-authored
+  content remains unmodified.
+- S10-05 is complete. Companion now resolves weighted supported
+  `Accept-Language` ranges before concrete account preference and Simplified
+  Chinese fallback, without inspecting message or private context. The
+  resolved language composes a reviewed Provider instruction and selects
+  server-owned fallback, refusal, and safety copy. Chinese and English terms
+  retain the same safety categories and deterministic refusals still bypass
+  the Provider. Full backend tests, OpenAPI lint, and a PostgreSQL-backed
+  temporary-account runtime smoke for account-English/header-Chinese
+  precedence pass; the temporary account was deleted.
+- S10-06 is complete. Logout retains the selected device language and an
+  in-progress Reset preserves its route and unsaved text during immediate
+  switching. All 29 mobile tests and the full backend/mobile/admin/OpenAPI
+  quality gate pass. A real provider success smoke returned language-coherent
+  English and Chinese replies and safety notices; a 390×844 runtime review
+  covered signed-out and authenticated switching plus post-logout retention
+  without clipping, overlap, or mixed-language product state. PostgreSQL
+  remains current at migration V11, the temporary account was deleted, and
+  Sprint 11 is now the next engineering focus.
 
 ## Recent Completed Work
 
@@ -202,6 +255,8 @@ scripts/zeroon-verify.sh all
 - Sprint 06 plan: `docs/07_Sprints/Sprint_06_My_ZEROON_Companion_V1.md`
 - Sprint 07 draft: `docs/07_Sprints/Sprint_07_AI_Provider_Integration_V1.md`
 - Sprint 10 plan: `docs/07_Sprints/Sprint_10_Language_Locale_Foundation_V1.md`
+- Sprint 10 locale ADR: `docs/02_Architecture/ADR_005_Language_Locale_V1.md`
+- Sprint 10 string inventory: `docs/07_Sprints/Sprint_10_String_Inventory_V1.md`
 - Sprint 11 plan: `docs/07_Sprints/Sprint_11_Help_Contact_Feedback_Foundation_V1.md`
 - Roadmap IA: `docs/07_Sprints/Roadmap_Information_Architecture_V2.md`
 - API contract: `docs/04_API/OpenAPI_V1.yaml`

@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_extensions.dart';
+
 const zeroonPaper = Color(0xFFFAF7F1);
 const zeroonIvory = Color(0xFFF2EEE6);
 const zeroonInk = Color(0xFF222730);
@@ -140,15 +142,17 @@ class ZeroonIconButton extends StatelessWidget {
     required this.child,
     this.onPressed,
     this.dark = false,
+    this.semanticLabel,
   });
 
   final Widget child;
   final VoidCallback? onPressed;
   final bool dark;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final button = InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(18),
       child: Container(
@@ -167,6 +171,20 @@ class ZeroonIconButton extends StatelessWidget {
           ),
           child: child,
         ),
+      ),
+    );
+    final label = semanticLabel;
+    if (label == null) {
+      return button;
+    }
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        container: true,
+        button: true,
+        label: label,
+        excludeSemantics: true,
+        child: button,
       ),
     );
   }
@@ -204,7 +222,7 @@ class ZeroonPrimaryButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const SizedBox(width: 18),
-            Text(loading ? '处理中...' : label),
+            Text(loading ? context.l10n.processing : label),
             const Icon(Icons.arrow_forward, size: 18),
           ],
         ),
@@ -349,18 +367,5 @@ Color stateColor(String state) {
     'OVERLOAD' => const Color(0xFFFF4D4D),
     'CONFUSED' => const Color(0xFF283F67),
     _ => zeroonCyan,
-  };
-}
-
-String stateLabel(String state) {
-  return switch (state) {
-    'IDLE' => '等待',
-    'CALM' => '平静',
-    'FOCUS' => '专注',
-    'CREATE' => '创造',
-    'TIRED' => '疲惫',
-    'OVERLOAD' => '高负荷',
-    'CONFUSED' => '混乱',
-    _ => state,
   };
 }

@@ -75,6 +75,22 @@ class CompanionFallbackControllerTest {
                 .isEqualTo("LlmProviderUnavailableException");
     }
 
+    @Test
+    void companionFallbackAndSafetyNoticeFollowEnglishRequestLanguage() throws Exception {
+        String accessToken = login("13800138107");
+
+        mockMvc.perform(post("/api/v1/companion/messages")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("Accept-Language", "en-US,en;q=0.9")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"Reflect on this moment\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reply", containsString("not be fully formed yet")))
+                .andExpect(jsonPath("$.reply", not(containsString("慢慢放进"))))
+                .andExpect(jsonPath("$.safetyNotice", containsString("non-diagnostic companion reflection")))
+                .andExpect(jsonPath("$.safetyNotice", not(containsString("非诊断性"))));
+    }
+
     private String login(String mobile) throws Exception {
         mockMvc.perform(post("/api/v1/auth/codes")
                         .contentType(MediaType.APPLICATION_JSON)

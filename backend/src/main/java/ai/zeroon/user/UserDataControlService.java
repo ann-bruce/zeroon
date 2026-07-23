@@ -12,6 +12,7 @@ import ai.zeroon.user.UserDataDtos.StateSessionExport;
 import ai.zeroon.user.UserDataDtos.UserDataExportResponse;
 import ai.zeroon.user.UserDataDtos.ZeroRecordExport;
 import ai.zeroon.user.UserDataDtos.ZeroonCompanionExport;
+import ai.zeroon.user.UserPreferenceDtos.LanguagePreferenceResponse;
 import jakarta.persistence.EntityNotFoundException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserDataControlService {
 
-    private static final String EXPORT_SCHEMA_VERSION = "zeroon-beta-export-v1";
+    private static final String EXPORT_SCHEMA_VERSION = "zeroon-beta-export-v2";
 
     private final UserRepository userRepository;
     private final JdbcTemplate jdbcTemplate;
@@ -41,6 +42,19 @@ public class UserDataControlService {
     @Transactional(readOnly = true)
     public CurrentUserResponse currentUser(Long userId) {
         return toCurrentUser(requireUser(userId));
+    }
+
+    @Transactional(readOnly = true)
+    public LanguagePreferenceResponse languagePreference(Long userId) {
+        return toLanguagePreference(requireUser(userId));
+    }
+
+    @Transactional
+    public LanguagePreferenceResponse updateLanguagePreference(
+            Long userId, LanguagePreference languagePreference) {
+        UserEntity user = requireUser(userId);
+        user.changeLanguagePreference(languagePreference);
+        return toLanguagePreference(user);
     }
 
     @Transactional(readOnly = true)
@@ -83,7 +97,12 @@ public class UserDataControlService {
                 user.getCurrentState().name(),
                 user.getStatus().name(),
                 user.getRoles().stream().map(Enum::name).sorted().toList(),
+                user.getLanguagePreference().name(),
                 user.getCreatedAt());
+    }
+
+    private LanguagePreferenceResponse toLanguagePreference(UserEntity user) {
+        return new LanguagePreferenceResponse(user.getLanguagePreference());
     }
 
     private ProfileExport profile(Long userId) {

@@ -16,39 +16,37 @@ import org.springframework.stereotype.Service;
 @Service
 public class CompanionService {
 
-    private static final String SAFETY_NOTICE =
-            "ZEROON 只能提供非诊断性的陪伴式反思，不能替代医疗、法律、财务或心理咨询。";
-    private static final String FALLBACK_REPLY =
-            "你正在把一些还没有完全成形的感受，慢慢放进可以回看的地方。"
-                    + "这些记录里已经有了状态、感受和小进展的线索，"
-                    + "ZEROON 会先安静保存它们，再陪你一点一点看清楚。";
-
     private final LlmProvider llmProvider;
     private final PromptTemplateService promptTemplateService;
     private final SafetyBoundaryService safetyBoundaryService;
     private final CompanionTurnPersistenceService turnPersistenceService;
+    private final CompanionLanguageResolver languageResolver;
 
     public CompanionService(
             LlmProvider llmProvider,
             PromptTemplateService promptTemplateService,
             SafetyBoundaryService safetyBoundaryService,
-            CompanionTurnPersistenceService turnPersistenceService) {
+            CompanionTurnPersistenceService turnPersistenceService,
+            CompanionLanguageResolver languageResolver) {
         this.llmProvider = llmProvider;
         this.promptTemplateService = promptTemplateService;
         this.safetyBoundaryService = safetyBoundaryService;
         this.turnPersistenceService = turnPersistenceService;
+        this.languageResolver = languageResolver;
     }
 
-    public ChatResponse sendMessage(Long userId, Long conversationId, String message) {
+    public ChatResponse sendMessage(
+            Long userId, Long conversationId, String message, String acceptLanguage) {
         String normalizedMessage = message.trim();
+        CompanionLanguage language = languageResolver.resolve(userId, acceptLanguage);
         StartedTurn turn = turnPersistenceService.begin(userId, conversationId, normalizedMessage);
         long startedAt = System.nanoTime();
-        SafetyBoundaryResult boundary = safetyBoundaryService.evaluate(normalizedMessage);
+        SafetyBoundaryResult boundary = safetyBoundaryService.evaluate(normalizedMessage, language);
         if (boundary.blocked()) {
             return turnPersistenceService.complete(
                     turn,
                     boundary.reply(),
-                    SAFETY_NOTICE,
+                    language.safetyNotice(),
                     new AiUsageDetails(
                             "safety-boundary",
                             null,
@@ -66,16 +64,19 @@ public class CompanionService {
 
         PromptTemplateSelection prompt = promptTemplateService.companionReflectionPrompt();
         String userPrompt = turnPersistenceService.assembleUserPrompt(userId, normalizedMessage);
+        String systemPrompt = prompt.content().stripTrailing()
+                + "\n\n"
+                + language.providerInstruction().strip();
         long providerStartedAt = System.nanoTime();
         try {
             LlmResponse response = llmProvider.generate(new LlmRequest(
-                    prompt.content(),
+                    systemPrompt,
                     userPrompt,
                     Duration.ofSeconds(8)));
             return turnPersistenceService.complete(
                     turn,
                     response.content(),
-                    SAFETY_NOTICE,
+                    language.safetyNotice(),
                     new AiUsageDetails(
                             response.provider(),
                             response.model(),
@@ -92,8 +93,8 @@ public class CompanionService {
         } catch (LlmProviderUnavailableException ex) {
             return turnPersistenceService.complete(
                     turn,
-                    FALLBACK_REPLY,
-                    SAFETY_NOTICE,
+                    language.fallbackReply(),
+                    language.safetyNotice(),
                     new AiUsageDetails(
                             "openai-compatible",
                             null,
@@ -103,7 +104,7 @@ public class CompanionService {
                             prompt.code(),
                             prompt.version(),
                             userPrompt.length(),
-                            FALLBACK_REPLY.length(),
+                            language.fallbackReply().length(),
                             null,
                             null,
                             ex.getClass().getSimpleName()));

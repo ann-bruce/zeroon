@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../common/zeroon_design.dart';
+import '../l10n/l10n_extensions.dart';
 import 'growth_controller.dart';
 import 'growth_models.dart';
 
@@ -17,7 +18,6 @@ class GrowthScreen extends ConsumerWidget {
       child: summary.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _GrowthError(
-          message: error.toString(),
           onRetry: () => ref.invalidate(growthSummaryProvider),
         ),
         data: (data) => _GrowthContent(
@@ -48,30 +48,34 @@ class _GrowthContent extends StatelessWidget {
       children: [
         ZeroonHeader(
           mark: 'COMPANION GROWTH',
-          title: '陪伴成长',
+          title: context.l10n.growthTitle,
           center: true,
           leading: ZeroonIconButton(
+            semanticLabel: context.l10n.back,
             child: const Icon(Icons.chevron_left),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
           action: ZeroonIconButton(
-            child: const Icon(Icons.info_outline),
+            semanticLabel: context.l10n.growthInfoTooltip,
             onPressed: () => _showGrowthInfo(context),
+            child: const Icon(Icons.info_outline),
           ),
         ),
         const SizedBox(height: 12),
         _GrowthOrbit(days: summary.companionDays),
         const SizedBox(height: 6),
-        SectionMark('TOGETHER SINCE ${_formatDate(summary.firstRecordDate)}'),
+        SectionMark(
+          '${context.l10n.growthTogetherSince} ${_formatDate(context, summary.firstRecordDate)}',
+        ),
         const SizedBox(height: 8),
         Text(
-          _growthTitle(summary.companionDays),
+          _growthTitle(context, summary.companionDays),
           textAlign: TextAlign.center,
           style: zeroonSerif(context, size: 23),
         ),
         const SizedBox(height: 6),
-        const Text(
-          '不是每一天都需要留下什么。\n但你走过的路，正在这里慢慢发光。',
+        Text(
+          context.l10n.growthIntro,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
@@ -84,28 +88,28 @@ class _GrowthContent extends StatelessWidget {
           childAspectRatio: 1.24,
           children: [
             _GrowthMetricCard(
-              title: '连续归零',
+              title: context.l10n.metricContinuous,
               value: '${summary.continuousResetDays}',
-              unit: '天',
-              description: '最近一次连续记录',
+              unit: context.l10n.unitDays,
+              description: context.l10n.metricRecentContinuous,
             ),
             _GrowthMetricCard(
-              title: '累计缓存',
+              title: context.l10n.metricArchive,
               value: '${summary.cachedEntries}',
-              unit: '条',
-              description: '可见的私人沉淀',
+              unit: context.l10n.unitRecords,
+              description: context.l10n.metricPrivate,
             ),
             _GrowthMetricCard(
-              title: '第一次记录',
-              value: _formatDate(summary.firstRecordDate),
+              title: context.l10n.metricFirstRecord,
+              value: _formatDate(context, summary.firstRecordDate),
               unit: '',
-              description: '时间从这里开始',
+              description: context.l10n.metricTimeStarts,
             ),
             _GrowthMetricCard(
-              title: '陪伴天数',
+              title: context.l10n.metricCompanionDays,
               value: '${summary.companionDays}',
-              unit: '天',
-              description: '包含相遇的第一天',
+              unit: context.l10n.unitDays,
+              description: context.l10n.metricIncludesMeeting,
             ),
           ],
         ),
@@ -118,24 +122,21 @@ class _GrowthContent extends StatelessWidget {
     );
   }
 
-  String _growthTitle(int days) {
+  String _growthTitle(BuildContext context, int days) {
     if (days >= 365) {
-      return '我们已经一起走过一年。';
+      return context.l10n.growthTogetherYear;
     }
     if (days > 1) {
-      return '我们已经一起走过 $days 天。';
+      return context.l10n.growthTogetherDays(days);
     }
-    return '时间从第一条记录开始。';
+    return context.l10n.growthStartsFirst;
   }
 
-  String _formatDate(DateTime? date) {
+  String _formatDate(BuildContext context, DateTime? date) {
     if (date == null) {
-      return '还没有';
+      return context.l10n.notYet;
     }
-    final year = date.year.toString().padLeft(4, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '$year.$month.$day';
+    return localizedDate(context, date);
   }
 }
 
@@ -166,28 +167,31 @@ class _StatePatternCard extends StatelessWidget {
         ),
       ),
       child: statePattern.when(
-        loading: () => const Text(
-          '正在整理近期状态观察...',
-          style: TextStyle(color: Color(0xFFE9DFCC), fontSize: 10),
+        loading: () => Text(
+          context.l10n.growthObservationLoading,
+          style: const TextStyle(color: Color(0xFFE9DFCC), fontSize: 10),
         ),
         error: (error, stackTrace) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SectionMark('这一年的 ZEROON'),
+            SectionMark(context.l10n.growthYearTitle),
             const SizedBox(height: 8),
-            Text('近期状态观察暂时不可用。',
+            Text(context.l10n.growthObservationUnavailable,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            OutlinedButton(onPressed: onRetry, child: const Text('重试观察')),
+            OutlinedButton(
+              onPressed: onRetry,
+              child: Text(context.l10n.growthRetryObservation),
+            ),
           ],
         ),
         data: (data) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SectionMark('这一年的 ZEROON'),
+            SectionMark(context.l10n.growthYearTitle),
             const SizedBox(height: 6),
             Text(
-              _yearlyZeroonCopy(data),
+              _yearlyZeroonCopy(context, data),
               style: const TextStyle(
                 color: Color(0xFFE9DFCC),
                 fontFamily: 'serif',
@@ -201,15 +205,15 @@ class _StatePatternCard extends StatelessWidget {
     );
   }
 
-  String _yearlyZeroonCopy(StatePatternSummary data) {
+  String _yearlyZeroonCopy(BuildContext context, StatePatternSummary data) {
     if (data.dominantState == null) {
-      return 'ZEROON 还在安静等待更多记录。时间不急，能留下来的东西会慢慢出现。';
+      return context.l10n.growthWaiting;
     }
-    final label = stateLabel(data.dominantState!);
-    if (label == '专注') {
-      return '你最常回到「专注」，也正在学会把模糊的想法，一点一点放进可以被看见的地方。';
+    final label = localizedStateLabel(context, data.dominantState!);
+    if (data.dominantState == 'FOCUS') {
+      return context.l10n.growthFocusNarrative(label);
     }
-    return '你最常回到「$label」。ZEROON 会记得这些微小的变化，也陪你慢慢看见它们。';
+    return context.l10n.growthStateNarrative(label);
   }
 }
 
@@ -224,19 +228,19 @@ void _showGrowthInfo(BuildContext context) {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            SectionMark('GROWTH NOTE'),
-            SizedBox(height: 10),
+          children: [
+            SectionMark(context.l10n.growthNoteMark),
+            const SizedBox(height: 10),
             Text(
-              '陪伴成长说明',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              context.l10n.growthNoteTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
-            SizedBox(height: 12),
-            Text('连续归零、累计缓存和第一次记录来自你的归零记录。'),
-            SizedBox(height: 8),
-            Text('“这一年的 ZEROON”来自近期状态分布和山海缓存中的可见记录。'),
-            SizedBox(height: 8),
-            Text('ZEROON 不做诊断，不给你贴固定标签，只帮助你回看自己留下的变化。'),
+            const SizedBox(height: 12),
+            Text(context.l10n.growthNoteRecords),
+            const SizedBox(height: 8),
+            Text(context.l10n.growthNotePattern),
+            const SizedBox(height: 8),
+            Text(context.l10n.growthNoteBoundary),
           ],
         ),
       );
@@ -361,9 +365,9 @@ class _GrowthOrbit extends StatelessWidget {
                     style: zeroonSerif(context, size: 28, color: zeroonIvory),
                   ),
                   const SizedBox(height: 2),
-                  const Text(
-                    '天',
-                    style: TextStyle(
+                  Text(
+                    context.l10n.unitDays,
+                    style: const TextStyle(
                       color: Color(0x88F2EEE6),
                       fontSize: 9,
                     ),
@@ -403,9 +407,7 @@ class _OrbitStar extends StatelessWidget {
 }
 
 class _GrowthError extends StatelessWidget {
-  const _GrowthError({required this.message, required this.onRetry});
-
-  final String message;
+  const _GrowthError({required this.onRetry});
   final VoidCallback onRetry;
 
   @override
@@ -413,11 +415,10 @@ class _GrowthError extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text('成长数据读取失败', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Text(message),
+        Text(context.l10n.growthLoadFailed,
+            style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 12),
-        OutlinedButton(onPressed: onRetry, child: const Text('重试')),
+        OutlinedButton(onPressed: onRetry, child: Text(context.l10n.retry)),
       ],
     );
   }

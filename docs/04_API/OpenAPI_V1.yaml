@@ -141,6 +141,53 @@ paths:
                 $ref: "#/components/schemas/CurrentUser"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /me/preferences/language:
+    get:
+      tags: [User]
+      summary: Get the current user's explicit language preference
+      description: >-
+        Returns the account preference only. FOLLOW_SYSTEM remains stored and
+        is resolved independently on each device; the service does not infer a
+        preference from Profile, Record, Memory, or conversation content.
+      operationId: getCurrentUserLanguagePreference
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current account language preference
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LanguagePreferenceResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      tags: [User]
+      summary: Replace the current user's explicit language preference
+      description: >-
+        Idempotently stores an explicit account preference. This setting is
+        separate from Profile context consent and does not translate existing
+        private content.
+      operationId: updateCurrentUserLanguagePreference
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LanguagePreferenceRequest"
+      responses:
+        "200":
+          description: Saved account language preference
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LanguagePreferenceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /me/export:
     get:
       tags: [User]
@@ -412,11 +459,17 @@ paths:
         Companion continuity does not append raw recent Zero Record goal/content
         outside this Memory path, so pausing, revoking AI permission, or deleting
         Memory immediately prevents that source text from entering the next
-        provider request. Titles, summaries, and other private Memory text are
-        excluded from usage logs and error metadata.
+        provider request. The first supported Accept-Language range by quality
+        weight selects Simplified Chinese or English response behavior; otherwise
+        a concrete account preference applies, then Simplified Chinese fallback.
+        Language is never inferred from message, Profile, Record, Memory, or
+        conversation content. Titles, summaries, and other private Memory text
+        are excluded from usage logs and error metadata.
       operationId: sendCompanionMessage
       security:
         - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AcceptLanguage"
       requestBody:
         required: true
         content:
@@ -693,6 +746,22 @@ components:
       scheme: bearer
       bearerFormat: JWT
   parameters:
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      required: false
+      description: >-
+        Weighted language ranges for the current interaction. Supported ranges
+        resolve to `zh-CN` or `en`; unsupported or malformed ranges are ignored
+        and are never persisted. A concrete account preference is the next
+        fallback, followed by Simplified Chinese.
+      schema:
+        type: string
+      examples:
+        english:
+          value: en-US,en;q=0.9
+        simplifiedChinese:
+          value: zh-CN,zh-Hans;q=0.9
     Page:
       name: page
       in: query
@@ -824,7 +893,7 @@ components:
           $ref: "#/components/schemas/AuthUser"
     AuthUser:
       type: object
-      required: [id, uid, currentState]
+      required: [id, uid, currentState, languagePreference]
       properties:
         id:
           type: integer
@@ -836,9 +905,11 @@ components:
           nullable: true
         currentState:
           $ref: "#/components/schemas/State"
+        languagePreference:
+          $ref: "#/components/schemas/LanguagePreference"
     CurrentUser:
       type: object
-      required: [uid, currentState, status, roles, createdAt]
+      required: [uid, currentState, status, roles, languagePreference, createdAt]
       properties:
         uid:
           type: string
@@ -855,9 +926,30 @@ components:
           items:
             type: string
             enum: [USER, ADMIN]
+        languagePreference:
+          $ref: "#/components/schemas/LanguagePreference"
         createdAt:
           type: string
           format: date-time
+    LanguagePreference:
+      type: string
+      description: >-
+        Explicit interaction-language preference. FOLLOW_SYSTEM is preserved
+        and resolved on each device rather than being replaced at save time.
+      enum: [FOLLOW_SYSTEM, ZH_CN, EN]
+    LanguagePreferenceRequest:
+      type: object
+      required: [languagePreference]
+      additionalProperties: false
+      properties:
+        languagePreference:
+          $ref: "#/components/schemas/LanguagePreference"
+    LanguagePreferenceResponse:
+      type: object
+      required: [languagePreference]
+      properties:
+        languagePreference:
+          $ref: "#/components/schemas/LanguagePreference"
     UserDataExport:
       type: object
       required:
@@ -874,7 +966,7 @@ components:
       properties:
         schemaVersion:
           type: string
-          enum: [zeroon-beta-export-v1]
+          enum: [zeroon-beta-export-v2]
         exportedAt:
           type: string
           format: date-time

@@ -7,10 +7,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class SafetyBoundaryService {
 
-    private static final String BOUNDARY_REPLY =
-            "我不能替代医疗、法律、财务或心理诊断建议。"
-                    + "我可以陪你把感受记录下来，也建议你在需要时联系合适的专业人士。";
-
     private static final List<BoundaryRule> RULES = List.of(
             new BoundaryRule("MEDICAL", List.of(
                     "diagnose", "diagnosis", "prescribe", "medicine", "medical", "doctor",
@@ -25,14 +21,14 @@ public class SafetyBoundaryService {
                     "depression", "anxiety disorder", "bipolar", "adhd", "ptsd",
                     "抑郁症", "焦虑症", "双相", "心理诊断", "精神病", "adhd")));
 
-    public SafetyBoundaryResult evaluate(String message) {
+    public SafetyBoundaryResult evaluate(String message, CompanionLanguage language) {
         if (message == null || message.isBlank()) {
             return allow();
         }
         String normalized = message.toLowerCase(Locale.ROOT);
         for (BoundaryRule rule : RULES) {
             if (rule.matches(normalized)) {
-                return new SafetyBoundaryResult(true, rule.label(), BOUNDARY_REPLY);
+                return new SafetyBoundaryResult(true, rule.label(), language.boundaryReply());
             }
         }
         return allow();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../common/zeroon_design.dart';
+import '../l10n/l10n_extensions.dart';
 import 'my_zeroon_models.dart';
 
 class EncounterScreen extends StatelessWidget {
@@ -24,7 +25,7 @@ class EncounterScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
         children: [
           const SizedBox(height: 8),
-          const Center(child: SectionMark('ZEROON ENCOUNTER')),
+          Center(child: SectionMark(context.l10n.encounterMark)),
           const SizedBox(height: 18),
           const _EncounterFigure(),
           const SizedBox(height: 18),
@@ -88,15 +89,16 @@ class _EncounterInvite extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Column(
         children: [
-          Text('与 ZEROON 相遇', style: zeroonSerif(context, size: 30)),
+          Text(context.l10n.encounterTitle,
+              style: zeroonSerif(context, size: 30)),
           const SizedBox(height: 10),
-          const Text(
-            '在开始记录之前，先确认这个会陪你回看此刻的 ZEROON。',
+          Text(
+            context.l10n.encounterBody,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 18),
           ZeroonPrimaryButton(
-            label: '确认相遇',
+            label: context.l10n.confirmEncounter,
             loading: loading,
             onPressed: loading ? null : () => onMeet(),
           ),
@@ -118,14 +120,15 @@ class _EncounterComplete extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Column(
         children: [
-          Text('你的 ZEROON 已经在这里', style: zeroonSerif(context, size: 27)),
+          Text(context.l10n.encounterCompleteTitle,
+              style: zeroonSerif(context, size: 27)),
           const SizedBox(height: 10),
-          const Text(
-            '我在这里。以后你留下的此刻，我都会陪你一起回看。',
+          Text(
+            context.l10n.encounterCompleteBody,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 18),
-          const SectionMark('NAMEPLATE'),
+          SectionMark(context.l10n.nameplate),
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -147,7 +150,7 @@ class _EncounterComplete extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ZeroonPrimaryButton(
-            label: '进入 ZEROON',
+            label: context.l10n.enterZeroon,
             onPressed: onEnter,
           ),
         ],
@@ -178,11 +181,15 @@ class EncounterErrorScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('暂时没有见到 ZEROON', style: zeroonSerif(context, size: 24)),
+                Text(context.l10n.encounterUnavailableTitle,
+                    style: zeroonSerif(context, size: 24)),
                 const SizedBox(height: 8),
-                Text(message),
+                Text(context.l10n.encounterUnavailableBody),
                 const SizedBox(height: 14),
-                OutlinedButton(onPressed: onRetry, child: const Text('重试')),
+                OutlinedButton(
+                  onPressed: onRetry,
+                  child: Text(context.l10n.retry),
+                ),
               ],
             ),
           ),

@@ -92,7 +92,12 @@ public class AuthService {
                 accessToken.token(),
                 refreshToken.token(),
                 expiresIn,
-                new UserPayload(user.getId(), user.getUid(), user.getMobile(), user.getCurrentState().name()));
+                new UserPayload(
+                        user.getId(),
+                        user.getUid(),
+                        user.getMobile(),
+                        user.getCurrentState().name(),
+                        user.getLanguagePreference().name()));
     }
 
     private String createUid() {

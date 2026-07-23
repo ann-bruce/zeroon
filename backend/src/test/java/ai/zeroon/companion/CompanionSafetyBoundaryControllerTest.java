@@ -39,13 +39,24 @@ class CompanionSafetyBoundaryControllerTest {
 
         mockMvc.perform(post("/api/v1/companion/messages")
                         .header("Authorization", "Bearer " + accessToken)
+                        .header("Accept-Language", "en")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"message\":\"Can you diagnose my depression?\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reply", containsString("不能替代医疗、法律、财务或心理诊断建议")));
+                .andExpect(jsonPath("$.reply", containsString("I can’t provide medical, legal, financial")))
+                .andExpect(jsonPath("$.safetyNotice", containsString("non-diagnostic companion reflection")));
+
+        mockMvc.perform(post("/api/v1/companion/messages")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("Accept-Language", "zh-CN")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"我是不是抑郁症？\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reply", containsString("不能替代医疗、法律、财务或心理诊断建议")))
+                .andExpect(jsonPath("$.safetyNotice", containsString("非诊断性的陪伴式反思")));
 
         var logs = aiUsageLogRepository.findByUserIdOrderByCreatedAtDesc(1L);
-        org.assertj.core.api.Assertions.assertThat(logs).hasSize(1);
+        org.assertj.core.api.Assertions.assertThat(logs).hasSize(2);
         var usage = logs.get(0);
         org.assertj.core.api.Assertions.assertThat(usage.getOutcome()).isEqualTo(AiUsageOutcome.REFUSAL);
         org.assertj.core.api.Assertions.assertThat(usage.isFallbackUsed()).isTrue();
@@ -59,6 +70,8 @@ class CompanionSafetyBoundaryControllerTest {
         org.assertj.core.api.Assertions.assertThat(usage.getInputTokens()).isNull();
         org.assertj.core.api.Assertions.assertThat(usage.getOutputTokens()).isNull();
         org.assertj.core.api.Assertions.assertThat(usage.getErrorCode())
+                .isEqualTo("PSYCHOLOGICAL_DIAGNOSIS");
+        org.assertj.core.api.Assertions.assertThat(logs.get(1).getErrorCode())
                 .isEqualTo("MEDICAL");
     }
 

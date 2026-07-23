@@ -1,0 +1,27 @@
+{
+  "@@locale": "zh_CN",
+  "appTitle": "ZEROON",
+  "@appTitle": {
+    "description": "Application title. ZEROON is a brand name and is not translated."
+  },
+  "languageFollowSystem": "跟随系统",
+  "@languageFollowSystem": {
+    "description": "Label for the locale preference that follows the current device system language."
+  },
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {
+    "description": "Label for the explicit Simplified Chinese locale preference."
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "Label for the explicit English locale preference."
+  },
+  "languageSyncPending": "这台设备已切换语言，账户同步将在网络恢复后重试。",
+  "@languageSyncPending": {
+    "description": "Recoverable message shown when the device locale changed but account synchronization is pending."
+  },
+  "languageStorageUnavailable": "暂时无法保存语言设置；本次使用期间仍会保持当前选择。",
+  "@languageStorageUnavailable": {
+    "description": "Message shown when the non-sensitive device preference store cannot persist the locale."
+  }
+}

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../companion/companion_models.dart';
 import '../companion/companion_repository.dart';
 import '../common/zeroon_design.dart';
+import '../l10n/l10n_extensions.dart';
 import 'archive_screen.dart';
 import 'record_models.dart';
 
@@ -40,9 +41,10 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
         children: [
           ZeroonHeader(
             mark: 'ZEROON',
-            title: '归零完成',
+            title: context.l10n.resetCompleteTitle,
             center: true,
             action: ZeroonIconButton(
+              semanticLabel: context.l10n.close,
               child: const Icon(Icons.close),
               onPressed: () => _returnHome(context),
             ),
@@ -59,7 +61,9 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
                   Positioned(
                     bottom: -10,
                     child: Text(
-                      'RECORDED · ${_formatTime(widget.record.createdAt)}',
+                      context.l10n.recordTimeValue(
+                        localizedTime(context, widget.record.createdAt),
+                      ),
                       style: const TextStyle(
                         color: zeroonMuted,
                         fontSize: 7,
@@ -73,11 +77,13 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
           ),
           const SizedBox(height: 42),
           Center(
-            child: SectionMark('本次状态 · ${stateLabel(widget.record.state)}'),
+            child: SectionMark(
+              '${context.l10n.resetStateMark} · ${localizedStateLabel(context, widget.record.state)}',
+            ),
           ),
           const SizedBox(height: 11),
           Text(
-            '已经替你保存好了。',
+            context.l10n.resetSaved,
             textAlign: TextAlign.center,
             style: zeroonSerif(context, size: 27),
           ),
@@ -85,8 +91,8 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 180),
             child: Text(
-              _quoteText,
-              key: ValueKey(_quoteText),
+              _quoteText(context),
+              key: ValueKey(_quoteText(context)),
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Color(0xFF666970),
@@ -108,8 +114,8 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '今天的记录',
+                Text(
+                  context.l10n.todayRecord,
                   style: TextStyle(color: Color(0xFF9A8D75), fontSize: 8),
                 ),
                 const SizedBox(height: 8),
@@ -126,7 +132,7 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
                 if (_hasText(widget.record.goal)) ...[
                   const SizedBox(height: 8),
                   Text(
-                    '目标 · ${widget.record.goal!.trim()}',
+                    '${context.l10n.goalPrefix} ${widget.record.goal!.trim()}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style:
@@ -138,14 +144,14 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
           ),
           const SizedBox(height: 34),
           ZeroonPrimaryButton(
-            label: '回到此刻',
+            label: context.l10n.returnNow,
             onPressed: () => _returnHome(context),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ArchiveScreen()),
             ),
-            child: const Text('查看山海缓存'),
+            child: Text(context.l10n.viewArchive),
           ),
         ],
       ),
@@ -157,25 +163,25 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
     widget.onReturnHome?.call();
   }
 
-  String get _quoteText {
+  String _quoteText(BuildContext context) {
     if (_loadingQuote) {
-      return '“这一刻已经收好。ZEROON 正在轻轻回应。”';
+      return '“${context.l10n.reflectionLoading}”';
     }
-    return '“${_quote ?? _fallbackQuote}”';
+    return '“${_quote ?? _fallbackQuote(context)}”';
   }
 
-  String get _fallbackQuote {
+  String _fallbackQuote(BuildContext context) {
     if (_hasText(widget.record.aiSummary)) {
       return widget.record.aiSummary!.trim();
     }
-    return '这一次归零已经完成。\n不用急着解释，先让它被好好保存。';
+    return context.l10n.completionFallback;
   }
 
   Future<void> _loadQuote() async {
     try {
       final response = await ref.read(companionRepositoryProvider).sendMessage(
             CompanionMessageRequest(
-              message: _completionPrompt(),
+              message: context.l10n.completionPrompt,
             ),
           );
       if (!mounted) {
@@ -190,7 +196,7 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
         return;
       }
       setState(() {
-        _quote = _fallbackQuote;
+        _quote = _fallbackQuote(context);
         _loadingQuote = false;
       });
     }
@@ -198,17 +204,3 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
 }
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
-
-String _formatTime(DateTime value) {
-  final local = value.toLocal();
-  final hour = local.hour.toString().padLeft(2, '0');
-  final minute = local.minute.toString().padLeft(2, '0');
-  return '$hour:$minute';
-}
-
-String _completionPrompt() {
-  return [
-    '请基于我刚完成一次归零这个动作，给一句简短、温和、像 ZEROON 说的话。',
-    '只确认这一刻已经被保存，不要猜测记录内容，不要诊断，也不要给过多建议。',
-  ].join('\n');
-}

@@ -14,6 +14,7 @@ public final class UserDataDtos {
             String currentState,
             String status,
             List<String> roles,
+            String languagePreference,
             Instant createdAt) {
     }
 
