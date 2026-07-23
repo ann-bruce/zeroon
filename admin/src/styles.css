@@ -53,6 +53,10 @@ body {
   max-width: 1120px;
 }
 
+.support-panel {
+  max-width: 1400px;
+}
+
 .full-width {
   width: 100%;
 }
@@ -70,4 +74,44 @@ body {
   border-radius: 12px;
   background: #18202a;
   color: #f7f2e8;
+}
+
+.diagnostics-content {
+  max-height: 260px;
+  margin: 0;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+  border: 1px solid rgba(24, 32, 42, 0.12);
+  border-radius: 10px;
+  background: #f7f7f5;
+}
+
+.support-message {
+  width: 100%;
+  padding: 14px;
+  border-left: 3px solid #52c41a;
+  border-radius: 8px;
+  background: rgba(82, 196, 26, 0.06);
+}
+
+.support-message.internal {
+  border-left-color: #fa8c16;
+  background: rgba(250, 140, 22, 0.08);
+}
+
+.support-body {
+  margin: 8px 0 0 !important;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .content {
+    padding: 16px;
+  }
+
+  .panel {
+    padding: 20px;
+  }
 }

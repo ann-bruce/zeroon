@@ -108,7 +108,7 @@ restart was required for that tooling-only change.
 
 | ID | Severity | Finding | Evidence | Release consequence | Verification needed |
 |---|---|---|---|---|---|
-| RB-01 | Closed in S8-01 | Normal app tokens could access `/admin/**` | Database roles now enter signed tokens; `/admin/**` requires ADMIN | Automated USER 403 and ADMIN success pass; local USER 403 confirmed | Add mutation audit when admin write APIs are introduced |
+| RB-01 | Closed in S11-06 | Normal app tokens could access `/admin/**` | Database roles enter signed tokens; `/admin/**` requires ADMIN; support writes have request-scoped actor/timestamp audit without copied content | Automated USER 403, ADMIN lifecycle, assignment competition, audit, export isolation, and real PostgreSQL acceptance pass | Keep every future admin write behind reviewed authorization and mutation audit |
 | RB-02 | Closed in S8-02 | Production could start with development JWT and database defaults | Prod environment post-processor rejects unsafe JWT and PostgreSQL values; S8-03 extends checks to shared Redis and sender configuration | Public release remains blocked by compliance work and provider onboarding | Focused tests, unsafe prod boot failure, and full local/test regression passed |
 | RB-03 | Engineering closed in S8-03 | Verification code path was local-only and abuse-prone | Prod now uses random one-time codes, Redis atomic state, HTTPS sender boundary, mobile/IP/device throttling, and five-attempt deletion; local-only beans are profile-isolated | Public authentication remains blocked until an SMS provider is onboarded and production delivery smoke passes | Controller/service/store tests, real Redis cross-instance test, safe prod-profile startup, and full quality gate passed |
 | RB-04 | P0 | Public anthropomorphic-service compliance path is incomplete | No complete age/minor, overuse, escalation, complaint, filing, or assessment workflow; Sprint 11 now plans the reachable contact, complaint intake, operator audit, and escalation engineering subset | Public China release remains blocked pending professional review; Sprint 11 does not by itself close this blocker | Product, engineering, operations, and legal readiness checklist signed off |
@@ -120,12 +120,10 @@ restart was required for that tooling-only change.
 
 ## 8. Next Action
 
-Sprint 09 controllable-memory engineering, operational provider verification,
-and mobile latency/consent-path review are complete. The next bounded sequence
-is Sprint 10 Language and Locale Foundation followed by the independent Sprint
-11 Help, Contact, and Feedback Foundation. Sprint 11 provides reachable,
-private, trackable support engineering before wider Beta recruitment while
-keeping professional compliance review separate.
+Sprint 09 controllable-memory engineering, Sprint 10 language foundation, and
+Sprint 11 reachable human-support engineering are complete. The next bounded
+step is explicit Sprint 12 scope intake; previously undocumented scope must not
+be treated as approved implementation work.
 
 Public release remains blocked by RB-03 provider onboarding and RB-04
 professional compliance review; neither blocker authorizes widening Memory

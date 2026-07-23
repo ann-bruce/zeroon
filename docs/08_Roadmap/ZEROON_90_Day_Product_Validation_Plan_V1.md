@@ -295,6 +295,12 @@ a real-team contact path before login and during API outage; signed-in users
 must receive a private, trackable request and real operator response without
 automatically attaching unrelated private content.
 
+Sprint 11 completed on 2026-07-23 with automated retention, privacy and abuse
+boundaries, bilingual outage fallback, operator audit, zero companion-context
+coupling, full quality gates, and real PostgreSQL end-to-end acceptance.
+Sprint 12 begins only after its previously undocumented scope is explicitly
+inventoried and approved.
+
 ## 7. Operating Rhythm
 
 ### Weekly

@@ -18,6 +18,12 @@ evolution.
 - `conversations`: user-owned AI conversations
 - `messages`: ordered user, assistant, and system messages
 - `memory_entries`: derived long-term memory summaries
+- `support_requests`: private owner-scoped requests with opaque public
+  references, status, bounded diagnostics, and idempotent client submission id
+- `support_messages`: explicitly user-visible or internal human support text
+- `support_status_history`: immutable user-visible lifecycle transitions
+- `support_admin_audit`: content-free administrator mutation evidence scoped
+  to one support request
 
 ## Operations
 
@@ -38,6 +44,10 @@ users
 ├── conversations
 │   └── messages
 ├── memory_entries
+├── support_requests
+│   ├── support_messages
+│   ├── support_status_history
+│   └── support_admin_audit
 └── audit_events (actor, nullable)
 ```
 
@@ -47,6 +57,17 @@ records preserve the event while nulling a deleted actor reference.
 `language_preference` is an account interaction preference introduced by V11.
 It is not stored in `user_profiles`, does not grant AI context consent, and is
 removed with the user row.
+
+V12 introduces the support-request foundation. Public references contain no
+database or user id, ownership queries begin with the authenticated user, and
+all support rows hard-delete with the owner. Internal notes and future admin
+audit remain distinct from user-visible DTOs and exports.
+
+V13 adds nullable administrator assignment, reviewed escalation state, and a
+request-cascading admin audit. Deleting an administrator nulls assignment and
+audit actor references; deleting the request owner removes the request,
+messages, history, and support audit together. Audit values are bounded
+structured transition metadata and never copy request or message bodies.
 
 ## Query Baseline
 

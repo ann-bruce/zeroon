@@ -11,6 +11,7 @@ import '../l10n/l10n_extensions.dart';
 import '../locale/language_picker.dart';
 import '../my_zeroon/my_zeroon_controller.dart';
 import '../my_zeroon/my_zeroon_models.dart';
+import '../support/support_screen.dart';
 import 'profile_controller.dart';
 import 'profile_models.dart';
 
@@ -261,6 +262,8 @@ class _ProfileForm extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         const LanguageSettingCard(),
+        const SizedBox(height: 12),
+        const SupportSettingCard(),
         const SizedBox(height: 18),
         const _ProfileSectionIntro(),
         const SizedBox(height: 12),

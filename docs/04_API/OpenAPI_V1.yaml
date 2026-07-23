@@ -24,6 +24,8 @@ tags:
     description: Derived private memory entries.
   - name: Growth
     description: Long-term companion and personal growth metrics.
+  - name: Support
+    description: Private requests handled by the real ZEROON team.
   - name: Admin
     description: Operational APIs restricted to authenticated users with the ADMIN role.
 paths:
@@ -218,9 +220,11 @@ paths:
       description: >-
         Completes synchronous hard deletion before returning. Repeated calls
         are idempotent. User-owned profiles, sessions, state data, records,
-        conversations, messages, memory, and companion data are deleted.
-        Content-free AI usage and audit metadata may remain only after user and
-        conversation references are set to null.
+        conversations, messages, memory, companion data, and all in-app support
+        requests, messages, diagnostics, history, and support audit are deleted.
+        Content-free AI usage and unrelated audit metadata may remain only after
+        user and conversation references are set to null. External support email
+        is governed by its separately disclosed verified-deletion process.
       operationId: deleteCurrentAccount
       security:
         - bearerAuth: []
@@ -229,6 +233,257 @@ paths:
           description: Account content deleted, or already deleted
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /support/requests:
+    post:
+      tags: [Support]
+      summary: Submit a private support request
+      description: >-
+        Creates one owner-scoped request with an opaque public reference.
+        Retrying the same clientSubmissionId and identical body returns the
+        existing request; reusing the id with different content returns 409.
+        Diagnostics are optional, explicitly consented, and allowlisted. No
+        Record, Memory, Profile, conversation, prompt, reply, token, secret,
+        screenshot, attachment, or full log is accepted.
+      operationId: createSupportRequest
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupportRequest"
+      responses:
+        "201":
+          description: Support request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportRequestDetail"
+        "200":
+          description: Existing support request returned for an identical idempotent retry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportRequestDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/SupportRateLimited"
+  /me/support-requests:
+    get:
+      tags: [Support]
+      summary: List support requests owned by the current user
+      operationId: listCurrentUserSupportRequests
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/SupportSize"
+      responses:
+        "200":
+          description: Owned support request page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportRequestPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /me/support-requests/{reference}:
+    get:
+      tags: [Support]
+      summary: Get one support request owned by the current user
+      operationId: getCurrentUserSupportRequest
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SupportReference"
+      responses:
+        "200":
+          description: Owned support request detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportRequestDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /me/support-requests/{reference}/messages:
+    post:
+      tags: [Support]
+      summary: Add a follow-up to one owned support request
+      description: >-
+        Adds a bounded user-visible message. CLOSED requests reject follow-up.
+        A follow-up to WAITING_FOR_USER or REPLIED returns the request to
+        IN_REVIEW and records the transition.
+      operationId: addCurrentUserSupportMessage
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SupportReference"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddSupportMessageRequest"
+      responses:
+        "201":
+          description: Follow-up stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportMessage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/SupportRateLimited"
+  /admin/support-requests:
+    get:
+      tags: [Support]
+      summary: List support requests for human operator handling
+      description: >-
+        ADMIN-only metadata queue. It never includes unrelated ZEROON private
+        content, internal database ids, or message bodies.
+      operationId: listAdminSupportRequests
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/SupportSize"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/SupportRequestStatus"
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/SupportCategory"
+        - name: escalated
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Filtered operator queue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSupportRequestPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /admin/support-requests/{reference}:
+    get:
+      tags: [Support]
+      summary: Read one support request for human handling
+      operationId: getAdminSupportRequest
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SupportReference"
+      responses:
+        "200":
+          description: Operator detail including explicitly separated internal notes and audit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSupportRequestDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Support]
+      summary: Apply bounded triage changes to one support request
+      description: >-
+        ADMIN may change category, assign or unassign themself, set or clear a
+        reviewed escalation, and take a RECEIVED request into IN_REVIEW. Every
+        effective mutation creates a content-free audit row. Closing and other
+        user-visible status changes require the reply operation.
+      operationId: updateAdminSupportRequest
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SupportReference"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSupportUpdateRequest"
+      responses:
+        "200":
+          description: Updated operator detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSupportRequestDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /admin/support-requests/{reference}/messages:
+    post:
+      tags: [Support]
+      summary: Add an internal note or audited user-visible human reply
+      description: >-
+        INTERNAL is visible only to ADMIN and cannot change status.
+        USER_VISIBLE requires one allowed next status and is stored atomically
+        with its transition. Closing therefore always includes a visible
+        explanation. Closed requests cannot be mutated or reopened.
+      operationId: addAdminSupportMessage
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SupportReference"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSupportMessageRequest"
+      responses:
+        "201":
+          description: Message, transition, and audit committed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSupportRequestDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /me/profile:
     get:
       tags: [User]
@@ -777,6 +1032,21 @@ components:
         minimum: 1
         maximum: 100
         default: 20
+    SupportSize:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    SupportReference:
+      name: reference
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: "^ZS-[A-F0-9]{20}$"
   responses:
     BadRequest:
       description: Invalid request
@@ -802,6 +1072,24 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
+    Conflict:
+      description: Idempotency conflict or request state does not allow the operation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    SupportRateLimited:
+      description: Support request or follow-up rate limit exceeded
+      headers:
+        Retry-After:
+          description: Minimum seconds before retrying this operation
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
     RateLimited:
       description: Rate limit exceeded
       headers:
@@ -950,6 +1238,394 @@ components:
       properties:
         languagePreference:
           $ref: "#/components/schemas/LanguagePreference"
+    SupportCategory:
+      type: string
+      enum:
+        - PRODUCT_PROBLEM
+        - SUGGESTION
+        - ACCOUNT_DATA_PRIVACY
+        - AI_RESPONSE_SAFETY
+        - COMPLAINT_RIGHTS
+        - OTHER
+    SupportRequestStatus:
+      type: string
+      enum: [RECEIVED, IN_REVIEW, WAITING_FOR_USER, REPLIED, CLOSED]
+    SupportActorType:
+      type: string
+      enum: [SYSTEM, USER, ADMIN]
+    SupportMessageVisibility:
+      type: string
+      enum: [USER_VISIBLE, INTERNAL]
+    SupportEscalationCode:
+      type: string
+      enum:
+        - ENGINEERING
+        - PRODUCT
+        - PRIVACY
+        - SAFETY
+        - COMPLAINT
+        - PROFESSIONAL_REVIEW
+    SupportAdminAuditAction:
+      type: string
+      enum:
+        - CATEGORY_CHANGE
+        - ASSIGNMENT_CHANGE
+        - ESCALATION_CHANGE
+        - STATUS_CHANGE
+        - USER_VISIBLE_REPLY
+        - INTERNAL_NOTE
+    CreateSupportRequest:
+      type: object
+      additionalProperties: false
+      required:
+        [clientSubmissionId, category, subject, description, diagnosticConsent]
+      properties:
+        clientSubmissionId:
+          type: string
+          format: uuid
+        category:
+          $ref: "#/components/schemas/SupportCategory"
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        replyContact:
+          type: string
+          maxLength: 200
+          nullable: true
+        diagnosticConsent:
+          type: boolean
+          description: Must be true when diagnostics is present.
+        diagnostics:
+          $ref: "#/components/schemas/SupportDiagnosticEnvelope"
+          nullable: true
+    SupportDiagnosticEnvelope:
+      type: object
+      additionalProperties: false
+      properties:
+        appVersion:
+          type: string
+          maxLength: 40
+        build:
+          type: string
+          maxLength: 40
+        platform:
+          type: string
+          maxLength: 30
+        osFamily:
+          type: string
+          maxLength: 40
+        locale:
+          type: string
+          enum: [zh-CN, en]
+        errorCode:
+          type: string
+          maxLength: 80
+          pattern: "^[A-Za-z0-9._:-]*$"
+        timestamp:
+          type: string
+          format: date-time
+    AddSupportMessageRequest:
+      type: object
+      additionalProperties: false
+      required: [body]
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    SupportRequestSummary:
+      type: object
+      required: [reference, category, status, subject, createdAt, updatedAt]
+      properties:
+        reference:
+          type: string
+          pattern: "^ZS-[A-F0-9]{20}$"
+        category:
+          $ref: "#/components/schemas/SupportCategory"
+        status:
+          $ref: "#/components/schemas/SupportRequestStatus"
+        subject:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SupportRequestPage:
+      type: object
+      required: [items, page, size, totalElements]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupportRequestSummary"
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 50
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+    SupportMessage:
+      type: object
+      required: [id, actorType, body, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        actorType:
+          $ref: "#/components/schemas/SupportActorType"
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    SupportStatusHistory:
+      type: object
+      required: [toStatus, actorType, createdAt]
+      properties:
+        fromStatus:
+          $ref: "#/components/schemas/SupportRequestStatus"
+          nullable: true
+        toStatus:
+          $ref: "#/components/schemas/SupportRequestStatus"
+        actorType:
+          $ref: "#/components/schemas/SupportActorType"
+        createdAt:
+          type: string
+          format: date-time
+    SupportRequestDetail:
+      allOf:
+        - $ref: "#/components/schemas/SupportRequestSummary"
+        - type: object
+          required: [description, messages, statusHistory]
+          properties:
+            description:
+              type: string
+            replyContact:
+              type: string
+              nullable: true
+            diagnostics:
+              $ref: "#/components/schemas/SupportDiagnosticEnvelope"
+              nullable: true
+            messages:
+              type: array
+              items:
+                $ref: "#/components/schemas/SupportMessage"
+            statusHistory:
+              type: array
+              items:
+                $ref: "#/components/schemas/SupportStatusHistory"
+            closedAt:
+              type: string
+              format: date-time
+              nullable: true
+    AdminSupportUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [reasonCode]
+      minProperties: 2
+      properties:
+        category:
+          $ref: "#/components/schemas/SupportCategory"
+        status:
+          $ref: "#/components/schemas/SupportRequestStatus"
+          description: Status-only mutation is limited to RECEIVED to IN_REVIEW.
+        assignToMe:
+          type: boolean
+          description: True assigns the authenticated ADMIN; false unassigns.
+        escalated:
+          type: boolean
+        escalationCode:
+          $ref: "#/components/schemas/SupportEscalationCode"
+          nullable: true
+          description: Required when escalated is true and absent when false.
+        reasonCode:
+          type: string
+          pattern: "^[A-Z0-9_]{2,40}$"
+          maxLength: 40
+    AdminSupportMessageRequest:
+      type: object
+      additionalProperties: false
+      required: [body, visibility, reasonCode]
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        visibility:
+          $ref: "#/components/schemas/SupportMessageVisibility"
+        nextStatus:
+          $ref: "#/components/schemas/SupportRequestStatus"
+          nullable: true
+          description: Required for USER_VISIBLE and forbidden for INTERNAL.
+        reasonCode:
+          type: string
+          pattern: "^[A-Z0-9_]{2,40}$"
+          maxLength: 40
+    AdminSupportRequestSummary:
+      type: object
+      required:
+        - reference
+        - ownerUid
+        - category
+        - status
+        - subject
+        - descriptionPreview
+        - escalated
+        - createdAt
+        - updatedAt
+      properties:
+        reference:
+          type: string
+          pattern: "^ZS-[A-F0-9]{20}$"
+        ownerUid:
+          type: string
+        category:
+          $ref: "#/components/schemas/SupportCategory"
+        status:
+          $ref: "#/components/schemas/SupportRequestStatus"
+        subject:
+          type: string
+        descriptionPreview:
+          type: string
+          maxLength: 160
+        assignedAdminUid:
+          type: string
+          nullable: true
+        escalated:
+          type: boolean
+        escalationCode:
+          $ref: "#/components/schemas/SupportEscalationCode"
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AdminSupportRequestPage:
+      type: object
+      required: [items, page, size, totalElements]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminSupportRequestSummary"
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 50
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+    AdminSupportMessage:
+      type: object
+      required: [id, actorType, visibility, body, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        actorType:
+          $ref: "#/components/schemas/SupportActorType"
+        visibility:
+          $ref: "#/components/schemas/SupportMessageVisibility"
+        actorUid:
+          type: string
+          nullable: true
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    AdminSupportStatusHistory:
+      type: object
+      required: [toStatus, actorType, reasonCode, createdAt]
+      properties:
+        fromStatus:
+          $ref: "#/components/schemas/SupportRequestStatus"
+          nullable: true
+        toStatus:
+          $ref: "#/components/schemas/SupportRequestStatus"
+        actorType:
+          $ref: "#/components/schemas/SupportActorType"
+        actorUid:
+          type: string
+          nullable: true
+        reasonCode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    AdminSupportAudit:
+      type: object
+      required: [actionType, reasonCode, createdAt]
+      description: Structured mutation evidence that never copies message or request body text.
+      properties:
+        actionType:
+          $ref: "#/components/schemas/SupportAdminAuditAction"
+        actorUid:
+          type: string
+          nullable: true
+        fromValue:
+          type: string
+          nullable: true
+        toValue:
+          type: string
+          nullable: true
+        messageId:
+          type: integer
+          format: int64
+          nullable: true
+        reasonCode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    AdminSupportRequestDetail:
+      allOf:
+        - $ref: "#/components/schemas/AdminSupportRequestSummary"
+        - type: object
+          required: [description, messages, statusHistory, audit]
+          properties:
+            description:
+              type: string
+            replyContact:
+              type: string
+              nullable: true
+            diagnostics:
+              $ref: "#/components/schemas/SupportDiagnosticEnvelope"
+              nullable: true
+            messages:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminSupportMessage"
+            statusHistory:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminSupportStatusHistory"
+            audit:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminSupportAudit"
+            closedAt:
+              type: string
+              format: date-time
+              nullable: true
     UserDataExport:
       type: object
       required:
@@ -962,11 +1638,12 @@ components:
         - records
         - conversations
         - memoryEntries
+        - supportRequests
         - aiUsage
       properties:
         schemaVersion:
           type: string
-          enum: [zeroon-beta-export-v2]
+          enum: [zeroon-beta-export-v3]
         exportedAt:
           type: string
           format: date-time
@@ -1003,6 +1680,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UserDataMemoryEntry"
+        supportRequests:
+          type: array
+          description: >-
+            User-visible support data only. Internal notes, assignment,
+            administrator identity, internal reason codes, and security audit
+            details are excluded.
+          items:
+            $ref: "#/components/schemas/UserDataSupportRequest"
         aiUsage:
           type: array
           description: Content-free provider and outcome metadata; no prompt text.
@@ -1208,6 +1893,78 @@ components:
           type: string
           format: date-time
         updatedAt:
+          type: string
+          format: date-time
+    UserDataSupportRequest:
+      type: object
+      required:
+        - reference
+        - category
+        - status
+        - subject
+        - description
+        - messages
+        - statusHistory
+        - createdAt
+        - updatedAt
+      properties:
+        reference:
+          type: string
+        category:
+          $ref: "#/components/schemas/SupportCategory"
+        status:
+          $ref: "#/components/schemas/SupportRequestStatus"
+        subject:
+          type: string
+        description:
+          type: string
+        replyContact:
+          type: string
+          nullable: true
+        diagnostics:
+          $ref: "#/components/schemas/SupportDiagnosticEnvelope"
+          nullable: true
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDataSupportMessage"
+        statusHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDataSupportStatus"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        closedAt:
+          type: string
+          format: date-time
+          nullable: true
+    UserDataSupportMessage:
+      type: object
+      required: [actorType, body, createdAt]
+      properties:
+        actorType:
+          $ref: "#/components/schemas/SupportActorType"
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    UserDataSupportStatus:
+      type: object
+      required: [toStatus, actorType, createdAt]
+      properties:
+        fromStatus:
+          $ref: "#/components/schemas/SupportRequestStatus"
+          nullable: true
+        toStatus:
+          $ref: "#/components/schemas/SupportRequestStatus"
+        actorType:
+          $ref: "#/components/schemas/SupportActorType"
+        createdAt:
           type: string
           format: date-time
     UserDataAiUsage:

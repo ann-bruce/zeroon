@@ -16,15 +16,17 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import {
   DashboardOutlined,
+  CustomerServiceOutlined,
   MessageOutlined,
   ReloadOutlined,
   SettingOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
+import SupportPanel from './SupportPanel'
 
 const { Header, Sider, Content } = Layout
 
-type MenuKey = 'overview' | 'users' | 'prompts' | 'settings'
+type MenuKey = 'overview' | 'users' | 'support' | 'prompts' | 'settings'
 
 type PromptTemplateSummary = {
   id: number
@@ -60,6 +62,7 @@ export default function App() {
           items={[
             { key: 'overview', icon: <DashboardOutlined />, label: '概览' },
             { key: 'users', icon: <TeamOutlined />, label: '用户' },
+            { key: 'support', icon: <CustomerServiceOutlined />, label: '用户支持' },
             { key: 'prompts', icon: <MessageOutlined />, label: 'Prompt' },
             { key: 'settings', icon: <SettingOutlined />, label: '系统配置' },
           ]}
@@ -69,11 +72,17 @@ export default function App() {
         <Header className="header">
           <Space>
             <Typography.Text strong>ZEROON 管理后台</Typography.Text>
-            <Tag color="cyan">Sprint 2</Tag>
+            <Tag color="cyan">Sprint 11</Tag>
           </Space>
         </Header>
         <Content className="content">
-          {selectedKey === 'prompts' ? <PromptTemplatesPanel /> : <OverviewPanel />}
+          {selectedKey === 'support' ? (
+            <SupportPanel />
+          ) : selectedKey === 'prompts' ? (
+            <PromptTemplatesPanel />
+          ) : (
+            <OverviewPanel />
+          )}
         </Content>
       </Layout>
     </Layout>
@@ -85,8 +94,8 @@ function OverviewPanel() {
     <section className="panel">
       <Typography.Title level={2}>研发基线已建立</Typography.Title>
       <Typography.Paragraph>
-        当前 Sprint 2 已接入 Prompt 模板只读管理。用户与系统配置仍等待后续鉴权、
-        权限和审计能力完善后开放。
+        当前 Sprint 11 已接入人工支持工单处理与 Prompt 模板只读管理。支持工作台使用独立的
+        ADMIN 权限，并保留不复制正文的操作审计。
       </Typography.Paragraph>
     </section>
   )

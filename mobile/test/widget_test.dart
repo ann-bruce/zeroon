@@ -55,6 +55,7 @@ void main() {
       find.bySemanticsLabel('切换语言 / Change language'),
       findsOneWidget,
     );
+    expect(find.bySemanticsLabel('帮助与联系'), findsOneWidget);
   });
 
   testWidgets('login language entry switches the app immediately', (
@@ -303,17 +304,34 @@ void main() {
     expect(find.text('你的 ZEROON 已经在这里'), findsOneWidget);
     expect(find.text('ZR-20260703-A8K2'), findsOneWidget);
     expect(find.text('这是我的 ZEROON'), findsNothing);
+    expect(find.text('帮助与联系'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.textContaining('让 ZEROON 更懂你'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.textContaining('让 ZEROON 更懂你'), findsOneWidget);
-    await tester.drag(find.byType(ListView).last, const Offset(0, -350));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byType(TextField).first);
+    await tester.scrollUntilVisible(
+      find.byType(TextField).first,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'Bruce');
-    await tester.drag(find.byType(ListView).last, const Offset(0, -700));
+    await tester.scrollUntilVisible(
+      find.textContaining('下一次回应起就不再使用'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('下一次回应起就不再使用'), findsOneWidget);
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('保存我的信息'),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('保存我的信息'));
     await tester.pumpAndSettle();
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../common/zeroon_design.dart';
 import '../l10n/l10n_extensions.dart';
 import '../locale/language_picker.dart';
+import '../support/support_screen.dart';
 import 'auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -43,7 +44,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Wordmark(),
-              const LanguagePickerButton(),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ZeroonIconButton(
+                    semanticLabel: l10n.helpAndContact,
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            const SupportScreen(authenticated: false),
+                      ),
+                    ),
+                    child: const Icon(Icons.help_outline),
+                  ),
+                  const SizedBox(width: 8),
+                  const LanguagePickerButton(),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 62),

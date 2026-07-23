@@ -1514,6 +1514,438 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'了解成长信息'**
   String get growthInfoTooltip;
+
+  /// No description provided for @supportTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'帮助与反馈'**
+  String get supportTitle;
+
+  /// No description provided for @supportIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'这条信息会发给负责 ZEROON 的团队成员，而不是你的陪伴者。'**
+  String get supportIntro;
+
+  /// No description provided for @supportSignedOutBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'如果你暂时无法登录，仍然可以直接联系负责 ZEROON 的团队成员。'**
+  String get supportSignedOutBody;
+
+  /// No description provided for @supportSettingHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'报告问题，或告诉我们你的建议'**
+  String get supportSettingHint;
+
+  /// No description provided for @supportEmailTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'直接联系'**
+  String get supportEmailTitle;
+
+  /// No description provided for @supportCopyEmail.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制邮箱'**
+  String get supportCopyEmail;
+
+  /// No description provided for @supportEmailCopied.
+  ///
+  /// In zh, this message translates to:
+  /// **'邮箱已复制'**
+  String get supportEmailCopied;
+
+  /// No description provided for @supportCategoryLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'这次想反馈什么？'**
+  String get supportCategoryLabel;
+
+  /// No description provided for @supportCategoryProductProblem.
+  ///
+  /// In zh, this message translates to:
+  /// **'产品问题'**
+  String get supportCategoryProductProblem;
+
+  /// No description provided for @supportCategorySuggestion.
+  ///
+  /// In zh, this message translates to:
+  /// **'意见或建议'**
+  String get supportCategorySuggestion;
+
+  /// No description provided for @supportCategoryAccountPrivacy.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户、数据或隐私'**
+  String get supportCategoryAccountPrivacy;
+
+  /// No description provided for @supportCategoryAiSafety.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 回复或安全'**
+  String get supportCategoryAiSafety;
+
+  /// No description provided for @supportCategoryComplaintRights.
+  ///
+  /// In zh, this message translates to:
+  /// **'投诉或权利请求'**
+  String get supportCategoryComplaintRights;
+
+  /// No description provided for @supportCategoryOther.
+  ///
+  /// In zh, this message translates to:
+  /// **'其他'**
+  String get supportCategoryOther;
+
+  /// No description provided for @supportDescriptionLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'发生了什么，或你希望提出什么建议？'**
+  String get supportDescriptionLabel;
+
+  /// No description provided for @supportDescriptionHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'可以写下操作步骤或有助于团队理解的背景。'**
+  String get supportDescriptionHint;
+
+  /// No description provided for @supportDiagnosticsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'附带基础应用信息'**
+  String get supportDiagnosticsTitle;
+
+  /// No description provided for @supportDiagnosticsHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认关闭。发送前可查看全部字段。'**
+  String get supportDiagnosticsHint;
+
+  /// No description provided for @supportDiagnosticsPreviewTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'将会发送的信息'**
+  String get supportDiagnosticsPreviewTitle;
+
+  /// No description provided for @supportDiagnosticApp.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用'**
+  String get supportDiagnosticApp;
+
+  /// No description provided for @supportDiagnosticPlatform.
+  ///
+  /// In zh, this message translates to:
+  /// **'平台'**
+  String get supportDiagnosticPlatform;
+
+  /// No description provided for @supportDiagnosticLocale.
+  ///
+  /// In zh, this message translates to:
+  /// **'语言'**
+  String get supportDiagnosticLocale;
+
+  /// No description provided for @supportDiagnosticTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'时间'**
+  String get supportDiagnosticTime;
+
+  /// No description provided for @supportPrivacyNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'ZEROON 不会通过此表单附带你的记录、Memory、个人资料、对话、截图、文件或完整日志。'**
+  String get supportPrivacyNote;
+
+  /// No description provided for @supportRetentionNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用内请求关闭后最迟 180 天删除。支持邮箱中的副本遵循单独说明的最长 180 天流程，你也可以提前申请删除。'**
+  String get supportRetentionNote;
+
+  /// No description provided for @supportSubmit.
+  ///
+  /// In zh, this message translates to:
+  /// **'发送给 ZEROON 团队'**
+  String get supportSubmit;
+
+  /// No description provided for @supportRetrySubmit.
+  ///
+  /// In zh, this message translates to:
+  /// **'重新发送'**
+  String get supportRetrySubmit;
+
+  /// No description provided for @supportSubmitFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'这条信息尚未发送，草稿仍保留在这里。你可以重试，或使用上方邮箱联系。'**
+  String get supportSubmitFailed;
+
+  /// No description provided for @supportValidationDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先写下问题或建议。'**
+  String get supportValidationDescription;
+
+  /// No description provided for @supportReceiptTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'我们已收到你的信息'**
+  String get supportReceiptTitle;
+
+  /// No description provided for @supportReceiptBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'ZEROON 团队成员会查看它。这份回执不承诺回复时间或问题解决结果。'**
+  String get supportReceiptBody;
+
+  /// No description provided for @supportReferenceLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'回执编号'**
+  String get supportReferenceLabel;
+
+  /// No description provided for @supportCopyReference.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制回执编号'**
+  String get supportCopyReference;
+
+  /// No description provided for @supportReferenceCopied.
+  ///
+  /// In zh, this message translates to:
+  /// **'回执编号已复制'**
+  String get supportReferenceCopied;
+
+  /// No description provided for @supportExternalBoundary.
+  ///
+  /// In zh, this message translates to:
+  /// **'邮件不在应用内跟踪，因此不会在这里生成回执编号。你也可以通过邮件提出账户或数据删除请求。'**
+  String get supportExternalBoundary;
+
+  /// No description provided for @supportNonEmergency.
+  ///
+  /// In zh, this message translates to:
+  /// **'ZEROON 支持不是紧急救助服务。'**
+  String get supportNonEmergency;
+
+  /// No description provided for @supportMyRequests.
+  ///
+  /// In zh, this message translates to:
+  /// **'我的支持请求'**
+  String get supportMyRequests;
+
+  /// No description provided for @supportMyRequestsHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看处理状态和 ZEROON 团队回复'**
+  String get supportMyRequestsHint;
+
+  /// No description provided for @supportMyRequestsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'这里保存着你与 ZEROON 负责团队之间的私人支持沟通。'**
+  String get supportMyRequestsBody;
+
+  /// No description provided for @supportViewRequest.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看这条请求'**
+  String get supportViewRequest;
+
+  /// No description provided for @supportLoadMore.
+  ///
+  /// In zh, this message translates to:
+  /// **'加载更早的请求'**
+  String get supportLoadMore;
+
+  /// No description provided for @supportListRefreshFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂时没能刷新支持请求，已经显示的内容仍保留在这里。'**
+  String get supportListRefreshFailed;
+
+  /// No description provided for @supportEmptyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有支持请求'**
+  String get supportEmptyTitle;
+
+  /// No description provided for @supportEmptyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'当你提交问题或建议后，处理状态和人工回复会出现在这里。'**
+  String get supportEmptyBody;
+
+  /// No description provided for @supportLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂时没能读到你的支持请求。'**
+  String get supportLoadFailed;
+
+  /// No description provided for @supportRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'再试一次'**
+  String get supportRefresh;
+
+  /// No description provided for @supportRequestDetailTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'支持请求'**
+  String get supportRequestDetailTitle;
+
+  /// No description provided for @supportConversationTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'沟通记录'**
+  String get supportConversationTitle;
+
+  /// No description provided for @supportNoReplies.
+  ///
+  /// In zh, this message translates to:
+  /// **'ZEROON 团队暂时还没有回复，你的请求仍然保留在这里。'**
+  String get supportNoReplies;
+
+  /// No description provided for @supportProgressTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'处理进度'**
+  String get supportProgressTitle;
+
+  /// No description provided for @supportStatusReceived.
+  ///
+  /// In zh, this message translates to:
+  /// **'已收到'**
+  String get supportStatusReceived;
+
+  /// No description provided for @supportStatusInReview.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看中'**
+  String get supportStatusInReview;
+
+  /// No description provided for @supportStatusWaitingForUser.
+  ///
+  /// In zh, this message translates to:
+  /// **'等待你补充'**
+  String get supportStatusWaitingForUser;
+
+  /// No description provided for @supportStatusReplied.
+  ///
+  /// In zh, this message translates to:
+  /// **'团队已回复'**
+  String get supportStatusReplied;
+
+  /// No description provided for @supportStatusClosed.
+  ///
+  /// In zh, this message translates to:
+  /// **'已关闭'**
+  String get supportStatusClosed;
+
+  /// No description provided for @supportStatusReceivedHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'你的请求已被妥善记录，正在等待团队成员查看。'**
+  String get supportStatusReceivedHint;
+
+  /// No description provided for @supportStatusInReviewHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'ZEROON 团队成员正在查看这条请求。'**
+  String get supportStatusInReviewHint;
+
+  /// No description provided for @supportStatusWaitingForUserHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'ZEROON 团队需要你补充一些信息，之后才能继续查看。'**
+  String get supportStatusWaitingForUserHint;
+
+  /// No description provided for @supportStatusRepliedHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'ZEROON 团队已经回复。你可以在下方阅读回复，并在需要时继续补充。'**
+  String get supportStatusRepliedHint;
+
+  /// No description provided for @supportStatusClosedHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'这条请求已经关闭，沟通记录仍会保留供你回看。'**
+  String get supportStatusClosedHint;
+
+  /// No description provided for @supportActorSystem.
+  ///
+  /// In zh, this message translates to:
+  /// **'ZEROON 支持'**
+  String get supportActorSystem;
+
+  /// No description provided for @supportActorYou.
+  ///
+  /// In zh, this message translates to:
+  /// **'你'**
+  String get supportActorYou;
+
+  /// No description provided for @supportActorTeam.
+  ///
+  /// In zh, this message translates to:
+  /// **'ZEROON 团队'**
+  String get supportActorTeam;
+
+  /// No description provided for @supportWaitingPrompt.
+  ///
+  /// In zh, this message translates to:
+  /// **'团队正在等待你补充信息。'**
+  String get supportWaitingPrompt;
+
+  /// No description provided for @supportFollowUpLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'补充信息'**
+  String get supportFollowUpLabel;
+
+  /// No description provided for @supportFollowUpHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'回复团队需要的背景信息，请不要填写密码或验证码。'**
+  String get supportFollowUpHint;
+
+  /// No description provided for @supportSendFollowUp.
+  ///
+  /// In zh, this message translates to:
+  /// **'发送补充信息'**
+  String get supportSendFollowUp;
+
+  /// No description provided for @supportRetryFollowUp.
+  ///
+  /// In zh, this message translates to:
+  /// **'重新发送'**
+  String get supportRetryFollowUp;
+
+  /// No description provided for @supportFollowUpFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'这条补充信息尚未发送，草稿仍保留在这里。'**
+  String get supportFollowUpFailed;
+
+  /// No description provided for @supportFollowUpValidation.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先写下要补充的信息。'**
+  String get supportFollowUpValidation;
+
+  /// No description provided for @supportFollowUpSent.
+  ///
+  /// In zh, this message translates to:
+  /// **'补充信息已发送。'**
+  String get supportFollowUpSent;
+
+  /// No description provided for @supportClosedFollowUp.
+  ///
+  /// In zh, this message translates to:
+  /// **'这条请求已经关闭，无法继续在应用内补充。如果问题仍未解决，你可以新建请求或使用支持邮箱联系。'**
+  String get supportClosedFollowUp;
 }
 
 class _AppLocalizationsDelegate

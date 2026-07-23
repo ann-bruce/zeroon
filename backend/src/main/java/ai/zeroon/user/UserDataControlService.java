@@ -9,6 +9,10 @@ import ai.zeroon.user.UserDataDtos.ProfileExport;
 import ai.zeroon.user.UserDataDtos.SessionExport;
 import ai.zeroon.user.UserDataDtos.StateChangeExport;
 import ai.zeroon.user.UserDataDtos.StateSessionExport;
+import ai.zeroon.user.UserDataDtos.SupportDiagnosticExport;
+import ai.zeroon.user.UserDataDtos.SupportMessageExport;
+import ai.zeroon.user.UserDataDtos.SupportRequestExport;
+import ai.zeroon.user.UserDataDtos.SupportStatusExport;
 import ai.zeroon.user.UserDataDtos.UserDataExportResponse;
 import ai.zeroon.user.UserDataDtos.ZeroRecordExport;
 import ai.zeroon.user.UserDataDtos.ZeroonCompanionExport;
@@ -29,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserDataControlService {
 
-    private static final String EXPORT_SCHEMA_VERSION = "zeroon-beta-export-v2";
+    private static final String EXPORT_SCHEMA_VERSION = "zeroon-beta-export-v3";
 
     private final UserRepository userRepository;
     private final JdbcTemplate jdbcTemplate;
@@ -73,6 +77,7 @@ public class UserDataControlService {
                 records(userId),
                 conversations(userId, messages),
                 memoryEntries(userId),
+                supportRequests(userId),
                 aiUsage(userId));
     }
 
@@ -261,6 +266,78 @@ public class UserDataControlService {
                 nullableInteger(rs, "output_tokens"),
                 rs.getString("error_code"),
                 instant(rs, "created_at")), userId);
+    }
+
+    private List<SupportRequestExport> supportRequests(Long userId) {
+        return jdbcTemplate.query("""
+                SELECT id, public_reference, category, status, subject, description,
+                       reply_contact, diagnostic_app_version, diagnostic_build,
+                       diagnostic_platform, diagnostic_os_family, diagnostic_locale,
+                       diagnostic_error_code, diagnostic_timestamp, created_at,
+                       updated_at, closed_at
+                FROM support_requests WHERE user_id = ? ORDER BY created_at
+                """, (rs, row) -> {
+            long requestId = rs.getLong("id");
+            SupportDiagnosticExport diagnostics = supportDiagnostics(rs);
+            return new SupportRequestExport(
+                    rs.getString("public_reference"),
+                    rs.getString("category"),
+                    rs.getString("status"),
+                    rs.getString("subject"),
+                    rs.getString("description"),
+                    rs.getString("reply_contact"),
+                    diagnostics,
+                    supportMessages(requestId),
+                    supportStatusHistory(requestId),
+                    instant(rs, "created_at"),
+                    instant(rs, "updated_at"),
+                    instant(rs, "closed_at"));
+        }, userId);
+    }
+
+    private SupportDiagnosticExport supportDiagnostics(ResultSet rs) throws SQLException {
+        String appVersion = rs.getString("diagnostic_app_version");
+        String build = rs.getString("diagnostic_build");
+        String platform = rs.getString("diagnostic_platform");
+        String osFamily = rs.getString("diagnostic_os_family");
+        String locale = rs.getString("diagnostic_locale");
+        String errorCode = rs.getString("diagnostic_error_code");
+        Instant timestamp = instant(rs, "diagnostic_timestamp");
+        if (appVersion == null
+                && build == null
+                && platform == null
+                && osFamily == null
+                && locale == null
+                && errorCode == null
+                && timestamp == null) {
+            return null;
+        }
+        return new SupportDiagnosticExport(
+                appVersion, build, platform, osFamily, locale, errorCode, timestamp);
+    }
+
+    private List<SupportMessageExport> supportMessages(long requestId) {
+        return jdbcTemplate.query("""
+                SELECT actor_type, body, created_at
+                FROM support_messages
+                WHERE request_id = ? AND visibility = 'USER_VISIBLE'
+                ORDER BY created_at
+                """, (rs, row) -> new SupportMessageExport(
+                rs.getString("actor_type"),
+                rs.getString("body"),
+                instant(rs, "created_at")), requestId);
+    }
+
+    private List<SupportStatusExport> supportStatusHistory(long requestId) {
+        return jdbcTemplate.query("""
+                SELECT from_status, to_status, actor_type, created_at
+                FROM support_status_history
+                WHERE request_id = ? ORDER BY created_at
+                """, (rs, row) -> new SupportStatusExport(
+                rs.getString("from_status"),
+                rs.getString("to_status"),
+                rs.getString("actor_type"),
+                instant(rs, "created_at")), requestId);
     }
 
     private Long nullableLong(ResultSet resultSet, String column) throws SQLException {

@@ -55,3 +55,8 @@ zeroon:
     api-key: ${LLM_API_KEY:}
     model: ${ZEROON_LLM_MODEL:gpt-4o-mini}
     timeout-seconds: ${ZEROON_LLM_TIMEOUT_SECONDS:10}
+  support:
+    request-hourly-limit: ${ZEROON_SUPPORT_REQUEST_HOURLY_LIMIT:5}
+    message-hourly-limit: ${ZEROON_SUPPORT_MESSAGE_HOURLY_LIMIT:20}
+    closed-retention-days: ${ZEROON_SUPPORT_CLOSED_RETENTION_DAYS:180}
+    retention-cron: ${ZEROON_SUPPORT_RETENTION_CRON:0 17 * * * *}

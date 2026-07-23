@@ -219,6 +219,12 @@ The implemented Beta export, deletion, retention, and logout semantics are
 defined in `docs/05_Engineering/Data_Control_Lifecycle_V1.md`. OpenAPI must not
 describe planned asynchronous deletion as an implemented response.
 
+Closed support requests are purged automatically after 180 days. Local or
+deployment configuration may set `ZEROON_SUPPORT_CLOSED_RETENTION_DAYS` and
+`ZEROON_SUPPORT_RETENTION_CRON`; retention below one day is rejected. Tests may
+use a shorter positive window and frequent cron only for isolated runtime
+acceptance, followed by temporary-data cleanup.
+
 ## Memory V1
 
 Memory source, ownership, activation, AI-use, expiry, and deletion semantics

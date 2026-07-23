@@ -30,6 +30,7 @@ public final class UserDataDtos {
             List<ZeroRecordExport> records,
             List<ConversationExport> conversations,
             List<MemoryEntryExport> memoryEntries,
+            List<SupportRequestExport> supportRequests,
             List<AiUsageExport> aiUsage) {
     }
 
@@ -114,6 +115,44 @@ public final class UserDataDtos {
             boolean aiContextEnabled,
             Instant createdAt,
             Instant updatedAt) {
+    }
+
+    public record SupportRequestExport(
+            String reference,
+            String category,
+            String status,
+            String subject,
+            String description,
+            String replyContact,
+            SupportDiagnosticExport diagnostics,
+            List<SupportMessageExport> messages,
+            List<SupportStatusExport> statusHistory,
+            Instant createdAt,
+            Instant updatedAt,
+            Instant closedAt) {
+    }
+
+    public record SupportDiagnosticExport(
+            String appVersion,
+            String build,
+            String platform,
+            String osFamily,
+            String locale,
+            String errorCode,
+            Instant timestamp) {
+    }
+
+    public record SupportMessageExport(
+            String actorType,
+            String body,
+            Instant createdAt) {
+    }
+
+    public record SupportStatusExport(
+            String fromStatus,
+            String toStatus,
+            String actorType,
+            Instant createdAt) {
     }
 
     public record AiUsageExport(

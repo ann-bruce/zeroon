@@ -3,6 +3,7 @@ package ai.zeroon.common;
 import ai.zeroon.auth.RateLimitExceededException;
 import ai.zeroon.auth.VerificationCodeDeliveryException;
 import ai.zeroon.auth.VerificationCodeInfrastructureException;
+import ai.zeroon.support.SupportConflictException;
 import java.util.Map;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpHeaders;
@@ -72,5 +73,11 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     Map<String, String> notFound(EntityNotFoundException ex) {
         return Map.of("error", "not_found", "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(SupportConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    Map<String, String> conflict(SupportConflictException ex) {
+        return Map.of("error", "conflict", "message", ex.getMessage());
     }
 }

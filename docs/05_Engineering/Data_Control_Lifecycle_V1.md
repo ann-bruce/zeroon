@@ -21,7 +21,7 @@ current behavior.
 
 ## Beta Export Scope
 
-`zeroon-beta-export-v2` includes:
+`zeroon-beta-export-v3` includes:
 
 - account identity, state, status, roles, explicit language preference, and
   creation time;
@@ -32,6 +32,8 @@ current behavior.
 - Zero Records, including user content and AI summaries;
 - conversations and messages;
 - current and expired Memory entries;
+- owned support requests, submitted diagnostics, user-visible messages and
+  status history, excluding internal notes and operator identity;
 - content-free AI usage metadata.
 
 The export excludes access tokens, refresh tokens, refresh-token hashes,
@@ -40,9 +42,10 @@ content, and records belonging to another user. The Beta mobile client copies
 the JSON data copy to the system clipboard; the API also supplies an attachment
 filename for clients that support file downloads.
 
-V2 adds only the explicit `languagePreference` account field while preserving
-all V1 property names. It never exports a language inferred from Profile,
-Record, Memory, conversation, or other private text.
+V2 added only the explicit `languagePreference` account field. V3 adds the
+`supportRequests` collection while preserving all earlier property names. It
+never exports a language inferred from Profile, Record, Memory, conversation,
+support content, or other private text.
 
 This product export is not a substitute for jurisdiction-specific data-access
 or records-of-processing obligations.
@@ -58,7 +61,9 @@ successful request deletes the user row; database foreign keys then remove:
 - state history and state sessions;
 - Zero Records;
 - conversations and messages;
-- Memory entries.
+- Memory entries;
+- in-app support requests, diagnostics, messages, internal notes, transition
+  history, assignment, and support mutation audit.
 
 Repeating the request with the still-valid access-token signature returns `204`
 without recreating state. Every refresh token belonging to the deleted account
@@ -76,8 +81,24 @@ The following operational rows may remain only in deidentified form:
   null; private record or message bodies must not be placed in audit metadata;
 - administrator-created prompt templates may remain with `created_by` null.
 
+The request-scoped `support_admin_audit` is deliberately stricter than the
+general operational audit above: deleting the support-request owner cascades
+the support audit. Deleting only the administrator nulls its actor reference.
+It never stores request, internal-note, or reply bodies.
+
 No endpoint returns success while retaining the user's Profile, records,
-messages, Memory summaries, mobile number, refresh sessions, or companion row.
+messages, Memory summaries, in-app support content, mobile number, refresh
+sessions, or companion row. External mail sent to `zeroon_ai@gmail.com` cannot
+be matched automatically by account deletion; its separately disclosed process
+deletes messages within 180 days after handling closes or earlier after a
+verified request.
+
+Closed in-app support requests are also subject to an automated maximum. An
+hourly UTC worker deletes requests older than
+`ZEROON_SUPPORT_CLOSED_RETENTION_DAYS` (180 by default), and database cascades
+remove messages, diagnostics, history, internal notes, assignment, and support
+audit. `ZEROON_SUPPORT_RETENTION_CRON` controls the reviewed operational
+schedule. Values below one retention day are rejected at startup.
 
 ## Failure and UX Rules
 

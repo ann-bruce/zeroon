@@ -811,4 +811,248 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get growthInfoTooltip => 'About growth information';
+
+  @override
+  String get supportTitle => 'Help and feedback';
+
+  @override
+  String get supportIntro =>
+      'This message goes to the people responsible for ZEROON, not to your companion.';
+
+  @override
+  String get supportSignedOutBody =>
+      'If you cannot sign in, you can still contact the people responsible for ZEROON directly.';
+
+  @override
+  String get supportSettingHint => 'Report a problem or share a suggestion';
+
+  @override
+  String get supportEmailTitle => 'Direct contact';
+
+  @override
+  String get supportCopyEmail => 'Copy email';
+
+  @override
+  String get supportEmailCopied => 'Email copied';
+
+  @override
+  String get supportCategoryLabel => 'What is this about?';
+
+  @override
+  String get supportCategoryProductProblem => 'Product problem';
+
+  @override
+  String get supportCategorySuggestion => 'Suggestion';
+
+  @override
+  String get supportCategoryAccountPrivacy => 'Account, data, or privacy';
+
+  @override
+  String get supportCategoryAiSafety => 'AI response or safety';
+
+  @override
+  String get supportCategoryComplaintRights => 'Complaint or rights request';
+
+  @override
+  String get supportCategoryOther => 'Other';
+
+  @override
+  String get supportDescriptionLabel =>
+      'What happened, or what would you like to suggest?';
+
+  @override
+  String get supportDescriptionHint =>
+      'Include the steps or context that would help our team understand.';
+
+  @override
+  String get supportDiagnosticsTitle => 'Include basic app information';
+
+  @override
+  String get supportDiagnosticsHint =>
+      'Off by default. Review the exact fields before they are sent.';
+
+  @override
+  String get supportDiagnosticsPreviewTitle => 'Information to be sent';
+
+  @override
+  String get supportDiagnosticApp => 'App';
+
+  @override
+  String get supportDiagnosticPlatform => 'Platform';
+
+  @override
+  String get supportDiagnosticLocale => 'Language';
+
+  @override
+  String get supportDiagnosticTime => 'Time';
+
+  @override
+  String get supportPrivacyNote =>
+      'ZEROON never attaches your Records, Memory, profile, conversations, screenshots, files, or full logs to this form.';
+
+  @override
+  String get supportRetentionNote =>
+      'Closed in-app requests are deleted within 180 days. Support email copies follow the separately disclosed 180-day maximum, and you may request earlier deletion.';
+
+  @override
+  String get supportSubmit => 'Send to the ZEROON team';
+
+  @override
+  String get supportRetrySubmit => 'Try sending again';
+
+  @override
+  String get supportSubmitFailed =>
+      'This message was not sent. Your draft is still here; you can retry or use the email above.';
+
+  @override
+  String get supportValidationDescription =>
+      'Please describe the problem or suggestion first.';
+
+  @override
+  String get supportReceiptTitle => 'Your message was received';
+
+  @override
+  String get supportReceiptBody =>
+      'A person on the ZEROON team will review it. This receipt does not promise a response time or resolution.';
+
+  @override
+  String get supportReferenceLabel => 'Reference';
+
+  @override
+  String get supportCopyReference => 'Copy reference';
+
+  @override
+  String get supportReferenceCopied => 'Reference copied';
+
+  @override
+  String get supportExternalBoundary =>
+      'Email is outside in-app tracking, so it will not create a reference here. You can also use it for account or data deletion requests.';
+
+  @override
+  String get supportNonEmergency =>
+      'ZEROON support is not an emergency service.';
+
+  @override
+  String get supportMyRequests => 'My support requests';
+
+  @override
+  String get supportMyRequestsHint =>
+      'Read status and replies from the ZEROON team';
+
+  @override
+  String get supportMyRequestsBody =>
+      'These are your private conversations with the people responsible for ZEROON.';
+
+  @override
+  String get supportViewRequest => 'View this request';
+
+  @override
+  String get supportLoadMore => 'Load earlier requests';
+
+  @override
+  String get supportListRefreshFailed =>
+      'Your requests could not be refreshed just now. What is already here has been kept.';
+
+  @override
+  String get supportEmptyTitle => 'No support requests yet';
+
+  @override
+  String get supportEmptyBody =>
+      'If you send a problem or suggestion, its status and human replies will appear here.';
+
+  @override
+  String get supportLoadFailed =>
+      'Your support requests could not be read just now.';
+
+  @override
+  String get supportRefresh => 'Try again';
+
+  @override
+  String get supportRequestDetailTitle => 'Support request';
+
+  @override
+  String get supportConversationTitle => 'Conversation';
+
+  @override
+  String get supportNoReplies =>
+      'The ZEROON team has not replied yet. Your request is still here.';
+
+  @override
+  String get supportProgressTitle => 'Progress';
+
+  @override
+  String get supportStatusReceived => 'Received';
+
+  @override
+  String get supportStatusInReview => 'In review';
+
+  @override
+  String get supportStatusWaitingForUser => 'Waiting for you';
+
+  @override
+  String get supportStatusReplied => 'Team replied';
+
+  @override
+  String get supportStatusClosed => 'Closed';
+
+  @override
+  String get supportStatusReceivedHint =>
+      'Your request is safely recorded and is waiting for a team member to review it.';
+
+  @override
+  String get supportStatusInReviewHint =>
+      'A person on the ZEROON team is reviewing this request.';
+
+  @override
+  String get supportStatusWaitingForUserHint =>
+      'The ZEROON team needs more information from you before review can continue.';
+
+  @override
+  String get supportStatusRepliedHint =>
+      'The ZEROON team has replied. You can read the reply below and add more context if needed.';
+
+  @override
+  String get supportStatusClosedHint =>
+      'This request is closed. Its conversation remains available for you to revisit.';
+
+  @override
+  String get supportActorSystem => 'ZEROON support';
+
+  @override
+  String get supportActorYou => 'You';
+
+  @override
+  String get supportActorTeam => 'ZEROON team';
+
+  @override
+  String get supportWaitingPrompt =>
+      'The team is waiting for information from you.';
+
+  @override
+  String get supportFollowUpLabel => 'Add information';
+
+  @override
+  String get supportFollowUpHint =>
+      'Reply with the context the team needs. Do not include passwords or verification codes.';
+
+  @override
+  String get supportSendFollowUp => 'Send follow-up';
+
+  @override
+  String get supportRetryFollowUp => 'Try sending again';
+
+  @override
+  String get supportFollowUpFailed =>
+      'This follow-up was not sent. Your draft is still here.';
+
+  @override
+  String get supportFollowUpValidation =>
+      'Write your follow-up before sending.';
+
+  @override
+  String get supportFollowUpSent => 'Your follow-up was sent.';
+
+  @override
+  String get supportClosedFollowUp =>
+      'This request is closed and no longer accepts in-app follow-up. You can create a new request or use the support email if something remains unresolved.';
 }

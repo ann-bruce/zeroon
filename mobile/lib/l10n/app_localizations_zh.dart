@@ -740,6 +740,226 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get growthInfoTooltip => '了解成长信息';
+
+  @override
+  String get supportTitle => '帮助与反馈';
+
+  @override
+  String get supportIntro => '这条信息会发给负责 ZEROON 的团队成员，而不是你的陪伴者。';
+
+  @override
+  String get supportSignedOutBody => '如果你暂时无法登录，仍然可以直接联系负责 ZEROON 的团队成员。';
+
+  @override
+  String get supportSettingHint => '报告问题，或告诉我们你的建议';
+
+  @override
+  String get supportEmailTitle => '直接联系';
+
+  @override
+  String get supportCopyEmail => '复制邮箱';
+
+  @override
+  String get supportEmailCopied => '邮箱已复制';
+
+  @override
+  String get supportCategoryLabel => '这次想反馈什么？';
+
+  @override
+  String get supportCategoryProductProblem => '产品问题';
+
+  @override
+  String get supportCategorySuggestion => '意见或建议';
+
+  @override
+  String get supportCategoryAccountPrivacy => '账户、数据或隐私';
+
+  @override
+  String get supportCategoryAiSafety => 'AI 回复或安全';
+
+  @override
+  String get supportCategoryComplaintRights => '投诉或权利请求';
+
+  @override
+  String get supportCategoryOther => '其他';
+
+  @override
+  String get supportDescriptionLabel => '发生了什么，或你希望提出什么建议？';
+
+  @override
+  String get supportDescriptionHint => '可以写下操作步骤或有助于团队理解的背景。';
+
+  @override
+  String get supportDiagnosticsTitle => '附带基础应用信息';
+
+  @override
+  String get supportDiagnosticsHint => '默认关闭。发送前可查看全部字段。';
+
+  @override
+  String get supportDiagnosticsPreviewTitle => '将会发送的信息';
+
+  @override
+  String get supportDiagnosticApp => '应用';
+
+  @override
+  String get supportDiagnosticPlatform => '平台';
+
+  @override
+  String get supportDiagnosticLocale => '语言';
+
+  @override
+  String get supportDiagnosticTime => '时间';
+
+  @override
+  String get supportPrivacyNote =>
+      'ZEROON 不会通过此表单附带你的记录、Memory、个人资料、对话、截图、文件或完整日志。';
+
+  @override
+  String get supportRetentionNote =>
+      '应用内请求关闭后最迟 180 天删除。支持邮箱中的副本遵循单独说明的最长 180 天流程，你也可以提前申请删除。';
+
+  @override
+  String get supportSubmit => '发送给 ZEROON 团队';
+
+  @override
+  String get supportRetrySubmit => '重新发送';
+
+  @override
+  String get supportSubmitFailed => '这条信息尚未发送，草稿仍保留在这里。你可以重试，或使用上方邮箱联系。';
+
+  @override
+  String get supportValidationDescription => '请先写下问题或建议。';
+
+  @override
+  String get supportReceiptTitle => '我们已收到你的信息';
+
+  @override
+  String get supportReceiptBody => 'ZEROON 团队成员会查看它。这份回执不承诺回复时间或问题解决结果。';
+
+  @override
+  String get supportReferenceLabel => '回执编号';
+
+  @override
+  String get supportCopyReference => '复制回执编号';
+
+  @override
+  String get supportReferenceCopied => '回执编号已复制';
+
+  @override
+  String get supportExternalBoundary =>
+      '邮件不在应用内跟踪，因此不会在这里生成回执编号。你也可以通过邮件提出账户或数据删除请求。';
+
+  @override
+  String get supportNonEmergency => 'ZEROON 支持不是紧急救助服务。';
+
+  @override
+  String get supportMyRequests => '我的支持请求';
+
+  @override
+  String get supportMyRequestsHint => '查看处理状态和 ZEROON 团队回复';
+
+  @override
+  String get supportMyRequestsBody => '这里保存着你与 ZEROON 负责团队之间的私人支持沟通。';
+
+  @override
+  String get supportViewRequest => '查看这条请求';
+
+  @override
+  String get supportLoadMore => '加载更早的请求';
+
+  @override
+  String get supportListRefreshFailed => '暂时没能刷新支持请求，已经显示的内容仍保留在这里。';
+
+  @override
+  String get supportEmptyTitle => '还没有支持请求';
+
+  @override
+  String get supportEmptyBody => '当你提交问题或建议后，处理状态和人工回复会出现在这里。';
+
+  @override
+  String get supportLoadFailed => '暂时没能读到你的支持请求。';
+
+  @override
+  String get supportRefresh => '再试一次';
+
+  @override
+  String get supportRequestDetailTitle => '支持请求';
+
+  @override
+  String get supportConversationTitle => '沟通记录';
+
+  @override
+  String get supportNoReplies => 'ZEROON 团队暂时还没有回复，你的请求仍然保留在这里。';
+
+  @override
+  String get supportProgressTitle => '处理进度';
+
+  @override
+  String get supportStatusReceived => '已收到';
+
+  @override
+  String get supportStatusInReview => '查看中';
+
+  @override
+  String get supportStatusWaitingForUser => '等待你补充';
+
+  @override
+  String get supportStatusReplied => '团队已回复';
+
+  @override
+  String get supportStatusClosed => '已关闭';
+
+  @override
+  String get supportStatusReceivedHint => '你的请求已被妥善记录，正在等待团队成员查看。';
+
+  @override
+  String get supportStatusInReviewHint => 'ZEROON 团队成员正在查看这条请求。';
+
+  @override
+  String get supportStatusWaitingForUserHint => 'ZEROON 团队需要你补充一些信息，之后才能继续查看。';
+
+  @override
+  String get supportStatusRepliedHint => 'ZEROON 团队已经回复。你可以在下方阅读回复，并在需要时继续补充。';
+
+  @override
+  String get supportStatusClosedHint => '这条请求已经关闭，沟通记录仍会保留供你回看。';
+
+  @override
+  String get supportActorSystem => 'ZEROON 支持';
+
+  @override
+  String get supportActorYou => '你';
+
+  @override
+  String get supportActorTeam => 'ZEROON 团队';
+
+  @override
+  String get supportWaitingPrompt => '团队正在等待你补充信息。';
+
+  @override
+  String get supportFollowUpLabel => '补充信息';
+
+  @override
+  String get supportFollowUpHint => '回复团队需要的背景信息，请不要填写密码或验证码。';
+
+  @override
+  String get supportSendFollowUp => '发送补充信息';
+
+  @override
+  String get supportRetryFollowUp => '重新发送';
+
+  @override
+  String get supportFollowUpFailed => '这条补充信息尚未发送，草稿仍保留在这里。';
+
+  @override
+  String get supportFollowUpValidation => '请先写下要补充的信息。';
+
+  @override
+  String get supportFollowUpSent => '补充信息已发送。';
+
+  @override
+  String get supportClosedFollowUp =>
+      '这条请求已经关闭，无法继续在应用内补充。如果问题仍未解决，你可以新建请求或使用支持邮箱联系。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).

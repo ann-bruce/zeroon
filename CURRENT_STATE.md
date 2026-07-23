@@ -18,15 +18,16 @@ main
 
 ## Current Focus
 
-90-day product validation: Sprint 11 help, contact, and feedback foundation.
+90-day product validation: Sprint 11 is complete; Sprint 12 scope intake is next.
 
 Sprint 08 trust-foundation engineering, Sprint 09 controllable-memory
 engineering, the approved real-provider success smoke, and the mobile latency
 and consent-path audit are complete and integrated into `main` at `93b6a44`.
 Sprint 10 has closed with a complete Simplified Chinese/English interaction
-language foundation. Sprint 11 now establishes reachable, private, trackable
-contact and feedback with real operator handling. Previously discussed but
-undocumented Sprint 10 scope remains reserved as Sprint 12.
+language foundation. Sprint 11 has closed with reachable, private, trackable
+contact and feedback plus real operator handling. Previously discussed but
+undocumented Sprint 10 scope remains reserved for explicit Sprint 12 intake;
+it must not be reconstructed from memory without a reviewed plan.
 
 Immediate execution order:
 
@@ -43,9 +44,7 @@ Immediate execution order:
 - S10-06 full regression and two-locale runtime acceptance are complete;
 - original Record, Memory, Profile, and conversation content remains unchanged
   and is never used to infer identity or interaction language;
-- next implement Sprint 11 contact paths that remain
-  reachable before login and during API outage without automatic private-content
-  attachment.
+- next inventory and approve Sprint 12 scope before implementation.
 
 Key product guardrails:
 
@@ -199,6 +198,58 @@ Key product guardrails:
   without clipping, overlap, or mixed-language product state. PostgreSQL
   remains current at migration V11, the temporary account was deleted, and
   Sprint 11 is now the next engineering focus.
+- Sprint 11 S11-01 through S11-06 are complete. ADR 006 accepts the human-operated
+  support lifecycle: authenticated private requests, an immutable packaged
+  pre-auth/outage fallback, explicit categories and owner roles, constrained
+  status transitions, human response language, bounded opt-in diagnostics,
+  opaque owner-scoped idempotency, export, account-deletion hard deletion, and
+  a 180-day maximum after closure. `zeroon_ai@gmail.com` is the packaged
+  fallback and Bruce Ann is the accountable primary for the current one-person
+  closed Beta. There is no SLA or continuous-coverage claim; a named,
+  access-tested backup remains required before wider Beta recruitment.
+- S11-02 implements the private support-request foundation. PostgreSQL V12,
+  test schema, JPA, OpenAPI, and export V3 align on opaque references,
+  owner-scoped idempotency, bounded categories/text, opt-in allowlisted
+  diagnostics, five-per-hour creation and twenty-per-hour follow-up limits,
+  owned list/detail/follow-up, visible status history, and deletion cascade.
+  Automated tests cover authentication, cross-user isolation, identical and
+  conflicting retries, unknown diagnostics, rate limiting, closed follow-up,
+  export visibility, and hard deletion. Full quality gates and a two-account
+  PostgreSQL runtime smoke pass; both temporary accounts were deleted. Next is
+  S11-03 adds bilingual Login and Settings contact entry, a category and
+  description form with exact draft preservation and stable retry identity,
+  opt-in previewed diagnostics, a packaged outage fallback to
+  `zeroon_ai@gmail.com`, and an honest copyable receipt. Focused tests and the
+  full 34-test mobile suite pass. A real 390x844 Chinese/English runtime flow
+  created one opaque support reference and then deleted the temporary account
+  and its support data.
+- S11-04 adds the owner-scoped My support requests list, request detail,
+  user-visible human messages, status history, waiting-for-user guidance, and
+  exact-content follow-up with local retry and closed-state boundaries.
+  Simplified Chinese and English empty, loading, error, status, reply,
+  progress, and follow-up copy is complete. All 42 mobile tests pass. A real
+  390x844 PostgreSQL-backed temporary-account flow covered empty list, create,
+  receipt, detail, follow-up, list refresh, and Chinese/English rendering
+  before account deletion cascaded the support data.
+- S11-05 adds PostgreSQL V13, ADMIN-only support queue/detail/mutations,
+  self-assignment, reviewed escalation, constrained human reply transitions,
+  strictly separated internal notes, and content-free request-scoped audit.
+  Owner APIs and export continue to exclude internal handling data. Automated
+  authorization, lifecycle, isolation, audit, and deletion tests plus the full
+  backend/mobile/admin/OpenAPI gate pass. A temporary owner and ADMIN completed
+  the real PostgreSQL queue-to-`WAITING_FOR_USER` flow with six audited
+  mutations and full cleanup, and the Admin workbench passed visual review.
+  S11-06 follows with final privacy, abuse, and runtime acceptance.
+- S11-06 closes Sprint 11 with hourly automated 180-day support retention,
+  dependent-row cascade tests, follow-up throttling evidence, and explicit
+  LLM/Memory/Profile isolation. The support page discloses the in-app and
+  external-email retention boundary in Chinese and English. Full quality gates
+  pass. A real PostgreSQL three-account flow proved cross-user isolation,
+  human operator handling, eight audit rows, export isolation, zero AI usage,
+  scheduled purge, and complete cleanup; 390x844 English/Chinese and
+  backend-outage review also pass. Sprint 12 scope intake is next. Wider Beta
+  still requires a named, access-tested backup operator; public release remains
+  subject to the existing professional compliance gates.
 
 ## Recent Completed Work
 
@@ -258,6 +309,7 @@ scripts/zeroon-verify.sh all
 - Sprint 10 locale ADR: `docs/02_Architecture/ADR_005_Language_Locale_V1.md`
 - Sprint 10 string inventory: `docs/07_Sprints/Sprint_10_String_Inventory_V1.md`
 - Sprint 11 plan: `docs/07_Sprints/Sprint_11_Help_Contact_Feedback_Foundation_V1.md`
+- Sprint 11 support lifecycle ADR: `docs/02_Architecture/ADR_006_Support_Request_Lifecycle_V1.md`
 - Roadmap IA: `docs/07_Sprints/Roadmap_Information_Architecture_V2.md`
 - API contract: `docs/04_API/OpenAPI_V1.yaml`
 - Engineering guide: `docs/05_Engineering/Development_Guide_V1.md`
