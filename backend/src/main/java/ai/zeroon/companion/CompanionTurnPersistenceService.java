@@ -2,12 +2,14 @@ package ai.zeroon.companion;
 
 import ai.zeroon.ai.AiUsageDetails;
 import ai.zeroon.ai.AiUsageLogService;
+import ai.zeroon.ai.AiUsageOutcome;
 import ai.zeroon.companion.CompanionDtos.ChatResponse;
 import ai.zeroon.memory.MemoryAiContextAssembler;
 import ai.zeroon.profile.ProfileAiContextAssembler;
 import ai.zeroon.user.UserEntity;
 import ai.zeroon.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,17 +51,20 @@ public class CompanionTurnPersistenceService {
     }
 
     @Transactional(readOnly = true)
-    public String assembleUserPrompt(Long userId, String message) {
+    public AssembledUserPrompt assembleUserPrompt(Long userId, String message) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         StringBuilder prompt = new StringBuilder();
-        profileAiContextAssembler.assemble(userId)
-                .ifPresent(profileContext -> prompt.append(profileContext).append("\n\n"));
-        memoryAiContextAssembler.assemble(userId)
-                .ifPresent(memoryContext -> prompt.append(memoryContext).append("\n\n"));
+        var profileContext = profileAiContextAssembler.assemble(userId);
+        var memoryContext = memoryAiContextAssembler.assemble(userId);
+        profileContext.ifPresent(value -> prompt.append(value).append("\n\n"));
+        memoryContext.ifPresent(value -> prompt.append(value).append("\n\n"));
         prompt.append("Current state: ").append(user.getCurrentState().name()).append('\n');
         prompt.append("User message: ").append(message).append('\n');
-        return prompt.toString();
+        return new AssembledUserPrompt(
+                prompt.toString(),
+                profileContext.isPresent(),
+                memoryContext.isPresent());
     }
 
     @Transactional
@@ -67,7 +72,8 @@ public class CompanionTurnPersistenceService {
             StartedTurn turn,
             String reply,
             String safetyNotice,
-            AiUsageDetails usage) {
+            AiUsageDetails usage,
+            AssembledUserPrompt assembledPrompt) {
         ConversationEntity conversation = conversationRepository
                 .findByIdAndUserId(turn.conversationId(), turn.userId())
                 .orElseThrow(() -> new EntityNotFoundException("Conversation not found"));
@@ -78,7 +84,16 @@ public class CompanionTurnPersistenceService {
                 ASSISTANT_SAFETY_LABEL));
         conversation.touch();
         aiUsageLogService.record(conversation.getUser(), conversation, usage);
-        return new ChatResponse(conversation.getId(), assistantMessage.getId(), reply, safetyNotice);
+        return new ChatResponse(
+                conversation.getId(),
+                assistantMessage.getId(),
+                reply,
+                safetyNotice,
+                evidenceOutcome(usage),
+                latencyBucket(usage.durationMs()),
+                promptVersion(usage),
+                modelAlias(usage),
+                assembledPrompt.contextClasses());
     }
 
     private ConversationEntity resolveConversation(UserEntity user, Long conversationId) {
@@ -90,5 +105,70 @@ public class CompanionTurnPersistenceService {
     }
 
     public record StartedTurn(Long userId, Long conversationId) {
+    }
+
+    public record AssembledUserPrompt(
+            String prompt,
+            boolean profileContextEnabled,
+            boolean memoryContextEnabled) {
+
+        public List<String> contextClasses() {
+            java.util.ArrayList<String> classes = new java.util.ArrayList<>(2);
+            if (profileContextEnabled) {
+                classes.add("PROFILE");
+            }
+            if (memoryContextEnabled) {
+                classes.add("MEMORY");
+            }
+            return List.copyOf(classes);
+        }
+
+        public static AssembledUserPrompt none() {
+            return new AssembledUserPrompt("", false, false);
+        }
+    }
+
+    private String evidenceOutcome(AiUsageDetails usage) {
+        return switch (usage.outcome()) {
+            case SUCCESS -> "SUCCESS";
+            case FALLBACK -> "FALLBACK";
+            case REFUSAL -> "REFUSAL";
+            case ERROR -> "FAILED";
+        };
+    }
+
+    private String latencyBucket(long durationMs) {
+        if (durationMs < 500) {
+            return "UNDER_500_MS";
+        }
+        if (durationMs < 1_500) {
+            return "FROM_500_TO_1499_MS";
+        }
+        if (durationMs < 5_000) {
+            return "FROM_1500_TO_4999_MS";
+        }
+        if (durationMs < 15_000) {
+            return "FROM_5_TO_14_SECONDS";
+        }
+        return "OVER_15_SECONDS";
+    }
+
+    private String promptVersion(AiUsageDetails usage) {
+        if (usage.outcome() == AiUsageOutcome.REFUSAL) {
+            return "SAFETY_V1";
+        }
+        if (usage.promptTemplateVersion() == null) {
+            return "COMPANION_REFLECTION_FALLBACK_V1";
+        }
+        return "COMPANION_REFLECTION_V" + usage.promptTemplateVersion();
+    }
+
+    private String modelAlias(AiUsageDetails usage) {
+        return switch (usage.outcome()) {
+            case SUCCESS -> "PRIMARY";
+            case FALLBACK -> "FALLBACK";
+            case REFUSAL -> "SAFETY_BOUNDARY";
+            case ERROR -> "UNAVAILABLE";
+        };
     }
 }

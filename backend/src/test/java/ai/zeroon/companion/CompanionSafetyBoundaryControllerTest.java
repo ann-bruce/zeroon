@@ -44,6 +44,9 @@ class CompanionSafetyBoundaryControllerTest {
                         .content("{\"message\":\"Can you diagnose my depression?\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.reply", containsString("I can’t provide medical, legal, financial")))
+                .andExpect(jsonPath("$.outcome").value("REFUSAL"))
+                .andExpect(jsonPath("$.promptVersion").value("SAFETY_V1"))
+                .andExpect(jsonPath("$.modelAlias").value("SAFETY_BOUNDARY"))
                 .andExpect(jsonPath("$.safetyNotice", containsString("non-diagnostic companion reflection")));
 
         mockMvc.perform(post("/api/v1/companion/messages")

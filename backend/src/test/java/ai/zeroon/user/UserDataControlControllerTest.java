@@ -135,7 +135,7 @@ class UserDataControlControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string(
                         "Content-Disposition", "attachment; filename=zeroon-data-export.json"))
-                .andExpect(jsonPath("$.schemaVersion").value("zeroon-beta-export-v3"))
+                .andExpect(jsonPath("$.schemaVersion").value("zeroon-beta-export-v4"))
                 .andExpect(jsonPath("$.account.mobile").value("13700805001"))
                 .andExpect(jsonPath("$.account.languagePreference").value("EN"))
                 .andExpect(jsonPath("$.profile.nickname").value("River"))
@@ -154,6 +154,8 @@ class UserDataControlControllerTest {
                 .andExpect(jsonPath("$.supportRequests[0].messages[0].body")
                         .value("visible follow up"))
                 .andExpect(jsonPath("$.supportRequests[0].diagnostics.locale").value("en"))
+                .andExpect(jsonPath("$.betaEvidencePreference.enabled").value(false))
+                .andExpect(jsonPath("$.betaEvidenceEvents").isEmpty())
                 .andExpect(jsonPath("$.sessions[0].deviceId").value("data-control-owner"))
                 .andReturn()
                 .getResponse()

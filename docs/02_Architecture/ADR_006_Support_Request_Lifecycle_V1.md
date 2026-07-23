@@ -54,10 +54,10 @@ tested before S11-03 is complete.
 
 Roles are authorization and routing responsibilities, not labels shown as a
 promise to users. Bruce Ann is the accountable primary for all roles during the
-current one-person closed Beta. There is no backup or continuous-coverage
-promise yet, so no response SLA may be shown. A backup must be named and tested
-before wider Beta recruitment. An unassigned request remains visible in the
-queue and cannot be auto-closed.
+closed Beta. `chao.fan` is the named backup, but mailbox and ADMIN access must
+be tested before recruitment. Naming a backup does not establish continuous
+coverage, so no response SLA may be shown. An unassigned request remains
+visible in the queue and cannot be auto-closed.
 
 ### Status model
 
@@ -237,5 +237,6 @@ Approved on 2026-07-23 for engineering and the one-person closed Beta:
   separately disclosed verified-deletion process are accepted;
 - service expectation: no SLA or continuous-monitoring claim.
 
-Naming and access-testing a backup operator remains a wider-Beta readiness
-gate, not a reason to invent coverage or delay S11-02 engineering.
+`chao.fan` was named as backup on 2026-07-23. Mailbox and ADMIN access testing
+remains a recruitment-readiness gate, not a reason to invent coverage or delay
+Sprint 12 engineering.

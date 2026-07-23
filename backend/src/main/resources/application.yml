@@ -60,3 +60,9 @@ zeroon:
     message-hourly-limit: ${ZEROON_SUPPORT_MESSAGE_HOURLY_LIMIT:20}
     closed-retention-days: ${ZEROON_SUPPORT_CLOSED_RETENTION_DAYS:180}
     retention-cron: ${ZEROON_SUPPORT_RETENTION_CRON:0 17 * * * *}
+  evidence:
+    ingestion-enabled: ${ZEROON_EVIDENCE_INGESTION_ENABLED:false}
+    notice-version: ${ZEROON_EVIDENCE_NOTICE_VERSION:beta-evidence-v1}
+    event-hourly-limit: ${ZEROON_EVIDENCE_EVENT_HOURLY_LIMIT:200}
+    retention-days: ${ZEROON_EVIDENCE_RETENTION_DAYS:180}
+    retention-cron: ${ZEROON_EVIDENCE_RETENTION_CRON:0 29 * * * *}

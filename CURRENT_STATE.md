@@ -18,16 +18,18 @@ main
 
 ## Current Focus
 
-90-day product validation: Sprint 11 is complete; Sprint 12 scope intake is next.
+90-day product validation: Sprint 11 is complete; Sprint 12 Closed Beta
+Evidence and Recruitment Readiness is approved; S12-01 through S12-03 are
+complete.
 
 Sprint 08 trust-foundation engineering, Sprint 09 controllable-memory
 engineering, the approved real-provider success smoke, and the mobile latency
 and consent-path audit are complete and integrated into `main` at `93b6a44`.
 Sprint 10 has closed with a complete Simplified Chinese/English interaction
 language foundation. Sprint 11 has closed with reachable, private, trackable
-contact and feedback plus real operator handling. Previously discussed but
-undocumented Sprint 10 scope remains reserved for explicit Sprint 12 intake;
-it must not be reconstructed from memory without a reviewed plan.
+contact and feedback plus real operator handling. Sprint 12 is now explicitly
+approved for privacy-preserving closed-Beta evidence and recruitment readiness;
+previously undocumented Sprint 10 scope was not reconstructed or approved.
 
 Immediate execution order:
 
@@ -44,7 +46,11 @@ Immediate execution order:
 - S10-06 full regression and two-locale runtime acceptance are complete;
 - original Record, Memory, Profile, and conversation content remains unchanged
   and is never used to infer identity or interaction language;
-- next inventory and approve Sprint 12 scope before implementation.
+- S12-01 evidence policy and lifecycle are complete in ADR 007;
+- S12-02 typed event contract and persistence are complete;
+- S12-03 content-free core-loop instrumentation and failure isolation are
+  complete;
+- next implement S12-04 cohort and retention computation.
 
 Key product guardrails:
 
@@ -60,7 +66,8 @@ Key product guardrails:
 - 90-day validation plan: `docs/08_Roadmap/ZEROON_90_Day_Product_Validation_Plan_V1.md`
 - Validation baseline: `docs/08_Roadmap/Validation_Sprint_00_Baseline_V1.md`
 - Beta brief: `docs/01_PRD/Beta_Validation_Brief_V1.md`
-- Current engineering sprint: `docs/07_Sprints/Sprint_11_Help_Contact_Feedback_Foundation_V1.md`
+- Current engineering sprint: `docs/07_Sprints/Sprint_12_Closed_Beta_Evidence_Readiness_V1.md`
+- Evidence decision: `docs/02_Architecture/ADR_007_Beta_Evidence_Event_Lifecycle_V1.md`
 - Memory decision: `docs/02_Architecture/ADR_004_Memory_V1.md`
 - Phase 2 target window: 2026-08-11 to 2026-08-31; engineering began early
   after Sprint 08 closure.
@@ -204,9 +211,9 @@ Key product guardrails:
   status transitions, human response language, bounded opt-in diagnostics,
   opaque owner-scoped idempotency, export, account-deletion hard deletion, and
   a 180-day maximum after closure. `zeroon_ai@gmail.com` is the packaged
-  fallback and Bruce Ann is the accountable primary for the current one-person
-  closed Beta. There is no SLA or continuous-coverage claim; a named,
-  access-tested backup remains required before wider Beta recruitment.
+  fallback and Bruce Ann is the accountable primary for the closed Beta. There
+  is no SLA or continuous-coverage claim. `chao.fan` is now the named backup,
+  but mailbox and ADMIN access testing remains required before recruitment.
 - S11-02 implements the private support-request foundation. PostgreSQL V12,
   test schema, JPA, OpenAPI, and export V3 align on opaque references,
   owner-scoped idempotency, bounded categories/text, opt-in allowlisted
@@ -247,9 +254,41 @@ Key product guardrails:
   pass. A real PostgreSQL three-account flow proved cross-user isolation,
   human operator handling, eight audit rows, export isolation, zero AI usage,
   scheduled purge, and complete cleanup; 390x844 English/Chinese and
-  backend-outage review also pass. Sprint 12 scope intake is next. Wider Beta
-  still requires a named, access-tested backup operator; public release remains
-  subject to the existing professional compliance gates.
+  backend-outage review also pass. Public release remains subject to the
+  existing professional compliance gates.
+- Sprint 12 Closed Beta Evidence and Recruitment Readiness is approved. S12-01
+  fixes first-party typed content-free events, explicit and revocable Beta
+  evidence collection, an Asia/Shanghai calendar policy, a 180-day maximum,
+  account-deletion hard deletion, aggregate-only ADMIN access, and suppression
+  below five participants. `chao.fan` is the named backup support operator;
+  mailbox and ADMIN access testing still blocks the first invitation.
+- S12-02 typed event contract and persistence is complete. PostgreSQL V14 adds
+  owner-cascading evidence subjects and typed content-free event columns with
+  default-off notice-bound collection, subject-scoped idempotency/conflict,
+  event throttling, and a seven-day queued-date window. Export V4 exposes only
+  owned reviewed evidence, account deletion hard-deletes it, and the hourly UTC
+  worker enforces the 180-day maximum. All 15 approved event shapes, unknown
+  field rejection, disable/no-backfill, cross-user isolation, rate limiting,
+  export, deletion, and retention are covered. All 122 backend tests, OpenAPI
+  lint, real PostgreSQL V14 migration, and a temporary-account runtime smoke
+  pass with full cleanup.
+- S12-03 core-loop instrumentation is complete. Flutter emits the reviewed
+  content-free events for authentication, first encounter, manual state
+  selection, Reset and record save/failure, Archive/detail review, reflection,
+  Memory controls, Profile AI-context consent, export, and deletion intent.
+  Events use an in-memory 50-item/seven-day queue, stable UUID retries,
+  Asia/Shanghai dates, enums/booleans/buckets only, and best-effort failure
+  isolation. Companion responses expose only reviewed outcome, latency,
+  prompt-family version, provider-path alias, and enabled context-class names;
+  no prompt, Profile, Memory, Record, message, or reply content is added.
+  Login now truthfully distinguishes the account-creation response from an
+  existing account. Support content remains deliberately uninstrumented
+  because S12-01 approved no support-event contract. Flutter analyze, all 46
+  mobile tests, all 122 backend tests, OpenAPI lint, and whitespace checks pass.
+  PostgreSQL runtime acceptance covered the new-account flag, collection-off
+  no-store behavior, bounded refusal metadata, and temporary-account deletion;
+  it also caught and corrected a fallback-prompt alias mismatch. S12-04 cohort
+  and retention computation is next.
 
 ## Recent Completed Work
 

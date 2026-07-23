@@ -26,6 +26,8 @@ tags:
     description: Long-term companion and personal growth metrics.
   - name: Support
     description: Private requests handled by the real ZEROON team.
+  - name: Evidence
+    description: Explicit, first-party, content-free closed-Beta product evidence.
   - name: Admin
     description: Operational APIs restricted to authenticated users with the ADMIN role.
 paths:
@@ -190,6 +192,92 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /me/preferences/beta-evidence:
+    get:
+      tags: [User]
+      summary: Get the current user's closed-Beta evidence collection choice
+      description: >-
+        Returns the explicit first-party evidence choice. Collection defaults
+        off. The internal evidence subject identifier is never returned.
+      operationId: getCurrentUserBetaEvidencePreference
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current evidence collection choice and required notice version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidencePreferenceResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      tags: [User]
+      summary: Replace the current user's closed-Beta evidence collection choice
+      description: >-
+        Stores an explicit enable or disable choice only when noticeVersion
+        matches the server's current reviewed bilingual notice. Disabling stops
+        new events immediately and does not backfill when re-enabled.
+      operationId: updateCurrentUserBetaEvidencePreference
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidencePreferenceRequest"
+      responses:
+        "200":
+          description: Saved evidence collection choice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidencePreferenceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /evidence/events:
+    post:
+      tags: [Evidence]
+      summary: Submit one reviewed content-free closed-Beta evidence event
+      description: >-
+        Accepts schema version 1 and only the property combination approved for
+        the selected eventName. Unknown, free-text, nested, and event-inapplicable
+        properties are rejected. A disabled choice or disabled environment
+        returns stored false without persistence. The clientEventId is
+        idempotent per internal evidence subject; conflicting reuse returns 409.
+      operationId: submitBetaEvidenceEvent
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidenceEventRequest"
+      responses:
+        "201":
+          description: Event stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceEventResponse"
+        "200":
+          description: Identical duplicate, disabled choice, or disabled environment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceEventResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/EvidenceRateLimited"
   /me/export:
     get:
       tags: [User]
@@ -220,8 +308,9 @@ paths:
       description: >-
         Completes synchronous hard deletion before returning. Repeated calls
         are idempotent. User-owned profiles, sessions, state data, records,
-        conversations, messages, memory, companion data, and all in-app support
-        requests, messages, diagnostics, history, and support audit are deleted.
+        conversations, messages, memory, companion data, Beta evidence subject
+        and events, and all in-app support requests, messages, diagnostics,
+        history, and support audit are deleted.
         Content-free AI usage and unrelated audit metadata may remain only after
         user and conversation references are set to null. External support email
         is governed by its separately disclosed verified-deletion process.
@@ -1090,6 +1179,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiError"
+    EvidenceRateLimited:
+      description: Evidence event rate limit exceeded
+      headers:
+        Retry-After:
+          description: Minimum seconds before retrying evidence submission
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
     RateLimited:
       description: Rate limit exceeded
       headers:
@@ -1165,7 +1266,7 @@ components:
           minLength: 32
     AuthResponse:
       type: object
-      required: [accessToken, refreshToken, expiresIn, user]
+      required: [accessToken, refreshToken, expiresIn, newAccount, user]
       properties:
         accessToken:
           type: string
@@ -1177,6 +1278,9 @@ components:
         expiresIn:
           type: integer
           description: Access-token lifetime in seconds.
+        newAccount:
+          type: boolean
+          description: True only for the login response that created the account; refresh is false.
         user:
           $ref: "#/components/schemas/AuthUser"
     AuthUser:
@@ -1238,6 +1342,191 @@ components:
       properties:
         languagePreference:
           $ref: "#/components/schemas/LanguagePreference"
+    EvidencePreferenceRequest:
+      type: object
+      additionalProperties: false
+      required: [enabled, noticeVersion]
+      properties:
+        enabled:
+          type: boolean
+        noticeVersion:
+          type: string
+          minLength: 1
+          maxLength: 40
+          pattern: "^[A-Za-z0-9._-]+$"
+    EvidencePreferenceResponse:
+      type: object
+      required:
+        [available, enabled, requiredNoticeVersion]
+      properties:
+        available:
+          type: boolean
+          description: Whether this environment currently accepts evidence events.
+        enabled:
+          type: boolean
+        requiredNoticeVersion:
+          type: string
+        acceptedNoticeVersion:
+          type: string
+          nullable: true
+        choiceChangedAt:
+          type: string
+          format: date-time
+          nullable: true
+    EvidenceEventName:
+      type: string
+      enum:
+        - AUTH_COMPLETED
+        - ZEROON_ENCOUNTER_VIEWED
+        - ZEROON_ENCOUNTER_COMPLETED
+        - STATE_STARTED
+        - RESET_STARTED
+        - RECORD_SAVED
+        - RECORD_SAVE_FAILED
+        - ARCHIVE_VIEWED
+        - RECORD_DETAIL_VIEWED
+        - REFLECTION_REQUESTED
+        - REFLECTION_COMPLETED
+        - MEMORY_CONTROL_CHANGED
+        - PROFILE_AI_CONTEXT_CHANGED
+        - DATA_EXPORT_REQUESTED
+        - ACCOUNT_DELETE_REQUESTED
+    EvidenceEventRequest:
+      type: object
+      additionalProperties: false
+      required: [clientEventId, eventName, schemaVersion, occurredDate]
+      description: >-
+        Property contract by event: AUTH_COMPLETED requires accountType,
+        platform, appVersion; ZEROON_ENCOUNTER_VIEWED requires entrySource,
+        appVersion; ZEROON_ENCOUNTER_COMPLETED requires durationBucket,
+        retryCountBucket; STATE_STARTED requires state, source; RESET_STARTED
+        requires entrySource, activeStatePresent; RECORD_SAVED requires state,
+        hasGoal, hasContent, latencyBucket, retryCountBucket;
+        RECORD_SAVE_FAILED requires errorClass, retryable, networkStatus;
+        ARCHIVE_VIEWED requires entrySource, itemCountBucket;
+        RECORD_DETAIL_VIEWED requires recordAgeBucket, sourceType;
+        REFLECTION_REQUESTED requires surface, contextClasses;
+        REFLECTION_COMPLETED requires outcome, latencyBucket, promptVersion,
+        modelAlias; MEMORY_CONTROL_CHANGED requires action, sourceType;
+        PROFILE_AI_CONTEXT_CHANGED requires enabled, surface;
+        DATA_EXPORT_REQUESTED requires surface, outcome;
+        ACCOUNT_DELETE_REQUESTED requires surface, outcome and optionally
+        reasonCategory. Properties not listed for the selected event are
+        rejected.
+      properties:
+        clientEventId:
+          type: string
+          format: uuid
+        eventName:
+          $ref: "#/components/schemas/EvidenceEventName"
+        schemaVersion:
+          type: integer
+          enum: [1]
+        occurredDate:
+          type: string
+          format: date
+          description: Asia/Shanghai calendar date; no exact client timestamp.
+        accountType:
+          type: string
+          enum: [NEW, EXISTING]
+        platform:
+          type: string
+          enum: [IOS, ANDROID, WEB, UNKNOWN]
+        appVersion:
+          type: string
+          maxLength: 40
+          pattern: "^[A-Za-z0-9._+-]+$"
+        entrySource:
+          type: string
+          enum:
+            [LOGIN, NOW, RESET, ARCHIVE, RECORD_DETAIL, SETTINGS, PROFILE, COMPANION, UNKNOWN]
+        durationBucket:
+          type: string
+          enum:
+            [UNDER_10_SECONDS, FROM_10_TO_29_SECONDS, FROM_30_TO_59_SECONDS,
+             FROM_1_TO_2_MINUTES, OVER_2_MINUTES]
+        retryCountBucket:
+          type: string
+          enum: [ZERO, ONE, TWO_OR_MORE]
+        state:
+          $ref: "#/components/schemas/State"
+        source:
+          type: string
+          enum: [MANUAL, RECORD, AI, SYSTEM]
+        activeStatePresent:
+          type: boolean
+        hasGoal:
+          type: boolean
+        hasContent:
+          type: boolean
+        latencyBucket:
+          type: string
+          enum:
+            [UNDER_500_MS, FROM_500_TO_1499_MS, FROM_1500_TO_4999_MS,
+             FROM_5_TO_14_SECONDS, OVER_15_SECONDS]
+        errorClass:
+          type: string
+          enum: [NETWORK, TIMEOUT, VALIDATION, AUTHORIZATION, CONFLICT, SERVER, UNKNOWN]
+        retryable:
+          type: boolean
+        networkStatus:
+          type: string
+          enum: [ONLINE, OFFLINE, TIMEOUT, UNKNOWN]
+        itemCountBucket:
+          type: string
+          enum: [EMPTY, ONE, TWO_TO_FIVE, SIX_TO_TWENTY, OVER_TWENTY]
+        recordAgeBucket:
+          type: string
+          enum: [SAME_DAY, ONE_TO_SIX_DAYS, ONE_TO_FOUR_WEEKS, OVER_FOUR_WEEKS]
+        sourceType:
+          type: string
+          enum: [ZERO_RECORD, MEMORY]
+        surface:
+          type: string
+          enum:
+            [LOGIN, NOW, RESET, ARCHIVE, RECORD_DETAIL, SETTINGS, PROFILE,
+             COMPANION, DATA_CONTROL]
+        contextClasses:
+          type: array
+          uniqueItems: true
+          maxItems: 2
+          items:
+            type: string
+            enum: [PROFILE, MEMORY]
+        outcome:
+          type: string
+          enum: [STARTED, COMPLETED, SUCCESS, FALLBACK, REFUSAL, FAILED, CANCELLED]
+        promptVersion:
+          type: string
+          maxLength: 40
+          pattern: "^[A-Za-z0-9._:-]+$"
+        modelAlias:
+          type: string
+          maxLength: 40
+          pattern: "^[A-Za-z0-9._:-]+$"
+        action:
+          type: string
+          enum: [ENABLE, DISABLE, ALLOW_AI, DISALLOW_AI, DELETE]
+        enabled:
+          type: boolean
+        reasonCategory:
+          type: string
+          enum:
+            [NO_LONGER_NEEDED, PRIVACY_CONCERN, NOT_USEFUL, TOO_DIFFICULT,
+             OTHER, PREFER_NOT_TO_SAY]
+    EvidenceEventResponse:
+      type: object
+      required: [stored, duplicate, clientEventId, eventName]
+      properties:
+        stored:
+          type: boolean
+        duplicate:
+          type: boolean
+        clientEventId:
+          type: string
+          format: uuid
+        eventName:
+          $ref: "#/components/schemas/EvidenceEventName"
     SupportCategory:
       type: string
       enum:
@@ -1639,11 +1928,13 @@ components:
         - conversations
         - memoryEntries
         - supportRequests
+        - betaEvidencePreference
+        - betaEvidenceEvents
         - aiUsage
       properties:
         schemaVersion:
           type: string
-          enum: [zeroon-beta-export-v3]
+          enum: [zeroon-beta-export-v4]
         exportedAt:
           type: string
           format: date-time
@@ -1688,11 +1979,108 @@ components:
             details are excluded.
           items:
             $ref: "#/components/schemas/UserDataSupportRequest"
+        betaEvidencePreference:
+          $ref: "#/components/schemas/UserDataEvidencePreference"
+        betaEvidenceEvents:
+          type: array
+          description: >-
+            Retained owned content-free events. Internal subject id,
+            event fingerprint, and server receipt timestamp are excluded.
+          items:
+            $ref: "#/components/schemas/UserDataEvidenceEvent"
         aiUsage:
           type: array
           description: Content-free provider and outcome metadata; no prompt text.
           items:
             $ref: "#/components/schemas/UserDataAiUsage"
+    UserDataEvidencePreference:
+      type: object
+      required: [enabled]
+      properties:
+        enabled:
+          type: boolean
+        acceptedNoticeVersion:
+          type: string
+          nullable: true
+        choiceChangedAt:
+          type: string
+          format: date-time
+          nullable: true
+    UserDataEvidenceEvent:
+      type: object
+      required: [eventName, schemaVersion, occurredDate, properties]
+      properties:
+        eventName:
+          $ref: "#/components/schemas/EvidenceEventName"
+        schemaVersion:
+          type: integer
+          enum: [1]
+        occurredDate:
+          type: string
+          format: date
+        properties:
+          $ref: "#/components/schemas/UserDataEvidenceEventProperties"
+    UserDataEvidenceEventProperties:
+      type: object
+      additionalProperties: false
+      description: >-
+        Contains only the event-applicable subset of the reviewed typed
+        properties. It never contains private text or direct identity.
+      properties:
+        accountType:
+          type: string
+        platform:
+          type: string
+        appVersion:
+          type: string
+        entrySource:
+          type: string
+        durationBucket:
+          type: string
+        retryCountBucket:
+          type: string
+        state:
+          type: string
+        source:
+          type: string
+        activeStatePresent:
+          type: boolean
+        hasGoal:
+          type: boolean
+        hasContent:
+          type: boolean
+        latencyBucket:
+          type: string
+        errorClass:
+          type: string
+        retryable:
+          type: boolean
+        networkStatus:
+          type: string
+        itemCountBucket:
+          type: string
+        recordAgeBucket:
+          type: string
+        sourceType:
+          type: string
+        surface:
+          type: string
+        contextClasses:
+          type: array
+          items:
+            type: string
+        outcome:
+          type: string
+        promptVersion:
+          type: string
+        modelAlias:
+          type: string
+        action:
+          type: string
+        enabled:
+          type: boolean
+        reasonCategory:
+          type: string
     UserDataProfile:
       type: object
       required: [aiProfileContextEnabled, createdAt, updatedAt]
@@ -2230,7 +2618,9 @@ components:
           maxLength: 4000
     ChatResponse:
       type: object
-      required: [conversationId, messageId, reply]
+      required:
+        [conversationId, messageId, reply, outcome, latencyBucket,
+         promptVersion, modelAlias, contextClasses]
       properties:
         conversationId:
           type: integer
@@ -2243,6 +2633,30 @@ components:
         safetyNotice:
           type: string
           nullable: true
+        outcome:
+          type: string
+          enum: [SUCCESS, FALLBACK, REFUSAL, FAILED]
+        latencyBucket:
+          type: string
+          enum:
+            [UNDER_500_MS, FROM_500_TO_1499_MS, FROM_1500_TO_4999_MS,
+             FROM_5_TO_14_SECONDS, OVER_15_SECONDS]
+        promptVersion:
+          type: string
+          maxLength: 40
+          description: Content-free reviewed prompt-family/version alias.
+        modelAlias:
+          type: string
+          maxLength: 40
+          description: Content-free reviewed provider-path alias, never a raw model id.
+        contextClasses:
+          type: array
+          uniqueItems: true
+          maxItems: 2
+          description: Enabled Profile/Memory context classes used for this turn; no content.
+          items:
+            type: string
+            enum: [PROFILE, MEMORY]
     MemoryEntry:
       type: object
       required:

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../common/zeroon_design.dart';
+import '../evidence/evidence_models.dart';
+import '../evidence/evidence_repository.dart';
 import '../l10n/l10n_extensions.dart';
 import 'record_controller.dart';
 import 'record_complete_screen.dart';
@@ -25,6 +27,8 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
   final _contentController = TextEditingController();
   String? _message;
   bool _saving = false;
+  bool _resetRecorded = false;
+  int _saveAttempts = 0;
 
   @override
   void dispose() {
@@ -36,6 +40,16 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
   @override
   Widget build(BuildContext context) {
     final currentState = ref.watch(currentStateProvider);
+    final snapshot = currentState.valueOrNull;
+    if (snapshot != null && !_resetRecorded) {
+      _resetRecorded = true;
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('RESET_STARTED', {
+              'entrySource': 'NOW',
+              'activeStatePresent': snapshot.hasActiveSession,
+            }),
+          ));
+    }
     return ZeroonScreen(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
@@ -105,9 +119,21 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
       _saving = true;
       _message = null;
     });
+    _saveAttempts += 1;
+    final startedAt = DateTime.now();
     try {
       final record =
           await ref.read(recordListProvider.notifier).create(request);
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('RECORD_SAVED', {
+              'state': record.state,
+              'hasGoal': _hasText(request.goal),
+              'hasContent': _hasText(request.content),
+              'latencyBucket':
+                  latencyBucket(DateTime.now().difference(startedAt)),
+              'retryCountBucket': retryCountBucket(_saveAttempts - 1),
+            }),
+          ));
       ref.invalidate(currentStateProvider);
       _goalController.clear();
       _contentController.clear();
@@ -125,7 +151,15 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
           ),
         ),
       );
-    } catch (_) {
+    } catch (error) {
+      final failure = classifyEvidenceFailure(error);
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('RECORD_SAVE_FAILED', {
+              'errorClass': failure.errorClass,
+              'retryable': failure.retryable,
+              'networkStatus': failure.networkStatus,
+            }),
+          ));
       if (mounted) {
         setState(() {
           _saving = false;
@@ -135,6 +169,8 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
     }
   }
 }
+
+bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 
 class _LockedStateCard extends StatefulWidget {
   const _LockedStateCard({required this.snapshot});

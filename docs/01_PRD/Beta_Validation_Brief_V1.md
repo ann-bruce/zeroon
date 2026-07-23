@@ -1,7 +1,12 @@
 # ZEROON Beta Validation Brief V1
 
-Status: Active draft  
+Status: Accepted validation baseline
 Date: 2026-07-14  
+
+Sprint 12 event implementation is governed by
+`docs/02_Architecture/ADR_007_Beta_Evidence_Event_Lifecycle_V1.md`. Where this
+brief lists a broader future event or property, ADR 007 is authoritative for
+the closed-Beta engineering boundary.
 
 ## 1. Beta Promise
 

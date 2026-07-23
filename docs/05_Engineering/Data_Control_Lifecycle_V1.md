@@ -21,7 +21,7 @@ current behavior.
 
 ## Beta Export Scope
 
-`zeroon-beta-export-v3` includes:
+`zeroon-beta-export-v4` includes:
 
 - account identity, state, status, roles, explicit language preference, and
   creation time;
@@ -34,6 +34,9 @@ current behavior.
 - current and expired Memory entries;
 - owned support requests, submitted diagnostics, user-visible messages and
   status history, excluding internal notes and operator identity;
+- the explicit Beta evidence collection choice and retained owned content-free
+  events, excluding the internal subject id, event fingerprint, and receipt
+  timestamp;
 - content-free AI usage metadata.
 
 The export excludes access tokens, refresh tokens, refresh-token hashes,
@@ -42,9 +45,10 @@ content, and records belonging to another user. The Beta mobile client copies
 the JSON data copy to the system clipboard; the API also supplies an attachment
 filename for clients that support file downloads.
 
-V2 added only the explicit `languagePreference` account field. V3 adds the
-`supportRequests` collection while preserving all earlier property names. It
-never exports a language inferred from Profile, Record, Memory, conversation,
+V2 added only the explicit `languagePreference` account field. V3 added the
+`supportRequests` collection. V4 adds `betaEvidencePreference` and
+`betaEvidenceEvents` while preserving all earlier property names. It never
+exports a language inferred from Profile, Record, Memory, conversation,
 support content, or other private text.
 
 This product export is not a substitute for jurisdiction-specific data-access
@@ -62,6 +66,7 @@ successful request deletes the user row; database foreign keys then remove:
 - Zero Records;
 - conversations and messages;
 - Memory entries;
+- the Beta evidence subject mapping and every linked event;
 - in-app support requests, diagnostics, messages, internal notes, transition
   history, assignment, and support mutation audit.
 
@@ -88,10 +93,10 @@ It never stores request, internal-note, or reply bodies.
 
 No endpoint returns success while retaining the user's Profile, records,
 messages, Memory summaries, in-app support content, mobile number, refresh
-sessions, or companion row. External mail sent to `zeroon_ai@gmail.com` cannot
-be matched automatically by account deletion; its separately disclosed process
-deletes messages within 180 days after handling closes or earlier after a
-verified request.
+sessions, companion row, evidence subject, or evidence event. External mail
+sent to `zeroon_ai@gmail.com` cannot be matched automatically by account
+deletion; its separately disclosed process deletes messages within 180 days
+after handling closes or earlier after a verified request.
 
 Closed in-app support requests are also subject to an automated maximum. An
 hourly UTC worker deletes requests older than
@@ -99,6 +104,13 @@ hourly UTC worker deletes requests older than
 remove messages, diagnostics, history, internal notes, assignment, and support
 audit. `ZEROON_SUPPORT_RETENTION_CRON` controls the reviewed operational
 schedule. Values below one retention day are rejected at startup.
+
+Evidence events have their own hourly UTC maximum-retention worker.
+`ZEROON_EVIDENCE_RETENTION_DAYS` defaults to 180 and accepts only 1 through
+180. The worker deletes expired events first and then event-free subjects whose
+choice is older than the same cutoff. If a stale subject is removed, collection
+returns to the safe default-off state; it is never silently recreated as
+enabled. Account deletion remains immediate and does not wait for this worker.
 
 ## Failure and UX Rules
 

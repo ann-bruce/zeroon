@@ -7,6 +7,7 @@ import ai.zeroon.ai.LlmResponse;
 import ai.zeroon.ai.AiUsageDetails;
 import ai.zeroon.ai.AiUsageOutcome;
 import ai.zeroon.companion.CompanionDtos.ChatResponse;
+import ai.zeroon.companion.CompanionTurnPersistenceService.AssembledUserPrompt;
 import ai.zeroon.companion.CompanionTurnPersistenceService.StartedTurn;
 import ai.zeroon.prompt.PromptTemplateSelection;
 import ai.zeroon.prompt.PromptTemplateService;
@@ -59,11 +60,14 @@ public class CompanionService {
                             boundary.reply().length(),
                             null,
                             null,
-                            boundary.label()));
+                            boundary.label()),
+                    AssembledUserPrompt.none());
         }
 
         PromptTemplateSelection prompt = promptTemplateService.companionReflectionPrompt();
-        String userPrompt = turnPersistenceService.assembleUserPrompt(userId, normalizedMessage);
+        AssembledUserPrompt assembledPrompt =
+                turnPersistenceService.assembleUserPrompt(userId, normalizedMessage);
+        String userPrompt = assembledPrompt.prompt();
         String systemPrompt = prompt.content().stripTrailing()
                 + "\n\n"
                 + language.providerInstruction().strip();
@@ -89,7 +93,8 @@ public class CompanionService {
                             safeLength(response.content()),
                             response.inputTokens(),
                             response.outputTokens(),
-                            null));
+                            null),
+                    assembledPrompt);
         } catch (LlmProviderUnavailableException ex) {
             return turnPersistenceService.complete(
                     turn,
@@ -107,7 +112,8 @@ public class CompanionService {
                             language.fallbackReply().length(),
                             null,
                             null,
-                            ex.getClass().getSimpleName()));
+                            ex.getClass().getSimpleName()),
+                    assembledPrompt);
         }
     }
 

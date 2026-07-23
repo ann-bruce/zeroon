@@ -42,16 +42,19 @@ public class AuthService {
         if (!verificationCodeService.verify(mobile, code, deviceId, clientIp)) {
             throw new BadCredentialsException("Invalid verification code");
         }
-        UserEntity user = userRepository.findByMobile(mobile)
-                .orElseGet(() -> userRepository.save(new UserEntity(createUid(), mobile)));
-        return createSession(user, deviceId);
+        UserEntity existing = userRepository.findByMobile(mobile).orElse(null);
+        boolean newAccount = existing == null;
+        UserEntity user = newAccount
+                ? userRepository.save(new UserEntity(createUid(), mobile))
+                : existing;
+        return createSession(user, deviceId, newAccount);
     }
 
     @Transactional
     public AuthResponse refresh(String refreshToken) {
         RefreshSessionEntity existing = findValidSession(refreshToken);
         existing.revoke();
-        return createSession(existing.getUser(), existing.getDeviceId());
+        return createSession(existing.getUser(), existing.getDeviceId(), false);
     }
 
     @Transactional
@@ -79,7 +82,7 @@ public class AuthService {
         return session;
     }
 
-    private AuthResponse createSession(UserEntity user, String deviceId) {
+    private AuthResponse createSession(UserEntity user, String deviceId, boolean newAccount) {
         TokenService.AccessToken accessToken = tokenService.createAccessToken(user);
         TokenService.RefreshToken refreshToken = tokenService.createRefreshToken();
         refreshSessionRepository.save(new RefreshSessionEntity(
@@ -92,6 +95,7 @@ public class AuthService {
                 accessToken.token(),
                 refreshToken.token(),
                 expiresIn,
+                newAccount,
                 new UserPayload(
                         user.getId(),
                         user.getUid(),

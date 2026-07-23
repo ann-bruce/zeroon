@@ -6,18 +6,21 @@ class AuthSession {
     required this.refreshToken,
     required this.expiresIn,
     required this.user,
+    this.newAccount = false,
   });
 
   final String accessToken;
   final String refreshToken;
   final int expiresIn;
   final ZeroonUser user;
+  final bool newAccount;
 
   factory AuthSession.fromJson(Map<String, dynamic> json) {
     return AuthSession(
       accessToken: json['accessToken'] as String,
       refreshToken: json['refreshToken'] as String,
       expiresIn: json['expiresIn'] as int,
+      newAccount: json['newAccount'] as bool? ?? false,
       user: ZeroonUser.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
@@ -27,6 +30,7 @@ class AuthSession {
       'accessToken': accessToken,
       'refreshToken': refreshToken,
       'expiresIn': expiresIn,
+      'newAccount': newAccount,
       'user': user.toJson(),
     };
   }
@@ -36,6 +40,7 @@ class AuthSession {
       accessToken: accessToken,
       refreshToken: refreshToken,
       expiresIn: expiresIn,
+      newAccount: newAccount,
       user: user ?? this.user,
     );
   }

@@ -54,6 +54,10 @@ class CompanionFallbackControllerTest {
                 .andExpect(jsonPath("$.conversationId").isNumber())
                 .andExpect(jsonPath("$.messageId").isNumber())
                 .andExpect(jsonPath("$.reply", containsString("慢慢放进可以回看的地方")))
+                .andExpect(jsonPath("$.outcome").value("FALLBACK"))
+                .andExpect(jsonPath("$.promptVersion")
+                        .value("COMPANION_REFLECTION_FALLBACK_V1"))
+                .andExpect(jsonPath("$.modelAlias").value("FALLBACK"))
                 .andExpect(jsonPath("$.safetyNotice", not(blankOrNullString())));
 
         org.assertj.core.api.Assertions.assertThat(unavailableLlmProvider.wasTransactionActive()).isFalse();

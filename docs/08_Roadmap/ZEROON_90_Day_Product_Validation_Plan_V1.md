@@ -298,8 +298,28 @@ automatically attaching unrelated private content.
 Sprint 11 completed on 2026-07-23 with automated retention, privacy and abuse
 boundaries, bilingual outage fallback, operator audit, zero companion-context
 coupling, full quality gates, and real PostgreSQL end-to-end acceptance.
-Sprint 12 begins only after its previously undocumented scope is explicitly
-inventoried and approved.
+
+### Sprint 12 Closed Beta Evidence and Recruitment Readiness
+
+The accepted plan is
+`docs/07_Sprints/Sprint_12_Closed_Beta_Evidence_Readiness_V1.md`. S12-01
+completed on 2026-07-23 with a first-party typed event boundary, explicit and
+revocable collection, 180-day maximum, account-deletion hard deletion,
+aggregate-only reporting, and small-cell suppression at five participants.
+The first cohort remains capped at 20 invited adults. `chao.fan` is the named
+backup support operator; mailbox and ADMIN access testing remains a blocker
+before the first invitation.
+
+S12-02 completed on 2026-07-23 with PostgreSQL V14, a default-off
+notice-bound collection choice, typed first-party event persistence, export
+V4, account-deletion cascade, 180-day retention, all-event contract and
+rate-limit coverage, and real PostgreSQL runtime acceptance. S12-03 completed
+on 2026-07-23 with content-free mobile instrumentation across the approved
+core loop, a bounded seven-day/50-item retry queue, truthful
+new/existing-account and companion execution metadata, and best-effort failure
+isolation. Support content remains outside analytics because no support event
+was approved. Full backend/mobile tests and OpenAPI lint pass. S12-04 cohort
+and retention computation is next.
 
 ## 7. Operating Rhythm
 

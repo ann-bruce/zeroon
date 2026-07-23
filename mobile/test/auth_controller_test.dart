@@ -6,6 +6,8 @@ import 'package:zeroon_mobile/auth/auth_models.dart';
 import 'package:zeroon_mobile/auth/auth_repository.dart';
 import 'package:zeroon_mobile/auth/token_store.dart';
 import 'package:zeroon_mobile/data_control/data_control_repository.dart';
+import 'package:zeroon_mobile/evidence/evidence_models.dart';
+import 'package:zeroon_mobile/evidence/evidence_repository.dart';
 import 'package:zeroon_mobile/locale/locale_controller.dart';
 import 'package:zeroon_mobile/locale/locale_preference.dart';
 import 'package:zeroon_mobile/locale/locale_preference_repository.dart';
@@ -18,6 +20,7 @@ void main() {
     final authRepository = _FakeAuthRepository();
     final container = ProviderContainer(
       overrides: [
+        evidenceRepositoryProvider.overrideWithValue(_NoopEvidenceRepository()),
         tokenStoreProvider.overrideWithValue(tokenStore),
         authRepositoryProvider.overrideWithValue(authRepository),
         initialLocaleStateProvider.overrideWithValue(
@@ -53,6 +56,7 @@ void main() {
     final authRepository = _FakeAuthRepository(failLogout: true);
     final container = ProviderContainer(
       overrides: [
+        evidenceRepositoryProvider.overrideWithValue(_NoopEvidenceRepository()),
         tokenStoreProvider.overrideWithValue(tokenStore),
         authRepositoryProvider.overrideWithValue(authRepository),
       ],
@@ -71,6 +75,7 @@ void main() {
     final dataControlRepository = _FakeDataControlRepository();
     final container = ProviderContainer(
       overrides: [
+        evidenceRepositoryProvider.overrideWithValue(_NoopEvidenceRepository()),
         tokenStoreProvider.overrideWithValue(tokenStore),
         dataControlRepositoryProvider.overrideWithValue(dataControlRepository),
       ],
@@ -93,6 +98,7 @@ void main() {
     final localeStore = _MemoryLocalePreferenceStore();
     final container = ProviderContainer(
       overrides: [
+        evidenceRepositoryProvider.overrideWithValue(_NoopEvidenceRepository()),
         tokenStoreProvider.overrideWithValue(tokenStore),
         localePreferenceStoreProvider.overrideWithValue(localeStore),
         initialLocaleStateProvider.overrideWithValue(
@@ -125,6 +131,7 @@ void main() {
     final localeStore = _MemoryLocalePreferenceStore();
     final container = ProviderContainer(
       overrides: [
+        evidenceRepositoryProvider.overrideWithValue(_NoopEvidenceRepository()),
         tokenStoreProvider.overrideWithValue(tokenStore),
         authRepositoryProvider.overrideWithValue(authRepository),
         localePreferenceRepositoryProvider.overrideWithValue(localeRepository),
@@ -260,4 +267,11 @@ class _FakeLocalePreferenceRepository extends LocalePreferenceRepository {
     updated.add(preference);
     return preference;
   }
+}
+
+class _NoopEvidenceRepository extends EvidenceRepository {
+  _NoopEvidenceRepository() : super(Dio());
+
+  @override
+  Future<void> record(EvidenceEvent event) async {}
 }

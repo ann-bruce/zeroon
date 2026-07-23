@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../evidence/evidence_models.dart';
+import '../evidence/evidence_repository.dart';
 import 'state_models.dart';
 import 'state_repository.dart';
 
@@ -20,6 +24,12 @@ class CurrentStateController extends AsyncNotifier<StateSnapshot> {
             nextState,
           );
       state = AsyncData(snapshot);
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('STATE_STARTED', {
+              'state': snapshot.state,
+              'source': 'MANUAL',
+            }),
+          ));
     } catch (error, stackTrace) {
       if (state.hasValue) {
         state = AsyncData(state.requireValue);

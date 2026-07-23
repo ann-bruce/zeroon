@@ -225,6 +225,28 @@ deployment configuration may set `ZEROON_SUPPORT_CLOSED_RETENTION_DAYS` and
 use a shorter positive window and frequent cron only for isolated runtime
 acceptance, followed by temporary-data cleanup.
 
+Closed-Beta evidence ingestion is off unless
+`ZEROON_EVIDENCE_INGESTION_ENABLED=true`. The server publishes and accepts only
+the reviewed `ZEROON_EVIDENCE_NOTICE_VERSION` (default
+`beta-evidence-v1`). `ZEROON_EVIDENCE_EVENT_HOURLY_LIMIT` bounds ingestion per
+evidence subject. `ZEROON_EVIDENCE_RETENTION_DAYS` defaults to 180 and rejects
+values below one or above 180; `ZEROON_EVIDENCE_RETENTION_CRON` controls the UTC
+purge. Development, test, and synthetic acceptance environments must not point
+at participant evidence storage.
+
+The Flutter client generates a UUID per event, uses the fixed Asia/Shanghai
+calendar date, and queues at most 50 content-free events in process for at most
+seven days. It does not persist the queue or backfill while collection is off.
+Only event-specific enums, booleans, bounded version/alias strings, and buckets
+may be submitted. Callers must use the best-effort repository without awaiting
+it as part of a primary-flow success condition. Invalid 4xx events are dropped;
+network, `429`, and `5xx` failures remain bounded for a later in-process retry.
+
+Companion responses expose content-free evidence metadata separately from the
+reply: reviewed outcome, latency bucket, prompt-family version, provider-path
+alias, and enabled Profile/Memory context-class names. Raw model ids, prompts,
+private context, messages, and replies must not be copied into evidence events.
+
 ## Memory V1
 
 Memory source, ownership, activation, AI-use, expiry, and deletion semantics

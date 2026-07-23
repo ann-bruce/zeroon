@@ -2,6 +2,7 @@ package ai.zeroon.companion;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 
 public final class CompanionDtos {
 
@@ -17,6 +18,11 @@ public final class CompanionDtos {
             Long conversationId,
             Long messageId,
             String reply,
-            String safetyNotice) {
+            String safetyNotice,
+            String outcome,
+            String latencyBucket,
+            String promptVersion,
+            String modelAlias,
+            List<String> contextClasses) {
     }
 }

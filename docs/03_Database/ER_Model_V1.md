@@ -24,6 +24,10 @@ evolution.
 - `support_status_history`: immutable user-visible lifecycle transitions
 - `support_admin_audit`: content-free administrator mutation evidence scoped
   to one support request
+- `evidence_subjects`: private account-to-random-subject mapping, explicit
+  collection choice, accepted notice version, and choice timestamp
+- `evidence_events`: reviewed content-free event enums and typed property
+  columns; no arbitrary JSON, private text, direct identity, or user id
 
 ## Operations
 
@@ -48,6 +52,8 @@ users
 │   ├── support_messages
 │   ├── support_status_history
 │   └── support_admin_audit
+├── evidence_subjects
+│   └── evidence_events
 └── audit_events (actor, nullable)
 ```
 
@@ -69,9 +75,20 @@ audit actor references; deleting the request owner removes the request,
 messages, history, and support audit together. Audit values are bounded
 structured transition metadata and never copy request or message bodies.
 
+V14 adds the closed-Beta evidence foundation. `evidence_subjects` owns the only
+account link and hard-deletes with the user. `evidence_events` references only
+that subject, is idempotent on `(subject_id, client_event_id)`, and stores
+schema-versioned event names, an Asia/Shanghai calendar date, a payload
+fingerprint, and reviewed typed columns. It has no JSON property bag, user id,
+exact client timestamp, or private product/support content. An hourly UTC
+worker removes event rows after at most 180 days, then removes stale
+event-free subjects whose collection choice is beyond the same boundary.
+
 ## Query Baseline
 
 - User-owned timeline indexes begin with `user_id`.
 - Conversation messages are indexed by `conversation_id, created_at`.
 - List APIs sort newest-first and use bounded pagination.
 - Cross-user reads are forbidden outside reviewed admin services.
+- Evidence event writes serialize on the owned subject, and product reports
+  must use aggregate queries rather than per-subject browsing.

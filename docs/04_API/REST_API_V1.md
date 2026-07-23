@@ -60,6 +60,26 @@ Response
 
 ---
 
+## Closed-Beta Evidence
+
+- `GET /me/preferences/beta-evidence` returns the explicit default-off
+  collection choice and required notice version.
+- `PUT /me/preferences/beta-evidence` records an enable or disable choice only
+  for the current reviewed notice.
+- `POST /evidence/events` accepts one authenticated schema-v1 event with only
+  the event-specific typed properties in OpenAPI.
+
+Evidence ingestion uses a random internal subject, contains no private text or
+direct identity, and is idempotent per client event id. A disabled choice
+stores nothing. Account export includes retained owned events without internal
+ids; account deletion hard-deletes the subject and events.
+
+The mobile client uses a bounded in-process best-effort queue and never makes a
+primary operation depend on evidence availability. Support request content is
+not an evidence event.
+
+---
+
 ## State
 
 ### Get Current State
@@ -113,8 +133,16 @@ Request
 Response
 
 {
-  "reply": "先归零一下，我们慢慢来。"
+  "reply": "先归零一下，我们慢慢来。",
+  "outcome": "SUCCESS",
+  "latencyBucket": "FROM_500_TO_1499_MS",
+  "promptVersion": "COMPANION_REFLECTION_V7",
+  "modelAlias": "PRIMARY",
+  "contextClasses": ["MEMORY"]
 }
+
+Evidence metadata is content-free. `contextClasses` names only the enabled
+context class used for the turn and never contains the context itself.
 
 ---
 

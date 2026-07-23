@@ -119,7 +119,9 @@ Approved on 2026-07-23 with `zeroon_ai@gmail.com` as the packaged fallback and
 Bruce Ann as the accountable primary for the current one-person closed Beta.
 The recommended 180-day maximum and separately disclosed external-email
 deletion process are accepted. No SLA or continuous coverage is promised; a
-named, access-tested backup remains a wider-Beta readiness gate.
+backup access test remains a wider-Beta readiness gate. `chao.fan` was named
+as backup on 2026-07-23 after Sprint 11 closed; mailbox and ADMIN access are
+not yet recorded as tested.
 
 ## S11-02 Verification
 
@@ -292,8 +294,9 @@ Completed on 2026-07-23:
 - Experience review accepts the calm, secondary privacy/retention treatment.
   Product-guardrail review confirms that support remains human-operated,
   request-scoped, and separate from companion context. Sprint 11 is complete.
-  A named, access-tested backup remains a wider-Beta operations gate, and
-  professional public-release review remains outside this sprint.
+  `chao.fan` is now the named backup, but mailbox and ADMIN access testing
+  remains a wider-Beta operations gate. Professional public-release review
+  remains outside this sprint.
 
 ## Data Boundary
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +7,8 @@ import 'auth/auth_controller.dart';
 import 'auth/auth_models.dart';
 import 'auth/login_screen.dart';
 import 'common/zeroon_design.dart';
+import 'evidence/evidence_models.dart';
+import 'evidence/evidence_repository.dart';
 import 'home/home_shell.dart';
 import 'l10n/app_localizations.dart';
 import 'locale/locale_controller.dart';
@@ -143,6 +147,10 @@ class AuthenticatedEntry extends ConsumerStatefulWidget {
 
 class _AuthenticatedEntryState extends ConsumerState<AuthenticatedEntry> {
   bool _holdEncounterAfterMeeting = false;
+  bool _encounterViewed = false;
+  bool _encounterCompleted = false;
+  int _meetAttempts = 0;
+  DateTime? _encounterViewedAt;
 
   @override
   Widget build(BuildContext context) {
@@ -168,12 +176,38 @@ class _AuthenticatedEntryState extends ConsumerState<AuthenticatedEntry> {
       return HomeShell(session: widget.session);
     }
 
+    if (!companion.met && !_encounterViewed) {
+      _encounterViewed = true;
+      _encounterViewedAt = DateTime.now();
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('ZEROON_ENCOUNTER_VIEWED', {
+              'entrySource': 'LOGIN',
+              'appVersion': zeroonAppVersion,
+            }),
+          ));
+    }
+
     return EncounterScreen(
       companion: companion,
       loading: companionState.isLoading,
       onMeet: () async {
+        _meetAttempts += 1;
         setState(() => _holdEncounterAfterMeeting = true);
         await ref.read(myZeroonProvider.notifier).meet();
+        final met = ref.read(myZeroonProvider).valueOrNull?.met ?? false;
+        if (met && !_encounterCompleted) {
+          _encounterCompleted = true;
+          unawaited(ref.read(evidenceRepositoryProvider).record(
+                EvidenceEvent('ZEROON_ENCOUNTER_COMPLETED', {
+                  'durationBucket': durationBucket(
+                    DateTime.now().difference(
+                      _encounterViewedAt ?? DateTime.now(),
+                    ),
+                  ),
+                  'retryCountBucket': retryCountBucket(_meetAttempts - 1),
+                }),
+              ));
+        }
       },
       onEnter: () => setState(() => _holdEncounterAfterMeeting = false),
     );

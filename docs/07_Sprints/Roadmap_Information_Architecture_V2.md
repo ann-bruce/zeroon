@@ -115,8 +115,12 @@ capability is validated.
 
 ### Sprint 12
 
-- Reserved for the scope previously discussed as Sprint 10
-- Formal scope requires its own product decision and acceptance document
+- Closed Beta Evidence and Recruitment Readiness
+- First-party typed, content-free product evidence with explicit notice
+- 180-day maximum, account-deletion hard deletion, and aggregate-only ADMIN
+  reporting with cells below five participants suppressed
+- First cohort limited to at most 20 invited adults
+- Previously undocumented Sprint 10 scope is not reconstructed or approved
 
 ### V1.2
 

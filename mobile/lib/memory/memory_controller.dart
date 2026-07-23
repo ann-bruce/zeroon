@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../evidence/evidence_models.dart';
+import '../evidence/evidence_repository.dart';
 import 'memory_models.dart';
 import 'memory_repository.dart';
 
@@ -23,6 +27,7 @@ class MemoryListController extends AsyncNotifier<MemoryPage> {
     if (current != null) {
       state = AsyncData(current.replace(updated));
     }
+    _recordControl(enabled ? 'ENABLE' : 'DISABLE');
   }
 
   Future<void> setAiContextEnabled(int memoryId, bool aiContextEnabled) async {
@@ -34,6 +39,7 @@ class MemoryListController extends AsyncNotifier<MemoryPage> {
     if (current != null) {
       state = AsyncData(current.replace(updated));
     }
+    _recordControl(aiContextEnabled ? 'ALLOW_AI' : 'DISALLOW_AI');
   }
 
   Future<void> delete(int memoryId) async {
@@ -42,5 +48,15 @@ class MemoryListController extends AsyncNotifier<MemoryPage> {
     if (current != null) {
       state = AsyncData(current.remove(memoryId));
     }
+    _recordControl('DELETE');
+  }
+
+  void _recordControl(String action) {
+    unawaited(ref.read(evidenceRepositoryProvider).record(
+          EvidenceEvent('MEMORY_CONTROL_CHANGED', {
+            'action': action,
+            'sourceType': 'MEMORY',
+          }),
+        ));
   }
 }

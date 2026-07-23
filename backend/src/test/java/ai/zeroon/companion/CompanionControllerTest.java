@@ -80,6 +80,11 @@ class CompanionControllerTest {
                 .andExpect(jsonPath("$.conversationId").isNumber())
                 .andExpect(jsonPath("$.messageId").isNumber())
                 .andExpect(jsonPath("$.reply").value("You made a small clear step."))
+                .andExpect(jsonPath("$.outcome").value("SUCCESS"))
+                .andExpect(jsonPath("$.latencyBucket").isString())
+                .andExpect(jsonPath("$.promptVersion").value("COMPANION_REFLECTION_V7"))
+                .andExpect(jsonPath("$.modelAlias").value("PRIMARY"))
+                .andExpect(jsonPath("$.contextClasses").isEmpty())
                 .andExpect(jsonPath("$.safetyNotice").value(
                         "ZEROON offers non-diagnostic companion reflection. "
                                 + "It cannot replace medical, legal, financial, or mental health professionals."));
@@ -205,7 +210,10 @@ class CompanionControllerTest {
         assertProfileContextAbsent(capturingLlmProvider.requireRequest());
 
         saveProfile(accessToken, true);
-        sendMessage(accessToken, "Consent is now on");
+        String enabledResponse = sendMessage(accessToken, "Consent is now on");
+        JsonNode contextClasses = objectMapper.readTree(enabledResponse).path("contextClasses");
+        assertThat(contextClasses.size()).isEqualTo(1);
+        assertThat(contextClasses.path(0).asText()).isEqualTo("PROFILE");
         LlmRequest enabledRequest = capturingLlmProvider.requireRequest();
         assertThat(enabledRequest.userPrompt())
                 .contains("User-provided profile context")
@@ -238,12 +246,15 @@ class CompanionControllerTest {
                 .andExpect(status().isOk());
     }
 
-    private void sendMessage(String accessToken, String message) throws Exception {
-        mockMvc.perform(post("/api/v1/companion/messages")
+    private String sendMessage(String accessToken, String message) throws Exception {
+        return mockMvc.perform(post("/api/v1/companion/messages")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"message\":\"" + message + "\"}"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
     }
 
     private void updateLanguage(String accessToken, String preference) throws Exception {

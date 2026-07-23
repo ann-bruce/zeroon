@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data_control/data_control_repository.dart';
+import '../evidence/evidence_models.dart';
+import '../evidence/evidence_repository.dart';
 import '../locale/locale_controller.dart';
 import '../locale/locale_preference.dart';
 import '../locale/locale_preference_repository.dart';
@@ -39,6 +41,13 @@ class AuthController extends AsyncNotifier<AuthSession?> {
           .login(mobile: mobile, code: code, deviceId: deviceId);
       await ref.read(tokenStoreProvider).save(session);
       await _synchronizeLocaleFromSession(session);
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('AUTH_COMPLETED', {
+              'accountType': session.newAccount ? 'NEW' : 'EXISTING',
+              'platform': evidencePlatform(),
+              'appVersion': zeroonAppVersion,
+            }),
+          ));
       return session;
     });
   }
@@ -59,9 +68,22 @@ class AuthController extends AsyncNotifier<AuthSession?> {
   }
 
   Future<void> deleteAccount() async {
-    await ref.read(dataControlRepositoryProvider).deleteAccount();
-    await ref.read(tokenStoreProvider).clear();
-    state = const AsyncData(null);
+    final evidence = ref.read(evidenceRepositoryProvider);
+    unawaited(evidence.record(EvidenceEvent('ACCOUNT_DELETE_REQUESTED', {
+      'surface': 'DATA_CONTROL',
+      'outcome': 'STARTED',
+    })));
+    try {
+      await ref.read(dataControlRepositoryProvider).deleteAccount();
+      await ref.read(tokenStoreProvider).clear();
+      state = const AsyncData(null);
+    } catch (_) {
+      unawaited(evidence.record(EvidenceEvent('ACCOUNT_DELETE_REQUESTED', {
+        'surface': 'DATA_CONTROL',
+        'outcome': 'FAILED',
+      })));
+      rethrow;
+    }
   }
 
   void replaceSession(AuthSession? session) {

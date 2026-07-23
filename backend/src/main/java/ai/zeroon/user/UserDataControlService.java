@@ -1,5 +1,6 @@
 package ai.zeroon.user;
 
+import ai.zeroon.evidence.EvidenceService;
 import ai.zeroon.user.UserDataDtos.AiUsageExport;
 import ai.zeroon.user.UserDataDtos.ConversationExport;
 import ai.zeroon.user.UserDataDtos.CurrentUserResponse;
@@ -33,14 +34,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserDataControlService {
 
-    private static final String EXPORT_SCHEMA_VERSION = "zeroon-beta-export-v3";
+    private static final String EXPORT_SCHEMA_VERSION = "zeroon-beta-export-v4";
 
     private final UserRepository userRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final EvidenceService evidenceService;
 
-    public UserDataControlService(UserRepository userRepository, JdbcTemplate jdbcTemplate) {
+    public UserDataControlService(
+            UserRepository userRepository,
+            JdbcTemplate jdbcTemplate,
+            EvidenceService evidenceService) {
         this.userRepository = userRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.evidenceService = evidenceService;
     }
 
     @Transactional(readOnly = true)
@@ -78,6 +84,8 @@ public class UserDataControlService {
                 conversations(userId, messages),
                 memoryEntries(userId),
                 supportRequests(userId),
+                evidenceService.preferenceExport(userId),
+                evidenceService.eventExports(userId),
                 aiUsage(userId));
     }
 

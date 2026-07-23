@@ -26,6 +26,7 @@ public final class AuthDtos {
             String accessToken,
             String refreshToken,
             long expiresIn,
+            boolean newAccount,
             UserPayload user) {
     }
 

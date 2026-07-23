@@ -1,18 +1,29 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../evidence/evidence_models.dart';
+import '../evidence/evidence_repository.dart';
 import '../l10n/l10n_extensions.dart';
 import 'record_controller.dart';
 import 'record_models.dart';
 
-class RecordDetailScreen extends ConsumerWidget {
+class RecordDetailScreen extends ConsumerStatefulWidget {
   const RecordDetailScreen({super.key, required this.recordId});
 
   final int recordId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final record = ref.watch(recordDetailProvider(recordId));
+  ConsumerState<RecordDetailScreen> createState() => _RecordDetailScreenState();
+}
+
+class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
+  bool _viewRecorded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final record = ref.watch(recordDetailProvider(widget.recordId));
 
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.recordDetailTitle)),
@@ -29,51 +40,62 @@ class RecordDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 OutlinedButton(
                   onPressed: () =>
-                      ref.invalidate(recordDetailProvider(recordId)),
+                      ref.invalidate(recordDetailProvider(widget.recordId)),
                   child: Text(context.l10n.retry),
                 ),
               ],
             ),
           ),
-          data: (item) => ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              Row(
-                children: [
-                  Text(context.l10n.archiveMemoryMark,
-                      style: Theme.of(context).textTheme.labelLarge),
-                  const Spacer(),
-                  Chip(label: Text(context.l10n.privateRecord)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text(recordPreview(item),
-                  style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 12),
-              Text('${context.l10n.recordNumber} #${item.id}'),
-              const SizedBox(height: 4),
-              Text(context.l10n.resetStateValue(
-                localizedStateLabel(context, item.state),
-              )),
-              const SizedBox(height: 4),
-              Text(context.l10n.recordTimeValue(
-                _formatRecordTimeRange(context, item),
-              )),
-              const SizedBox(height: 24),
-              if (item.goal != null)
-                _DetailBlock(
-                    title: context.l10n.smallProgressTitle,
-                    content: item.goal!),
-              if (item.content != null)
-                _DetailBlock(
-                    title: context.l10n.recordWordsTitle,
-                    content: item.content!),
-              if (item.aiSummary != null)
-                _DetailBlock(
-                    title: context.l10n.zeroonEchoTitle,
-                    content: item.aiSummary!),
-            ],
-          ),
+          data: (item) {
+            if (!_viewRecorded) {
+              _viewRecorded = true;
+              unawaited(ref.read(evidenceRepositoryProvider).record(
+                    EvidenceEvent('RECORD_DETAIL_VIEWED', {
+                      'recordAgeBucket': recordAgeBucket(item.createdAt),
+                      'sourceType': 'ZERO_RECORD',
+                    }),
+                  ));
+            }
+            return ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                Row(
+                  children: [
+                    Text(context.l10n.archiveMemoryMark,
+                        style: Theme.of(context).textTheme.labelLarge),
+                    const Spacer(),
+                    Chip(label: Text(context.l10n.privateRecord)),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Text(recordPreview(item),
+                    style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 12),
+                Text('${context.l10n.recordNumber} #${item.id}'),
+                const SizedBox(height: 4),
+                Text(context.l10n.resetStateValue(
+                  localizedStateLabel(context, item.state),
+                )),
+                const SizedBox(height: 4),
+                Text(context.l10n.recordTimeValue(
+                  _formatRecordTimeRange(context, item),
+                )),
+                const SizedBox(height: 24),
+                if (item.goal != null)
+                  _DetailBlock(
+                      title: context.l10n.smallProgressTitle,
+                      content: item.goal!),
+                if (item.content != null)
+                  _DetailBlock(
+                      title: context.l10n.recordWordsTitle,
+                      content: item.content!),
+                if (item.aiSummary != null)
+                  _DetailBlock(
+                      title: context.l10n.zeroonEchoTitle,
+                      content: item.aiSummary!),
+              ],
+            );
+          },
         ),
       ),
     );

@@ -1,5 +1,7 @@
 package ai.zeroon.user;
 
+import ai.zeroon.evidence.EvidenceDtos.EvidenceEventExport;
+import ai.zeroon.evidence.EvidenceDtos.EvidencePreferenceExport;
 import java.time.Instant;
 import java.util.List;
 
@@ -31,6 +33,8 @@ public final class UserDataDtos {
             List<ConversationExport> conversations,
             List<MemoryEntryExport> memoryEntries,
             List<SupportRequestExport> supportRequests,
+            EvidencePreferenceExport betaEvidencePreference,
+            List<EvidenceEventExport> betaEvidenceEvents,
             List<AiUsageExport> aiUsage) {
     }
 

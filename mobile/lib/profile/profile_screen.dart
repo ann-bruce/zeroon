@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_controller.dart';
 import '../common/zeroon_design.dart';
 import '../data_control/data_control_repository.dart';
+import '../evidence/evidence_models.dart';
+import '../evidence/evidence_repository.dart';
 import '../l10n/l10n_extensions.dart';
 import '../locale/language_picker.dart';
 import '../my_zeroon/my_zeroon_controller.dart';
@@ -135,6 +138,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _exporting = true;
       _message = null;
     });
+    final evidence = ref.read(evidenceRepositoryProvider);
+    unawaited(evidence.record(EvidenceEvent('DATA_EXPORT_REQUESTED', {
+      'surface': 'DATA_CONTROL',
+      'outcome': 'STARTED',
+    })));
     try {
       final data = await ref.read(dataControlRepositoryProvider).exportData();
       await Clipboard.setData(
@@ -143,7 +151,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         setState(() => _message = context.l10n.dataCopied);
       }
+      unawaited(evidence.record(EvidenceEvent('DATA_EXPORT_REQUESTED', {
+        'surface': 'DATA_CONTROL',
+        'outcome': 'COMPLETED',
+      })));
     } catch (_) {
+      unawaited(evidence.record(EvidenceEvent('DATA_EXPORT_REQUESTED', {
+        'surface': 'DATA_CONTROL',
+        'outcome': 'FAILED',
+      })));
       if (mounted) {
         setState(() => _message = context.l10n.dataExportFailed);
       }

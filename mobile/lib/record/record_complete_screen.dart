@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../companion/companion_models.dart';
 import '../companion/companion_repository.dart';
 import '../common/zeroon_design.dart';
+import '../evidence/evidence_models.dart';
+import '../evidence/evidence_repository.dart';
 import '../l10n/l10n_extensions.dart';
 import 'archive_screen.dart';
 import 'record_models.dart';
@@ -149,7 +153,9 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ArchiveScreen()),
+              MaterialPageRoute(
+                builder: (_) => const ArchiveScreen(entrySource: 'RESET'),
+              ),
             ),
             child: Text(context.l10n.viewArchive),
           ),
@@ -178,12 +184,27 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
   }
 
   Future<void> _loadQuote() async {
+    final startedAt = DateTime.now();
     try {
       final response = await ref.read(companionRepositoryProvider).sendMessage(
             CompanionMessageRequest(
               message: context.l10n.completionPrompt,
             ),
           );
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('REFLECTION_REQUESTED', {
+              'surface': 'RESET',
+              'contextClasses': response.contextClasses,
+            }),
+          ));
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('REFLECTION_COMPLETED', {
+              'outcome': response.outcome,
+              'latencyBucket': response.latencyBucket,
+              'promptVersion': response.promptVersion,
+              'modelAlias': response.modelAlias,
+            }),
+          ));
       if (!mounted) {
         return;
       }
@@ -192,6 +213,21 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
         _loadingQuote = false;
       });
     } catch (_) {
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('REFLECTION_REQUESTED', {
+              'surface': 'RESET',
+              'contextClasses': <String>[],
+            }),
+          ));
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('REFLECTION_COMPLETED', {
+              'outcome': 'FAILED',
+              'latencyBucket':
+                  latencyBucket(DateTime.now().difference(startedAt)),
+              'promptVersion': 'UNKNOWN',
+              'modelAlias': 'UNAVAILABLE',
+            }),
+          ));
       if (!mounted) {
         return;
       }

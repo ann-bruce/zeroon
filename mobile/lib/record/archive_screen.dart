@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../companion/companion_models.dart';
 import '../companion/companion_repository.dart';
 import '../common/zeroon_design.dart';
+import '../evidence/evidence_models.dart';
+import '../evidence/evidence_repository.dart';
 import '../l10n/l10n_extensions.dart';
 import '../memory/memory_screen.dart';
 import 'record_controller.dart';
@@ -11,9 +15,14 @@ import 'record_detail_screen.dart';
 import 'record_models.dart';
 
 class ArchiveScreen extends ConsumerStatefulWidget {
-  const ArchiveScreen({super.key, this.initialDate});
+  const ArchiveScreen({
+    super.key,
+    this.initialDate,
+    this.entrySource = 'ARCHIVE',
+  });
 
   final DateTime? initialDate;
+  final String entrySource;
 
   @override
   ConsumerState<ArchiveScreen> createState() => _ArchiveScreenState();
@@ -21,6 +30,7 @@ class ArchiveScreen extends ConsumerStatefulWidget {
 
 class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
   late DateTime? _selectedDate = _dateOnly(widget.initialDate);
+  bool _viewRecorded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -49,12 +59,23 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
               ),
             ],
           ),
-          data: (page) => _ArchiveList(
-            page: page,
-            selectedDate: _selectedDate,
-            onClearDate: () => setState(() => _selectedDate = null),
-            onSelectDate: (date) => setState(() => _selectedDate = date),
-          ),
+          data: (page) {
+            if (!_viewRecorded) {
+              _viewRecorded = true;
+              unawaited(ref.read(evidenceRepositoryProvider).record(
+                    EvidenceEvent('ARCHIVE_VIEWED', {
+                      'entrySource': widget.entrySource,
+                      'itemCountBucket': itemCountBucket(page.totalElements),
+                    }),
+                  ));
+            }
+            return _ArchiveList(
+              page: page,
+              selectedDate: _selectedDate,
+              onClearDate: () => setState(() => _selectedDate = null),
+              onSelectDate: (date) => setState(() => _selectedDate = date),
+            );
+          },
         ),
       ),
     );
@@ -394,12 +415,27 @@ class _ArchiveObservationCardState
       _loading = true;
       _error = null;
     });
+    final startedAt = DateTime.now();
     try {
       final response = await ref.read(companionRepositoryProvider).sendMessage(
             CompanionMessageRequest(
               message: context.l10n.observationPrompt,
             ),
           );
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('REFLECTION_REQUESTED', {
+              'surface': 'ARCHIVE',
+              'contextClasses': response.contextClasses,
+            }),
+          ));
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('REFLECTION_COMPLETED', {
+              'outcome': response.outcome,
+              'latencyBucket': response.latencyBucket,
+              'promptVersion': response.promptVersion,
+              'modelAlias': response.modelAlias,
+            }),
+          ));
       if (!mounted) {
         return;
       }
@@ -408,6 +444,21 @@ class _ArchiveObservationCardState
         _loading = false;
       });
     } catch (_) {
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('REFLECTION_REQUESTED', {
+              'surface': 'ARCHIVE',
+              'contextClasses': <String>[],
+            }),
+          ));
+      unawaited(ref.read(evidenceRepositoryProvider).record(
+            EvidenceEvent('REFLECTION_COMPLETED', {
+              'outcome': 'FAILED',
+              'latencyBucket':
+                  latencyBucket(DateTime.now().difference(startedAt)),
+              'promptVersion': 'UNKNOWN',
+              'modelAlias': 'UNAVAILABLE',
+            }),
+          ));
       if (!mounted) {
         return;
       }
