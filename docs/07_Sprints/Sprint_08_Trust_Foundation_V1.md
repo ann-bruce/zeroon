@@ -101,8 +101,10 @@ Acceptance:
 - failed-attempt limits exist;
 - multi-instance state is not process-local in production.
 
-Actual SMS-provider procurement can remain separately blocked if the interface,
-environment boundary, and release failure behavior are complete.
+The first closed Beta later selected email verification because an individual
+operator could not obtain an SMS service. The same secure generator, Redis
+one-time state, throttling, failed-attempt cap, and fail-closed boundary apply;
+SMS remains disabled unless separately reviewed and configured.
 
 ### S8-04 AI profile consent closure
 

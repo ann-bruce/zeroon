@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 class EvidenceControllerTest {
 
-    private static final String NOTICE_VERSION = "beta-evidence-v1";
+    private static final String NOTICE_VERSION = "beta-evidence-v2";
 
     @Autowired
     private MockMvc mockMvc;
@@ -65,6 +65,7 @@ class EvidenceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(true))
                 .andExpect(jsonPath("$.enabled").value(false))
+                .andExpect(jsonPath("$.adultConfirmed").value(false))
                 .andExpect(jsonPath("$.requiredNoticeVersion").value(NOTICE_VERSION))
                 .andExpect(jsonPath("$.acceptedNoticeVersion").doesNotExist())
                 .andExpect(jsonPath("$.choiceChangedAt").doesNotExist());
@@ -92,8 +93,22 @@ class EvidenceControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "enabled": false,
+                                  "adultConfirmed": false,
+                                  "noticeVersion": "beta-evidence-v2"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+        assertThat(subjectCount("13700806001")).isZero();
+
+        mockMvc.perform(put("/api/v1/me/preferences/beta-evidence")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
                                   "enabled": true,
-                                  "noticeVersion": "beta-evidence-v1",
+                                  "adultConfirmed": true,
+                                  "noticeVersion": "beta-evidence-v2",
                                   "privateContent": "must not be accepted"
                                 }
                                 """))
@@ -205,8 +220,9 @@ class EvidenceControllerTest {
         String export = mockMvc.perform(get("/api/v1/me/export")
                         .header("Authorization", bearer(ownerToken)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.schemaVersion").value("zeroon-beta-export-v4"))
+                .andExpect(jsonPath("$.schemaVersion").value("zeroon-beta-export-v5"))
                 .andExpect(jsonPath("$.betaEvidencePreference.enabled").value(true))
+                .andExpect(jsonPath("$.betaEvidencePreference.adultConfirmed").value(true))
                 .andExpect(jsonPath("$.betaEvidencePreference.acceptedNoticeVersion")
                         .value(NOTICE_VERSION))
                 .andExpect(jsonPath("$.betaEvidenceEvents.length()").value(1))
@@ -326,6 +342,8 @@ class EvidenceControllerTest {
                         "\"action\":\"DISALLOW_AI\",\"sourceType\":\"MEMORY\""),
                 new EventCase("PROFILE_AI_CONTEXT_CHANGED",
                         "\"enabled\":false,\"surface\":\"PROFILE\""),
+                new EventCase("PROFILE_AI_CONTEXT_CONTROL_VIEWED",
+                        "\"enabled\":false,\"surface\":\"PROFILE\""),
                 new EventCase("DATA_EXPORT_REQUESTED",
                         "\"surface\":\"DATA_CONTROL\",\"outcome\":\"COMPLETED\""),
                 new EventCase("ACCOUNT_DELETE_REQUESTED",
@@ -383,6 +401,7 @@ class EvidenceControllerTest {
         return """
                 {
                   "enabled": %s,
+                  "adultConfirmed": true,
                   "noticeVersion": "%s"
                 }
                 """.formatted(enabled, noticeVersion);

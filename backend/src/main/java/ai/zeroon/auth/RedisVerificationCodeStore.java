@@ -9,7 +9,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("prod")
+@Profile({"prod", "smtp-smoke"})
 public class RedisVerificationCodeStore implements VerificationCodeStore {
 
     private static final DefaultRedisScript<Long> STORE_SCRIPT = new DefaultRedisScript<>("""

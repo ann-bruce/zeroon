@@ -9,8 +9,10 @@ import 'auth/login_screen.dart';
 import 'common/zeroon_design.dart';
 import 'evidence/evidence_models.dart';
 import 'evidence/evidence_repository.dart';
+import 'evidence/beta_notice_screen.dart';
 import 'home/home_shell.dart';
 import 'l10n/app_localizations.dart';
+import 'l10n/l10n_extensions.dart';
 import 'locale/locale_controller.dart';
 import 'locale/locale_preference.dart';
 import 'my_zeroon/encounter_screen.dart';
@@ -146,6 +148,14 @@ class AuthenticatedEntry extends ConsumerStatefulWidget {
 }
 
 class _AuthenticatedEntryState extends ConsumerState<AuthenticatedEntry> {
+  EvidencePreference? _evidencePreference;
+  Object? _evidencePreferenceError;
+  bool _evidencePreferenceLoading = true;
+  bool _evidencePreferenceSaving = false;
+  bool _evidencePreferenceSaveFailed = false;
+  bool _underage = false;
+  bool _authEvidenceQueued = false;
+  bool _requiresReintroduction = false;
   bool _holdEncounterAfterMeeting = false;
   bool _encounterViewed = false;
   bool _encounterCompleted = false;
@@ -153,7 +163,43 @@ class _AuthenticatedEntryState extends ConsumerState<AuthenticatedEntry> {
   DateTime? _encounterViewedAt;
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(_loadEvidencePreference);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_underage) {
+      return BetaUnavailableScreen(
+        onRetry: () => setState(() => _underage = false),
+        onLogout: _logout,
+      );
+    }
+    if (_evidencePreferenceLoading) {
+      return const SplashScreen();
+    }
+    if (_evidencePreferenceError != null) {
+      return BetaUnavailableScreen(
+        onRetry: _loadEvidencePreference,
+        onLogout: _logout,
+      );
+    }
+    final preference = _evidencePreference;
+    if (preference == null) {
+      return const SplashScreen();
+    }
+    if (preference.requiresNotice) {
+      return BetaNoticeScreen(
+        loading: _evidencePreferenceSaving,
+        errorMessage: _evidencePreferenceSaveFailed
+            ? context.l10n.betaNoticeSaveFailed
+            : null,
+        onContinue: (enabled) => _completeNotice(preference, enabled),
+        onUnderage: () => setState(() => _underage = true),
+      );
+    }
+
     final companionState = ref.watch(myZeroonProvider);
 
     if (companionState.isLoading && !companionState.hasValue) {
@@ -172,11 +218,13 @@ class _AuthenticatedEntryState extends ConsumerState<AuthenticatedEntry> {
       return const SplashScreen();
     }
 
-    if (companion.met && !_holdEncounterAfterMeeting) {
+    if (companion.met &&
+        !_requiresReintroduction &&
+        !_holdEncounterAfterMeeting) {
       return HomeShell(session: widget.session);
     }
 
-    if (!companion.met && !_encounterViewed) {
+    if ((!companion.met || _requiresReintroduction) && !_encounterViewed) {
       _encounterViewed = true;
       _encounterViewedAt = DateTime.now();
       unawaited(ref.read(evidenceRepositoryProvider).record(
@@ -189,14 +237,20 @@ class _AuthenticatedEntryState extends ConsumerState<AuthenticatedEntry> {
 
     return EncounterScreen(
       companion: companion,
+      reintroduction: companion.met && _requiresReintroduction,
       loading: companionState.isLoading,
       onMeet: () async {
         _meetAttempts += 1;
         setState(() => _holdEncounterAfterMeeting = true);
-        await ref.read(myZeroonProvider.notifier).meet();
+        if (!companion.met) {
+          await ref.read(myZeroonProvider.notifier).meet();
+        }
         final met = ref.read(myZeroonProvider).valueOrNull?.met ?? false;
         if (met && !_encounterCompleted) {
           _encounterCompleted = true;
+          if (mounted) {
+            setState(() => _requiresReintroduction = false);
+          }
           unawaited(ref.read(evidenceRepositoryProvider).record(
                 EvidenceEvent('ZEROON_ENCOUNTER_COMPLETED', {
                   'durationBucket': durationBucket(
@@ -211,6 +265,85 @@ class _AuthenticatedEntryState extends ConsumerState<AuthenticatedEntry> {
       },
       onEnter: () => setState(() => _holdEncounterAfterMeeting = false),
     );
+  }
+
+  Future<void> _loadEvidencePreference() async {
+    if (mounted) {
+      setState(() {
+        _evidencePreferenceLoading = true;
+        _evidencePreferenceError = null;
+      });
+    }
+    try {
+      final preference =
+          await ref.read(evidenceRepositoryProvider).getPreference();
+      _queueAuthenticationEvidence(preference);
+      if (mounted) {
+        setState(() {
+          _evidencePreference = preference;
+          _evidencePreferenceLoading = false;
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _evidencePreferenceError = error;
+          _evidencePreferenceLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _completeNotice(
+    EvidencePreference current,
+    bool evidenceEnabled,
+  ) async {
+    setState(() {
+      _evidencePreferenceSaving = true;
+      _evidencePreferenceSaveFailed = false;
+    });
+    try {
+      final saved = await ref.read(evidenceRepositoryProvider).updatePreference(
+            enabled: evidenceEnabled,
+            adultConfirmed: true,
+            noticeVersion: current.requiredNoticeVersion,
+          );
+      _queueAuthenticationEvidence(saved);
+      if (mounted) {
+        setState(() {
+          _evidencePreference = saved;
+          _requiresReintroduction = true;
+          _evidencePreferenceSaving = false;
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _evidencePreferenceSaveFailed = true;
+          _evidencePreferenceSaving = false;
+        });
+      }
+    }
+  }
+
+  void _queueAuthenticationEvidence(EvidencePreference preference) {
+    if (_authEvidenceQueued ||
+        !preference.enabled ||
+        !widget.session.freshAuthentication) {
+      return;
+    }
+    _authEvidenceQueued = true;
+    unawaited(ref.read(evidenceRepositoryProvider).record(
+          EvidenceEvent('AUTH_COMPLETED', {
+            'accountType': widget.session.newAccount ? 'NEW' : 'EXISTING',
+            'platform': evidencePlatform(),
+            'appVersion': zeroonAppVersion,
+          }),
+        ));
+  }
+
+  Future<void> _logout() {
+    return ref.read(authControllerProvider.notifier).logout();
   }
 }
 

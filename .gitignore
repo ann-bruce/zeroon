@@ -3,6 +3,8 @@
 .vscode/
 .env
 .run/
+.playwright-cli/
+output/playwright/
 *.iml
 
 backend/.gradle/

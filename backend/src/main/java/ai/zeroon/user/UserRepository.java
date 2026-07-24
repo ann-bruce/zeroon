@@ -11,6 +11,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByMobile(String mobile);
 
+    Optional<UserEntity> findByEmail(String email);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select user from UserEntity user where user.id = :userId")
     Optional<UserEntity> findByIdForUpdate(@Param("userId") Long userId);

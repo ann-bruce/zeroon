@@ -33,9 +33,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String? _ageRange;
   bool _aiProfileContextEnabled = false;
   bool _initialized = false;
+  bool _aiControlViewRecorded = false;
   bool _exporting = false;
   bool _deleting = false;
+  EvidencePreference? _betaEvidencePreference;
+  bool _betaEvidenceLoading = true;
+  bool _betaEvidenceSaving = false;
+  bool _betaEvidenceFailed = false;
   String? _message;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_loadBetaEvidencePreference);
+  }
 
   @override
   void dispose() {
@@ -72,6 +83,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         data: (profile) {
           _syncFromProfile(profile);
+          _recordAiControlViewed(profile);
           return _ProfileForm(
             myZeroonState: myZeroonState,
             onRetryMyZeroon: () => ref.invalidate(myZeroonProvider),
@@ -85,6 +97,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             saving: profileState.isLoading,
             exporting: _exporting,
             deleting: _deleting,
+            betaEvidencePreference: _betaEvidencePreference,
+            betaEvidenceLoading: _betaEvidenceLoading,
+            betaEvidenceSaving: _betaEvidenceSaving,
+            betaEvidenceFailed: _betaEvidenceFailed,
             onAvatarChanged: (value) => setState(() => _avatarPreset = value),
             onAgeRangeChanged: (value) => setState(() => _ageRange = value),
             onAiContextChanged: (value) =>
@@ -93,6 +109,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onExport: _exportData,
             onDelete: _confirmDelete,
             onLogout: _logout,
+            onBetaEvidenceChanged: _changeBetaEvidence,
+            onRetryBetaEvidence: _loadBetaEvidencePreference,
           );
         },
       ),
@@ -110,6 +128,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _ageRange = profile.ageRange;
     _aiProfileContextEnabled = profile.aiProfileContextEnabled;
     _initialized = true;
+  }
+
+  void _recordAiControlViewed(UserProfile profile) {
+    if (_aiControlViewRecorded) {
+      return;
+    }
+    _aiControlViewRecorded = true;
+    unawaited(ref.read(evidenceRepositoryProvider).record(
+          EvidenceEvent('PROFILE_AI_CONTEXT_CONTROL_VIEWED', {
+            'enabled': profile.aiProfileContextEnabled,
+            'surface': 'PROFILE',
+          }),
+        ));
   }
 
   Future<void> _save() async {
@@ -211,6 +242,61 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       }
     }
   }
+
+  Future<void> _loadBetaEvidencePreference() async {
+    if (mounted) {
+      setState(() {
+        _betaEvidenceLoading = true;
+        _betaEvidenceFailed = false;
+      });
+    }
+    try {
+      final preference =
+          await ref.read(evidenceRepositoryProvider).getPreference();
+      if (mounted) {
+        setState(() {
+          _betaEvidencePreference = preference;
+          _betaEvidenceLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _betaEvidenceLoading = false;
+          _betaEvidenceFailed = true;
+        });
+      }
+    }
+  }
+
+  Future<void> _changeBetaEvidence(bool enabled) async {
+    final current = _betaEvidencePreference;
+    if (current == null) {
+      return;
+    }
+    setState(() {
+      _betaEvidenceSaving = true;
+      _betaEvidenceFailed = false;
+    });
+    try {
+      final saved = await ref.read(evidenceRepositoryProvider).updatePreference(
+            enabled: enabled,
+            adultConfirmed: true,
+            noticeVersion: current.requiredNoticeVersion,
+          );
+      if (mounted) {
+        setState(() => _betaEvidencePreference = saved);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _betaEvidenceFailed = true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _betaEvidenceSaving = false);
+      }
+    }
+  }
 }
 
 class _ProfileForm extends StatelessWidget {
@@ -227,6 +313,10 @@ class _ProfileForm extends StatelessWidget {
     required this.saving,
     required this.exporting,
     required this.deleting,
+    required this.betaEvidencePreference,
+    required this.betaEvidenceLoading,
+    required this.betaEvidenceSaving,
+    required this.betaEvidenceFailed,
     required this.onAvatarChanged,
     required this.onAgeRangeChanged,
     required this.onAiContextChanged,
@@ -234,6 +324,8 @@ class _ProfileForm extends StatelessWidget {
     required this.onExport,
     required this.onDelete,
     required this.onLogout,
+    required this.onBetaEvidenceChanged,
+    required this.onRetryBetaEvidence,
   });
 
   final AsyncValue<MyZeroonCompanion> myZeroonState;
@@ -248,6 +340,10 @@ class _ProfileForm extends StatelessWidget {
   final bool saving;
   final bool exporting;
   final bool deleting;
+  final EvidencePreference? betaEvidencePreference;
+  final bool betaEvidenceLoading;
+  final bool betaEvidenceSaving;
+  final bool betaEvidenceFailed;
   final ValueChanged<String?> onAvatarChanged;
   final ValueChanged<String?> onAgeRangeChanged;
   final ValueChanged<bool> onAiContextChanged;
@@ -255,6 +351,8 @@ class _ProfileForm extends StatelessWidget {
   final VoidCallback onExport;
   final VoidCallback onDelete;
   final VoidCallback onLogout;
+  final ValueChanged<bool> onBetaEvidenceChanged;
+  final VoidCallback onRetryBetaEvidence;
 
   @override
   Widget build(BuildContext context) {
@@ -363,12 +461,84 @@ class _ProfileForm extends StatelessWidget {
           Text(message!, style: const TextStyle(color: Color(0xFF2F6F78))),
         ],
         const SizedBox(height: 28),
+        _BetaEvidenceSettingCard(
+          preference: betaEvidencePreference,
+          loading: betaEvidenceLoading,
+          saving: betaEvidenceSaving,
+          failed: betaEvidenceFailed,
+          onChanged: onBetaEvidenceChanged,
+          onRetry: onRetryBetaEvidence,
+        ),
+        const SizedBox(height: 24),
         _DataControlSection(
           exporting: exporting,
           deleting: deleting,
           onExport: onExport,
           onDelete: onDelete,
           onLogout: onLogout,
+        ),
+      ],
+    );
+  }
+}
+
+class _BetaEvidenceSettingCard extends StatelessWidget {
+  const _BetaEvidenceSettingCard({
+    required this.preference,
+    required this.loading,
+    required this.saving,
+    required this.failed,
+    required this.onChanged,
+    required this.onRetry,
+  });
+
+  final EvidencePreference? preference;
+  final bool loading;
+  final bool saving;
+  final bool failed;
+  final ValueChanged<bool> onChanged;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionMark(context.l10n.betaEvidenceSettingMark),
+        const SizedBox(height: 7),
+        Text(
+          context.l10n.betaEvidenceSettingBody,
+          style: const TextStyle(color: zeroonMuted, height: 1.45),
+        ),
+        const SizedBox(height: 12),
+        ZeroonCard(
+          padding: const EdgeInsets.fromLTRB(16, 13, 12, 13),
+          child: loading
+              ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+              : Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        failed
+                            ? context.l10n.betaEvidenceSettingFailed
+                            : preference?.enabled == true
+                                ? context.l10n.betaEvidenceSettingOn
+                                : context.l10n.betaEvidenceSettingOff,
+                      ),
+                    ),
+                    if (failed)
+                      TextButton(
+                        onPressed: onRetry,
+                        child: Text(context.l10n.retryShort),
+                      )
+                    else
+                      Switch(
+                        value: preference?.enabled ?? false,
+                        onChanged:
+                            saving || preference == null ? null : onChanged,
+                      ),
+                  ],
+                ),
         ),
       ],
     );

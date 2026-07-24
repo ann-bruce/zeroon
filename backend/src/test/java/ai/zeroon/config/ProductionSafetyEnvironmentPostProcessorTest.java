@@ -75,9 +75,26 @@ class ProductionSafetyEnvironmentPostProcessorTest {
     @Test
     void productionRejectsNonHttpsVerificationSender() {
         MockEnvironment environment = safeProductionEnvironment()
+                .withProperty("zeroon.auth.sms-enabled", "true")
                 .withProperty("zeroon.auth.verification-code-sender-url", "http://sms.example.test/send");
 
         assertUnsafe(environment, "ZEROON_VERIFICATION_CODE_SENDER_URL");
+    }
+
+    @Test
+    void productionRejectsMissingSmtpHost() {
+        MockEnvironment environment = safeProductionEnvironment()
+                .withProperty("spring.mail.host", "");
+
+        assertUnsafe(environment, "ZEROON_SMTP_HOST");
+    }
+
+    @Test
+    void productionRejectsInvalidEmailFrom() {
+        MockEnvironment environment = safeProductionEnvironment()
+                .withProperty("zeroon.auth.email-from", "not-an-email");
+
+        assertUnsafe(environment, "ZEROON_EMAIL_FROM");
     }
 
     @Test
@@ -117,7 +134,11 @@ class ProductionSafetyEnvironmentPostProcessorTest {
                         "https://sms.example.test/send")
                 .withProperty(
                         "zeroon.auth.verification-code-sender-token",
-                        "test-only-sender-token");
+                        "test-only-sender-token")
+                .withProperty("spring.mail.host", "smtp.example.test")
+                .withProperty("spring.mail.username", "zeroon-smtp")
+                .withProperty("spring.mail.password", "test-only-smtp-password")
+                .withProperty("zeroon.auth.email-from", "hello@zeroon.example");
         environment.setActiveProfiles("prod");
         return environment;
     }

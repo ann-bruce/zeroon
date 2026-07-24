@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("!prod")
+@Profile("!prod & !smtp-smoke")
 public class InMemoryVerificationCodeStore implements VerificationCodeStore {
 
     private final Map<String, CodeEntry> codes = new HashMap<>();

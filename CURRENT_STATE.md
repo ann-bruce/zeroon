@@ -1,6 +1,6 @@
 # ZEROON Current State
 
-Last updated: 2026-07-23
+Last updated: 2026-07-24
 
 This file is the short handoff for new Codex threads. Read it before scanning long docs or old sessions.
 
@@ -19,8 +19,9 @@ main
 ## Current Focus
 
 90-day product validation: Sprint 11 is complete; Sprint 12 Closed Beta
-Evidence and Recruitment Readiness is approved; S12-01 through S12-03 are
-complete.
+Evidence and Recruitment Readiness is approved; S12-01 through S12-05 are
+complete. S12-06 engineering and local runtime acceptance is complete, while
+the real first invitation remains blocked by external launch gates.
 
 Sprint 08 trust-foundation engineering, Sprint 09 controllable-memory
 engineering, the approved real-provider success smoke, and the mobile latency
@@ -50,7 +51,19 @@ Immediate execution order:
 - S12-02 typed event contract and persistence are complete;
 - S12-03 content-free core-loop instrumentation and failure isolation are
   complete;
-- next implement S12-04 cohort and retention computation.
+- S12-04 cohort and retention computation is complete;
+- S12-05 ADMIN-only, aggregate-only evidence operations is complete with a
+  five-subject cohort minimum and backend-derived small-cell suppression;
+- S12-06 adds the bilingual adult-only notice, default-off evidence choice,
+  truthful fresh-login and existing-user re-introduction ordering, recoverable
+  Settings control, export V5, PostgreSQL V16, recruitment/interview kit, and
+  launch runbook. Engineering and local runtime acceptance are complete;
+- do not send the first invitation until SMTP email delivery, one-time code
+  consumption, spam placement, and outage behavior are tested in the intended
+  environment; approved real-provider checks, Bruce Ann/Chao Fan mailbox and
+  least-privilege ADMIN
+  access tests, and production-like isolation/outage/deletion rehearsal are
+  recorded.
 
 Key product guardrails:
 
@@ -89,11 +102,13 @@ Key product guardrails:
   unsafe-prod startup failure, and the full quality gate passed.
 - Sprint 08 S8-03 verification-code environment boundary is complete:
   development keeps fixed logged codes and in-memory state, while `prod` uses
-  secure random codes, Redis-backed atomic one-time state, an HTTPS sender,
-  mobile/IP/device throttling, and a five-failure cap. Redis/sender safety is
-  fail-fast, dependency outages return 503, and limits return 429 with
-  `Retry-After`. SMS-provider onboarding and a real delivery smoke remain
-  operational release blockers.
+  secure random codes, Redis-backed atomic one-time state, email/IP/device
+  throttling, and a five-failure cap. On 2026-07-24 email verification replaced
+  SMS as the first closed-Beta channel; SMTP is fail-fast and bounded by
+  connection/read/write timeouts, while legacy SMS is disabled by default.
+  Dependency outages return 503 and limits return 429 with `Retry-After`.
+  Intended-environment email delivery and outage smoke remain operational
+  release blockers.
 - Sprint 08 S8-04 AI profile consent closure is complete: Companion rereads
   consent for every request and includes only the user's nickname, age range,
   occupation or identity, and self-description when enabled. Avatar presets,
@@ -107,8 +122,8 @@ Key product guardrails:
   copy, remote-backed logout, and confirmed account deletion. Hard deletion
   removes private content and sessions before returning while only explicitly
   documented deidentified AI/audit metadata may remain. Sprint 08 engineering
-  scope is complete; compliance readiness and SMS-provider onboarding remain
-  release blockers.
+  scope is complete; compliance readiness and real email-delivery acceptance
+  remain release blockers.
 - Sprint 09 S9-01 Memory V1 foundation is complete. The accepted decision
   separates reversible memory activation from per-entry AI-use permission,
   defaults AI use off, requires source ownership, and hard-deletes memory
@@ -210,9 +225,9 @@ Key product guardrails:
   pre-auth/outage fallback, explicit categories and owner roles, constrained
   status transitions, human response language, bounded opt-in diagnostics,
   opaque owner-scoped idempotency, export, account-deletion hard deletion, and
-  a 180-day maximum after closure. `zeroon_ai@gmail.com` is the packaged
+  a 180-day maximum after closure. `zeroon_ai@outlook.com` is the packaged
   fallback and Bruce Ann is the accountable primary for the closed Beta. There
-  is no SLA or continuous-coverage claim. `chao.fan` is now the named backup,
+  is no SLA or continuous-coverage claim. Chao Fan is now the named backup,
   but mailbox and ADMIN access testing remains required before recruitment.
 - S11-02 implements the private support-request foundation. PostgreSQL V12,
   test schema, JPA, OpenAPI, and export V3 align on opaque references,
@@ -226,7 +241,7 @@ Key product guardrails:
   S11-03 adds bilingual Login and Settings contact entry, a category and
   description form with exact draft preservation and stable retry identity,
   opt-in previewed diagnostics, a packaged outage fallback to
-  `zeroon_ai@gmail.com`, and an honest copyable receipt. Focused tests and the
+  `zeroon_ai@outlook.com`, and an honest copyable receipt. Focused tests and the
   full 34-test mobile suite pass. A real 390x844 Chinese/English runtime flow
   created one opaque support reference and then deleted the temporary account
   and its support data.
@@ -260,7 +275,7 @@ Key product guardrails:
   fixes first-party typed content-free events, explicit and revocable Beta
   evidence collection, an Asia/Shanghai calendar policy, a 180-day maximum,
   account-deletion hard deletion, aggregate-only ADMIN access, and suppression
-  below five participants. `chao.fan` is the named backup support operator;
+  below five participants. Chao Fan is the named backup support operator;
   mailbox and ADMIN access testing still blocks the first invitation.
 - S12-02 typed event contract and persistence is complete. PostgreSQL V14 adds
   owner-cascading evidence subjects and typed content-free event columns with
@@ -287,8 +302,39 @@ Key product guardrails:
   mobile tests, all 122 backend tests, OpenAPI lint, and whitespace checks pass.
   PostgreSQL runtime acceptance covered the new-account flag, collection-off
   no-store behavior, bounded refusal metadata, and temporary-account deletion;
-  it also caught and corrected a fallback-prompt alias mismatch. S12-04 cohort
-  and retention computation is next.
+  it also caught and corrected a fallback-prompt alias mismatch.
+- S12-04 adds a pure aggregate calculator for activation, D1/D7/D30,
+  week-two Record, continuity/chat-only, reliability, AI outcome/latency,
+  consent control, export, and deletion demand. Every metric preserves its
+  numerator and denominator and returns null for immature/empty rates. The
+  reviewed Profile AI-context-control visibility event closes the original
+  activation gap without screen dwell, identity, or private content; V15 only
+  extends the event constraint. All 126 backend and 46 mobile tests, Flutter
+  analyze, OpenAPI lint, whitespace validation, and a PostgreSQL
+  store/export/delete runtime smoke pass with zero temporary rows.
+- S12-05 adds `GET /api/v1/admin/evidence/cohorts` and a read-only React Beta
+  Evidence view. Cohorts below five expose neither actual size nor metrics;
+  eligible reports independently suppress non-zero groups, event counts, and
+  distribution cells contributed by fewer than five subjects. ADMIN/USER
+  boundaries, invalid windows, safe zeroes, and suppression are automated.
+  Local runtime acceptance verified the whole-report suppression state and
+  responsive admin layout.
+- S12-06 engineering and local runtime acceptance adds a bilingual adult-only
+  notice before the measured encounter, optional default-off evidence choice,
+  separate interview consent, real existing-user re-introduction, recoverable
+  Settings control, export V5, PostgreSQL V16, and the recruitment/launch
+  materials. Runtime proved notice enforcement, ordered fresh-login events,
+  disable/no-store, deletion, and cleanup. The combined S12-05/S12-06 gate
+  passes with 142 backend and 51 mobile tests plus Flutter, Admin, OpenAPI, and
+  whitespace checks. Email verification now replaces SMS; legacy SMS is
+  disabled and fails closed. Review added normalized unique email identity,
+  Redis-backed one-time/rate boundaries, a stable per-install device id,
+  bounded SMTP timeouts, bilingual delivery copy, owned `/me` and export email,
+  and a production login page with no development prefill. Local PostgreSQL
+  acceptance proved email login, Export V5, SMS `503`, deletion `204`, revoked
+  refresh, consumed code, and zero temporary users. Real invitations remain
+  blocked by intended-environment SMTP delivery/one-time/spam/outage
+  acceptance, operator access, and the isolation/outage/deletion gates.
 
 ## Recent Completed Work
 

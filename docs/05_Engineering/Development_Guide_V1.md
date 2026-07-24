@@ -160,6 +160,35 @@ Build Pass
 
 ## Production Configuration Safety
 
+### Email verification delivery
+
+The first production authentication channel is email verification. Configure a
+verified transactional sender through SMTP; do not place a mailbox login
+password in deployment configuration. For a 163 mailbox, enable SMTP in the
+mailbox client settings, create a dedicated client authorization code, and use:
+
+```bash
+ZEROON_SMTP_HOST=smtp.163.com
+ZEROON_SMTP_PORT=465
+ZEROON_SMTP_USERNAME=zeroon_ai@163.com
+ZEROON_SMTP_PASSWORD=<163-client-authorization-code>
+ZEROON_EMAIL_FROM=zeroon_ai@163.com
+ZEROON_SMTP_SSL_ENABLED=true
+ZEROON_SMTP_STARTTLS_ENABLED=false
+ZEROON_SMS_ENABLED=false
+```
+
+The authorization code is a production secret. POP and IMAP are not required
+for sending verification messages. Before opening registration, perform a
+controlled delivery test to domestic and international inboxes and inspect spam
+placement.
+
+For a one-recipient, local-infrastructure delivery check only, start with
+`SPRING_PROFILES_ACTIVE=smtp-smoke`. This profile uses the local PostgreSQL and
+Redis instances with the real SMTP sender, secure random one-time codes, and
+the same delivery failure behavior as production. It is intentionally not a
+production profile and must never be used for public registration traffic.
+
 Production starts with the `prod` profile:
 
 ```bash
@@ -174,8 +203,12 @@ development/example value:
 - `POSTGRES_PASSWORD`: at least 12 characters;
 - `REDIS_HOST`: a shared host rather than loopback;
 - `REDIS_PASSWORD`: at least 12 non-placeholder characters;
-- `ZEROON_VERIFICATION_CODE_SENDER_URL`: an HTTPS delivery endpoint;
-- `ZEROON_VERIFICATION_CODE_SENDER_TOKEN`: at least 16 characters.
+- `ZEROON_SMTP_HOST`, `ZEROON_SMTP_USERNAME`, and
+  `ZEROON_SMTP_PASSWORD`;
+- `ZEROON_EMAIL_FROM`: the verified sender address;
+- when `ZEROON_SMS_ENABLED=true` only,
+  `ZEROON_VERIFICATION_CODE_SENDER_URL` and
+  `ZEROON_VERIFICATION_CODE_SENDER_TOKEN`.
 
 The validator reports only the environment variable name and never logs its
 value. Local and test profiles retain the documented development defaults.
@@ -187,17 +220,25 @@ in-memory state, and code logging for developer convenience. None of those
 beans are active under `prod`.
 
 Production uses a cryptographically secure six-digit generator, Redis-backed
-atomic one-time consumption, and an HTTPS sender adapter. Mobile identifiers
-are SHA-256 digested before entering Redis keys; codes expire after 10 minutes
-and are deleted after success or five failed attempts.
+atomic one-time consumption, and the SMTP email sender. Email addresses,
+source IPs, and stable per-install device identifiers are SHA-256 digested
+before entering Redis keys; codes expire after 10 minutes and are deleted
+after success or five failed attempts. SMTP connection, read, and write
+timeouts default to 5, 10, and 10 seconds and can be overridden with the
+corresponding `ZEROON_SMTP_*_TIMEOUT_MILLIS` variables.
 
 Default abuse controls are:
 
-- one code request per mobile every 60 seconds;
-- five code requests per mobile per hour;
+- one code request per email address every 60 seconds;
+- five code requests per email address per hour;
 - twenty code requests per source IP per hour;
 - ten login attempts per device per 15 minutes;
 - thirty login attempts per source IP per 15 minutes.
+
+The mobile client creates one random installation identifier in secure storage.
+Production UI never pre-fills an email address or verification code. The
+legacy mobile-number API is disabled unless `ZEROON_SMS_ENABLED=true`; there is
+no SMS-provider dependency for the first closed Beta.
 
 The API returns `429` with `Retry-After` when a limit is reached. Redis or
 sender failures fail closed with `503`; the service never falls back to a
@@ -228,7 +269,7 @@ acceptance, followed by temporary-data cleanup.
 Closed-Beta evidence ingestion is off unless
 `ZEROON_EVIDENCE_INGESTION_ENABLED=true`. The server publishes and accepts only
 the reviewed `ZEROON_EVIDENCE_NOTICE_VERSION` (default
-`beta-evidence-v1`). `ZEROON_EVIDENCE_EVENT_HOURLY_LIMIT` bounds ingestion per
+`beta-evidence-v2`). `ZEROON_EVIDENCE_EVENT_HOURLY_LIMIT` bounds ingestion per
 evidence subject. `ZEROON_EVIDENCE_RETENTION_DAYS` defaults to 180 and rejects
 values below one or above 180; `ZEROON_EVIDENCE_RETENTION_CRON` controls the UTC
 purge. Development, test, and synthetic acceptance environments must not point
@@ -246,6 +287,15 @@ Companion responses expose content-free evidence metadata separately from the
 reply: reviewed outcome, latency bucket, prompt-family version, provider-path
 alias, and enabled Profile/Memory context-class names. Raw model ids, prompts,
 private context, messages, and replies must not be copied into evidence events.
+
+The reproducible cohort, activation, retention, reliability, and trust-control
+formulas are fixed in
+`docs/05_Engineering/Beta_Evidence_Cohort_Computation_V1.md`. Operators may
+read them only through `GET /api/v1/admin/evidence/cohorts`. The server returns
+an empty suppression envelope below five cohort subjects and independently
+hides any derived non-zero group or event cell involving fewer than five
+distinct subjects. Do not add subject lookup, event drill-down, or client-only
+suppression.
 
 ## Memory V1
 

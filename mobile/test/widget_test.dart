@@ -12,6 +12,8 @@ import 'package:zeroon_mobile/auth/token_store.dart';
 import 'package:zeroon_mobile/companion/companion_models.dart';
 import 'package:zeroon_mobile/companion/companion_repository.dart';
 import 'package:zeroon_mobile/data_control/data_control_repository.dart';
+import 'package:zeroon_mobile/evidence/evidence_models.dart';
+import 'package:zeroon_mobile/evidence/evidence_repository.dart';
 import 'package:zeroon_mobile/growth/growth_models.dart';
 import 'package:zeroon_mobile/growth/growth_repository.dart';
 import 'package:zeroon_mobile/home/home_shell.dart';
@@ -52,10 +54,39 @@ void main() {
     expect(find.text('欢迎回来。'), findsOneWidget);
     expect(find.text('获取验证码'), findsOneWidget);
     expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('login-email')))
+          .controller!
+          .text,
+      isEmpty,
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('login-code')))
+          .controller!
+          .text,
+      isEmpty,
+    );
+    expect(
       find.bySemanticsLabel('切换语言 / Change language'),
       findsOneWidget,
     );
     expect(find.bySemanticsLabel('帮助与联系'), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('获取验证码'));
+    await tester.pump();
+    expect(find.text('请输入有效的邮箱地址。'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('login-email')),
+      'person@example.com',
+    );
+    await tester.ensureVisible(find.text('进入 ZEROON'));
+    await tester.tap(find.text('进入 ZEROON'));
+    await tester.pump();
+    expect(find.text('请输入邮件中的 6 位验证码。'), findsOneWidget);
   });
 
   testWidgets('login language entry switches the app immediately', (
@@ -150,12 +181,14 @@ void main() {
     tester,
   ) async {
     final myZeroonRepository = _FakeMyZeroonRepository();
+    final evidenceRepository = _CapturingEvidenceRepository();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           tokenStoreProvider
               .overrideWithValue(_FakeTokenStore(session: _session)),
           myZeroonRepositoryProvider.overrideWithValue(myZeroonRepository),
+          evidenceRepositoryProvider.overrideWithValue(evidenceRepository),
           currentStateProvider.overrideWith(
             () => _FakeCurrentStateController(),
           ),
@@ -179,6 +212,141 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('今天的 ZEROON'), findsWidgets);
+  });
+
+  testWidgets('existing user completes adult notice and a real reintroduction',
+      (tester) async {
+    final evidenceRepository = _CapturingEvidenceRepository(
+      preference: const EvidencePreference(
+        available: true,
+        enabled: false,
+        adultConfirmed: false,
+        requiredNoticeVersion: 'beta-evidence-v2',
+      ),
+    );
+    const freshSession = AuthSession(
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresIn: 1800,
+      newAccount: false,
+      freshAuthentication: true,
+      user: ZeroonUser(
+        uid: 'u123',
+        mobile: '13800138000',
+        currentState: 'CALM',
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tokenStoreProvider.overrideWithValue(
+            _FakeTokenStore(session: freshSession),
+          ),
+          evidenceRepositoryProvider.overrideWithValue(evidenceRepository),
+          myZeroonRepositoryProvider.overrideWithValue(
+            _FakeMyZeroonRepository(initialMet: true),
+          ),
+          initialLocaleStateProvider.overrideWithValue(_zhLocaleState),
+        ],
+        child: const ZeroonApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('开始之前，先把边界说清楚。'), findsOneWidget);
+    expect(find.text('与 ZEROON 相遇'), findsNothing);
+    expect(evidenceRepository.events, isEmpty);
+
+    await tester.scrollUntilVisible(
+      find.text('继续与 ZEROON 相遇'),
+      300,
+    );
+    await tester.tap(find.text('继续与 ZEROON 相遇'));
+    await tester.pump();
+    expect(find.text('请先确认你已年满 18 周岁。'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('我确认自己已年满 18 周岁'),
+      -300,
+    );
+    await tester.tap(find.text('我确认自己已年满 18 周岁'));
+    await tester.scrollUntilVisible(
+      find.text('允许收集这些不含内容的产品证据'),
+      300,
+    );
+    await tester.tap(find.text('允许收集这些不含内容的产品证据'));
+    await tester.scrollUntilVisible(
+      find.text('继续与 ZEROON 相遇'),
+      300,
+    );
+    await tester.tap(find.text('继续与 ZEROON 相遇'));
+    await tester.pumpAndSettle();
+
+    expect(evidenceRepository.lastPreferenceEnabled, isTrue);
+    expect(find.text('再次与 ZEROON 相遇'), findsOneWidget);
+    expect(
+      evidenceRepository.events.map((event) => event.eventName),
+      containsAllInOrder([
+        'AUTH_COMPLETED',
+        'ZEROON_ENCOUNTER_VIEWED',
+      ]),
+    );
+    expect(
+        evidenceRepository.events.first.properties['accountType'], 'EXISTING');
+
+    await tester.tap(find.text('从现在重新相遇'));
+    await tester.pumpAndSettle();
+    expect(find.text('你的 ZEROON 已经在这里'), findsOneWidget);
+    expect(
+      evidenceRepository.events.map((event) => event.eventName),
+      contains('ZEROON_ENCOUNTER_COMPLETED'),
+    );
+  });
+
+  testWidgets('underage participant cannot enter the closed Beta',
+      (tester) async {
+    final evidenceRepository = _CapturingEvidenceRepository(
+      preference: const EvidencePreference(
+        available: true,
+        enabled: false,
+        adultConfirmed: false,
+        requiredNoticeVersion: 'beta-evidence-v2',
+      ),
+    );
+    const freshSession = AuthSession(
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresIn: 1800,
+      freshAuthentication: true,
+      user: ZeroonUser(
+        uid: 'u-underage',
+        mobile: '13800138001',
+        currentState: 'CALM',
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tokenStoreProvider.overrideWithValue(
+            _FakeTokenStore(session: freshSession),
+          ),
+          evidenceRepositoryProvider.overrideWithValue(evidenceRepository),
+          initialLocaleStateProvider.overrideWithValue(_zhLocaleState),
+        ],
+        child: const ZeroonApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('我未满 18 周岁'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('现在还不能继续这次封闭测试'), findsOneWidget);
+    expect(find.text('与 ZEROON 相遇'), findsNothing);
+    expect(evidenceRepository.lastPreferenceEnabled, isNull);
+    expect(evidenceRepository.events, isEmpty);
   });
 
   testWidgets('home shell navigates between Now Archive and Growth', (
@@ -273,6 +441,7 @@ void main() {
     );
     final profileRepository = _FakeProfileRepository();
     final dataControlRepository = _FakeDataControlRepository();
+    final evidenceRepository = _CapturingEvidenceRepository();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -282,6 +451,7 @@ void main() {
           recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
           growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
           profileRepositoryProvider.overrideWithValue(profileRepository),
+          evidenceRepositoryProvider.overrideWithValue(evidenceRepository),
           dataControlRepositoryProvider.overrideWithValue(
             dataControlRepository,
           ),
@@ -305,6 +475,15 @@ void main() {
     expect(find.text('ZR-20260703-A8K2'), findsOneWidget);
     expect(find.text('这是我的 ZEROON'), findsNothing);
     expect(find.text('帮助与联系'), findsOneWidget);
+    final viewedEvents = evidenceRepository.events
+        .where(
+            (event) => event.eventName == 'PROFILE_AI_CONTEXT_CONTROL_VIEWED')
+        .toList();
+    expect(viewedEvents, hasLength(1));
+    expect(viewedEvents.single.properties, {
+      'enabled': false,
+      'surface': 'PROFILE',
+    });
     await tester.scrollUntilVisible(
       find.textContaining('让 ZEROON 更懂你'),
       200,
@@ -341,6 +520,19 @@ void main() {
 
     await tester.drag(find.byType(ListView).last, const Offset(0, -600));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('当前未收集新的产品证据'),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('当前未收集新的产品证据'), findsOneWidget);
+    final visibleSwitches = find.byType(Switch);
+    expect(visibleSwitches, findsWidgets);
+    await tester.tap(visibleSwitches.last);
+    await tester.pumpAndSettle();
+    expect(evidenceRepository.lastPreferenceEnabled, isTrue);
+    expect(find.text('已允许收集不含内容的产品证据'), findsOneWidget);
+
     await tester.ensureVisible(find.text('复制我的数据副本'));
     await tester.tap(find.text('复制我的数据副本'));
     await tester.pumpAndSettle();
@@ -937,6 +1129,48 @@ class _FakeProfileRepository extends ProfileRepository {
       updatedAt: DateTime.parse('2026-06-24T00:00:00Z'),
     );
     return _profile;
+  }
+}
+
+class _CapturingEvidenceRepository extends EvidenceRepository {
+  _CapturingEvidenceRepository({
+    this.preference = const EvidencePreference(
+      available: true,
+      enabled: false,
+      adultConfirmed: true,
+      requiredNoticeVersion: 'beta-evidence-v2',
+      acceptedNoticeVersion: 'beta-evidence-v2',
+    ),
+  }) : super(Dio());
+
+  final List<EvidenceEvent> events = [];
+  EvidencePreference preference;
+  bool? lastPreferenceEnabled;
+
+  @override
+  Future<EvidencePreference> getPreference() async => preference;
+
+  @override
+  Future<EvidencePreference> updatePreference({
+    required bool enabled,
+    required bool adultConfirmed,
+    required String noticeVersion,
+  }) async {
+    lastPreferenceEnabled = enabled;
+    preference = EvidencePreference(
+      available: preference.available,
+      enabled: enabled,
+      adultConfirmed: adultConfirmed,
+      requiredNoticeVersion: noticeVersion,
+      acceptedNoticeVersion: noticeVersion,
+      choiceChangedAt: DateTime.parse('2026-07-23T00:00:00Z'),
+    );
+    return preference;
+  }
+
+  @override
+  Future<void> record(EvidenceEvent event) async {
+    events.add(event);
   }
 }
 

@@ -42,6 +42,7 @@ public final class EvidenceDtos {
 
     public record EvidencePreferenceRequest(
             @NotNull Boolean enabled,
+            @NotNull Boolean adultConfirmed,
             @NotNull @Pattern(regexp = "^[A-Za-z0-9._-]{1,40}$") String noticeVersion) {
 
         @JsonAnySetter
@@ -53,6 +54,7 @@ public final class EvidenceDtos {
     public record EvidencePreferenceResponse(
             boolean available,
             boolean enabled,
+            boolean adultConfirmed,
             String requiredNoticeVersion,
             String acceptedNoticeVersion,
             Instant choiceChangedAt) {
@@ -436,6 +438,7 @@ public final class EvidenceDtos {
 
     public record EvidencePreferenceExport(
             boolean enabled,
+            boolean adultConfirmed,
             String acceptedNoticeVersion,
             Instant choiceChangedAt) {
     }

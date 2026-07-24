@@ -115,13 +115,13 @@ engineering policy for:
 - export of user-visible support data, account-deletion hard deletion, and a
   180-day maximum after closure with no unreviewed retention exception.
 
-Approved on 2026-07-23 with `zeroon_ai@gmail.com` as the packaged fallback and
+Approved on 2026-07-23 with a packaged external mailbox fallback and
 Bruce Ann as the accountable primary for the current one-person closed Beta.
 The recommended 180-day maximum and separately disclosed external-email
 deletion process are accepted. No SLA or continuous coverage is promised; a
-backup access test remains a wider-Beta readiness gate. `chao.fan` was named
-as backup on 2026-07-23 after Sprint 11 closed; mailbox and ADMIN access are
-not yet recorded as tested.
+backup access test remains a wider-Beta readiness gate. On 2026-07-24 the
+current fallback was changed to `zeroon_ai@outlook.com` and Chao Fan was named
+as backup; mailbox and ADMIN access are not yet recorded as tested.
 
 ## S11-02 Verification
 
@@ -159,7 +159,8 @@ Completed on 2026-07-23:
 
 - Login exposes a language-independent help icon next to the language picker.
   It opens a pre-auth page that never calls the support API and always displays
-  the packaged `zeroon_ai@gmail.com` fallback as selectable and copyable text.
+  the packaged external fallback as selectable and copyable text. Its current
+  value is `zeroon_ai@outlook.com`.
 - Settings exposes Help and contact as a first-level card. Signed-in users can
   submit one of the six reviewed categories with a description; the bounded
   backend subject is derived from the first nonblank description line without
@@ -289,12 +290,13 @@ Completed on 2026-07-23:
   were deleted.
 - Real 390x844 English and Simplified Chinese review found no clipping or
   overlap. After the backend was stopped and the page reloaded, the packaged
-  `zeroon_ai@gmail.com` route, external-channel boundary, retention statement,
+  external-mail route, external-channel boundary, retention statement,
   and non-emergency copy remained visible.
 - Experience review accepts the calm, secondary privacy/retention treatment.
   Product-guardrail review confirms that support remains human-operated,
   request-scoped, and separate from companion context. Sprint 11 is complete.
-  `chao.fan` is now the named backup, but mailbox and ADMIN access testing
+  The current mailbox is `zeroon_ai@outlook.com`; Chao Fan is the named backup,
+  but mailbox and ADMIN access testing
   remains a wider-Beta operations gate. Professional public-release review
   remains outside this sprint.
 

@@ -64,6 +64,8 @@ public class EvidenceService {
                     required("action", "sourceType")),
             spec(EventName.PROFILE_AI_CONTEXT_CHANGED,
                     required("enabled", "surface")),
+            spec(EventName.PROFILE_AI_CONTEXT_CONTROL_VIEWED,
+                    required("enabled", "surface")),
             spec(EventName.DATA_EXPORT_REQUESTED,
                     required("surface", "outcome")),
             new EventSpec(
@@ -88,7 +90,7 @@ public class EvidenceService {
             EvidenceEventRepository eventRepository,
             Clock clock,
             @Value("${zeroon.evidence.ingestion-enabled:false}") boolean ingestionAvailable,
-            @Value("${zeroon.evidence.notice-version:beta-evidence-v1}") String noticeVersion,
+            @Value("${zeroon.evidence.notice-version:beta-evidence-v2}") String noticeVersion,
             @Value("${zeroon.evidence.event-hourly-limit:200}") int hourlyLimit) {
         if (noticeVersion == null || !noticeVersion.matches("^[A-Za-z0-9._-]{1,40}$")) {
             throw new IllegalArgumentException("Evidence notice version is invalid");
@@ -111,7 +113,7 @@ public class EvidenceService {
         return subjectRepository.findByUser_Id(userId)
                 .map(this::toPreference)
                 .orElseGet(() -> new EvidencePreferenceResponse(
-                        ingestionAvailable, false, noticeVersion, null, null));
+                        ingestionAvailable, false, false, noticeVersion, null, null));
     }
 
     @Transactional
@@ -121,18 +123,23 @@ public class EvidenceService {
         if (!noticeVersion.equals(request.noticeVersion())) {
             throw new IllegalArgumentException("Evidence notice version is not current");
         }
+        if (!Boolean.TRUE.equals(request.adultConfirmed())) {
+            throw new IllegalArgumentException("Closed Beta requires adult confirmation");
+        }
         Instant now = clock.instant();
         EvidenceSubjectEntity subject = subjectRepository.findByUserIdForUpdate(userId)
                 .orElseGet(() -> new EvidenceSubjectEntity(
                         requireUser(userId),
                         UUID.randomUUID(),
                         request.enabled(),
+                        request.adultConfirmed(),
                         request.noticeVersion(),
                         now));
         if (subject.getId() == null) {
             subjectRepository.save(subject);
         } else {
-            subject.changeCollectionChoice(request.enabled(), request.noticeVersion(), now);
+            subject.changeCollectionChoice(
+                    request.enabled(), request.adultConfirmed(), request.noticeVersion(), now);
         }
         return toPreference(subject);
     }
@@ -186,9 +193,10 @@ public class EvidenceService {
         return subjectRepository.findByUser_Id(userId)
                 .map(subject -> new EvidencePreferenceExport(
                         subject.isCollectionEnabled(),
+                        subject.isAdultConfirmed(),
                         subject.getAcceptedNoticeVersion(),
                         subject.getChoiceChangedAt()))
-                .orElseGet(() -> new EvidencePreferenceExport(false, null, null));
+                .orElseGet(() -> new EvidencePreferenceExport(false, false, null, null));
     }
 
     @Transactional(readOnly = true)
@@ -210,6 +218,7 @@ public class EvidenceService {
         return new EvidencePreferenceResponse(
                 ingestionAvailable,
                 subject.isCollectionEnabled(),
+                subject.isAdultConfirmed(),
                 noticeVersion,
                 subject.getAcceptedNoticeVersion(),
                 subject.getChoiceChangedAt());

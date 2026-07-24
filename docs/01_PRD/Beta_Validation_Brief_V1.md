@@ -97,6 +97,7 @@ prompts, or memory summaries as analytics properties.
 | `reflection_completed` | AI reliability | outcome success/fallback/refusal, latency bucket, prompt version, model alias |
 | `memory_control_changed` | Trust behavior | action enable/disable/delete, source type |
 | `profile_ai_context_changed` | Consent behavior | enabled boolean, surface |
+| `profile_ai_context_control_viewed` | Activation control visibility | current enabled boolean, Profile surface |
 | `data_export_requested` | Data-control demand | surface, outcome |
 | `account_delete_requested` | Exit and trust | surface, outcome; reason only from fixed optional categories |
 | `subscription_offer_viewed` | Pricing exposure | package, price, cohort |
@@ -137,6 +138,9 @@ Core prompts:
 6. Which capability would you miss enough to pay for?
 
 Do not ask users to disclose sensitive record content during the interview.
+The approved recruitment copy, adult screening, separate interview consent,
+interview guide, and synthesis template are maintained in
+`docs/01_PRD/Closed_Beta_Recruitment_And_Interview_Kit_V1.md`.
 
 ## 8. Acceptance Criteria
 

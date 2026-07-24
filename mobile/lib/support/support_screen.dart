@@ -16,7 +16,7 @@ import 'support_requests_screen.dart';
 
 const zeroonSupportEmail = String.fromEnvironment(
   'ZEROON_SUPPORT_EMAIL',
-  defaultValue: 'zeroon_ai@gmail.com',
+  defaultValue: 'zeroon_ai@outlook.com',
 );
 const zeroonAppVersion = String.fromEnvironment(
   'ZEROON_APP_VERSION',

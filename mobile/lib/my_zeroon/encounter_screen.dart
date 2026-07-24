@@ -11,12 +11,14 @@ class EncounterScreen extends StatelessWidget {
     required this.loading,
     required this.onMeet,
     required this.onEnter,
+    this.reintroduction = false,
   });
 
   final MyZeroonCompanion companion;
   final bool loading;
   final Future<void> Function() onMeet;
   final VoidCallback onEnter;
+  final bool reintroduction;
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +31,17 @@ class EncounterScreen extends StatelessWidget {
           const SizedBox(height: 18),
           const _EncounterFigure(),
           const SizedBox(height: 18),
-          if (companion.met)
+          if (companion.met && !reintroduction)
             _EncounterComplete(
               serial: companion.nameplateSerial,
               onEnter: onEnter,
             )
           else
-            _EncounterInvite(loading: loading, onMeet: onMeet),
+            _EncounterInvite(
+              loading: loading,
+              onMeet: onMeet,
+              reintroduction: reintroduction,
+            ),
         ],
       ),
     );
@@ -78,10 +84,15 @@ class _EncounterFigure extends StatelessWidget {
 }
 
 class _EncounterInvite extends StatelessWidget {
-  const _EncounterInvite({required this.loading, required this.onMeet});
+  const _EncounterInvite({
+    required this.loading,
+    required this.onMeet,
+    required this.reintroduction,
+  });
 
   final bool loading;
   final Future<void> Function() onMeet;
+  final bool reintroduction;
 
   @override
   Widget build(BuildContext context) {
@@ -89,16 +100,23 @@ class _EncounterInvite extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Column(
         children: [
-          Text(context.l10n.encounterTitle,
+          Text(
+              reintroduction
+                  ? context.l10n.reencounterTitle
+                  : context.l10n.encounterTitle,
               style: zeroonSerif(context, size: 30)),
           const SizedBox(height: 10),
           Text(
-            context.l10n.encounterBody,
+            reintroduction
+                ? context.l10n.reencounterBody
+                : context.l10n.encounterBody,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 18),
           ZeroonPrimaryButton(
-            label: context.l10n.confirmEncounter,
+            label: reintroduction
+                ? context.l10n.confirmReencounter
+                : context.l10n.confirmEncounter,
             loading: loading,
             onPressed: loading ? null : () => onMeet(),
           ),

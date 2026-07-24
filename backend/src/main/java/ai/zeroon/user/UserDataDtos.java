@@ -13,6 +13,7 @@ public final class UserDataDtos {
     public record CurrentUserResponse(
             String uid,
             String mobile,
+            String email,
             String currentState,
             String status,
             List<String> roles,

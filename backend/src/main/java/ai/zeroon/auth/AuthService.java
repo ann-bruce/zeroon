@@ -9,6 +9,7 @@ import ai.zeroon.user.UserRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
@@ -18,27 +19,39 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final VerificationCodeService verificationCodeService;
+    private final EmailVerificationCodeService emailVerificationCodeService;
     private final UserRepository userRepository;
     private final RefreshSessionRepository refreshSessionRepository;
     private final TokenService tokenService;
+    private final boolean smsEnabled;
 
     public AuthService(
             VerificationCodeService verificationCodeService,
+            EmailVerificationCodeService emailVerificationCodeService,
             UserRepository userRepository,
             RefreshSessionRepository refreshSessionRepository,
-            TokenService tokenService) {
+            TokenService tokenService,
+            @Value("${zeroon.auth.sms-enabled:false}") boolean smsEnabled) {
         this.verificationCodeService = verificationCodeService;
+        this.emailVerificationCodeService = emailVerificationCodeService;
         this.userRepository = userRepository;
         this.refreshSessionRepository = refreshSessionRepository;
         this.tokenService = tokenService;
+        this.smsEnabled = smsEnabled;
     }
 
     public void requestCode(String mobile, String clientIp) {
+        requireSmsEnabled();
         verificationCodeService.requestCode(mobile, clientIp);
+    }
+
+    public void requestEmailCode(String email, String clientIp) {
+        emailVerificationCodeService.requestCode(normalizeEmail(email), clientIp);
     }
 
     @Transactional
     public AuthResponse login(String mobile, String code, String deviceId, String clientIp) {
+        requireSmsEnabled();
         if (!verificationCodeService.verify(mobile, code, deviceId, clientIp)) {
             throw new BadCredentialsException("Invalid verification code");
         }
@@ -46,6 +59,20 @@ public class AuthService {
         boolean newAccount = existing == null;
         UserEntity user = newAccount
                 ? userRepository.save(new UserEntity(createUid(), mobile))
+                : existing;
+        return createSession(user, deviceId, newAccount);
+    }
+
+    @Transactional
+    public AuthResponse loginWithEmail(String email, String code, String deviceId, String clientIp) {
+        String normalizedEmail = normalizeEmail(email);
+        if (!emailVerificationCodeService.verify(normalizedEmail, code, deviceId, clientIp)) {
+            throw new BadCredentialsException("Invalid verification code");
+        }
+        UserEntity existing = userRepository.findByEmail(normalizedEmail).orElse(null);
+        boolean newAccount = existing == null;
+        UserEntity user = newAccount
+                ? userRepository.save(new UserEntity(createUid(), null, normalizedEmail))
                 : existing;
         return createSession(user, deviceId, newAccount);
     }
@@ -100,11 +127,23 @@ public class AuthService {
                         user.getId(),
                         user.getUid(),
                         user.getMobile(),
+                        user.getEmail(),
                         user.getCurrentState().name(),
                         user.getLanguagePreference().name()));
     }
 
     private String createUid() {
         return "u" + UUID.randomUUID().toString().replace("-", "").substring(0, 24);
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private void requireSmsEnabled() {
+        if (!smsEnabled) {
+            throw new VerificationCodeDeliveryException(
+                    new IllegalStateException("SMS authentication is disabled"));
+        }
     }
 }

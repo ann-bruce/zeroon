@@ -21,10 +21,10 @@ current behavior.
 
 ## Beta Export Scope
 
-`zeroon-beta-export-v4` includes:
+`zeroon-beta-export-v5` includes:
 
-- account identity, state, status, roles, explicit language preference, and
-  creation time;
+- account identity (including the owned mobile number or email address), state,
+  status, roles, explicit language preference, and creation time;
 - optional Profile and AI-context permission;
 - the user's private ZEROON companion;
 - device/session metadata without credentials;
@@ -34,9 +34,9 @@ current behavior.
 - current and expired Memory entries;
 - owned support requests, submitted diagnostics, user-visible messages and
   status history, excluding internal notes and operator identity;
-- the explicit Beta evidence collection choice and retained owned content-free
-  events, excluding the internal subject id, event fingerprint, and receipt
-  timestamp;
+- the adult-only Beta acknowledgement, explicit evidence collection choice,
+  and retained owned content-free events, excluding the internal subject id,
+  event fingerprint, and receipt timestamp;
 - content-free AI usage metadata.
 
 The export excludes access tokens, refresh tokens, refresh-token hashes,
@@ -50,6 +50,10 @@ V2 added only the explicit `languagePreference` account field. V3 added the
 `betaEvidenceEvents` while preserving all earlier property names. It never
 exports a language inferred from Profile, Record, Memory, conversation,
 support content, or other private text.
+V5 adds only `adultConfirmed` to the Beta evidence preference so the
+participant can verify the adult-only acknowledgement stored with the current
+versioned notice. Before V5 was released, the account object was also corrected
+to include the existing owned email identifier for email-authenticated users.
 
 This product export is not a substitute for jurisdiction-specific data-access
 or records-of-processing obligations.
@@ -94,7 +98,7 @@ It never stores request, internal-note, or reply bodies.
 No endpoint returns success while retaining the user's Profile, records,
 messages, Memory summaries, in-app support content, mobile number, refresh
 sessions, companion row, evidence subject, or evidence event. External mail
-sent to `zeroon_ai@gmail.com` cannot be matched automatically by account
+sent to `zeroon_ai@outlook.com` cannot be matched automatically by account
 deletion; its separately disclosed process deletes messages within 180 days
 after handling closes or earlier after a verified request.
 

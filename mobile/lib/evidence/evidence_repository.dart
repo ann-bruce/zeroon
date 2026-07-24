@@ -26,6 +26,29 @@ class EvidenceRepository {
 
   int get pendingCount => _queue.length;
 
+  Future<EvidencePreference> getPreference() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/me/preferences/beta-evidence',
+    );
+    return EvidencePreference.fromJson(response.data!);
+  }
+
+  Future<EvidencePreference> updatePreference({
+    required bool enabled,
+    required bool adultConfirmed,
+    required String noticeVersion,
+  }) async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      '/me/preferences/beta-evidence',
+      data: {
+        'enabled': enabled,
+        'adultConfirmed': adultConfirmed,
+        'noticeVersion': noticeVersion,
+      },
+    );
+    return EvidencePreference.fromJson(response.data!);
+  }
+
   Future<void> record(EvidenceEvent event) async {
     try {
       _dropExpired();

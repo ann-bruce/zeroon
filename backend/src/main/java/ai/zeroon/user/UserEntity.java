@@ -30,6 +30,9 @@ public class UserEntity {
     @Column(unique = true, length = 20)
     private String mobile;
 
+    @Column(unique = true, length = 100)
+    private String email;
+
     @Column(name = "current_state", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private UserState currentState = UserState.CALM;
@@ -62,6 +65,12 @@ public class UserEntity {
         this.mobile = mobile;
     }
 
+    public UserEntity(String uid, String mobile, String email) {
+        this.uid = uid;
+        this.mobile = mobile;
+        this.email = email;
+    }
+
     public UserEntity(String uid, String mobile, Instant createdAt) {
         this(uid, mobile);
         this.createdAt = createdAt;
@@ -78,6 +87,10 @@ public class UserEntity {
 
     public String getMobile() {
         return mobile;
+    }
+
+    public String getEmail() {
+        return email;
     }
 
     public UserState getCurrentState() {

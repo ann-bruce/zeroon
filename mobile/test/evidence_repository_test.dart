@@ -6,6 +6,31 @@ import 'package:zeroon_mobile/evidence/evidence_models.dart';
 import 'package:zeroon_mobile/evidence/evidence_repository.dart';
 
 void main() {
+  test('reads and updates the versioned adult evidence preference', () async {
+    final adapter = _EvidenceAdapter();
+    final dio = Dio(BaseOptions(baseUrl: 'http://localhost/api/v1'))
+      ..httpClientAdapter = adapter;
+    final repository = EvidenceRepository(dio);
+
+    final initial = await repository.getPreference();
+    expect(initial.requiresNotice, isTrue);
+
+    final saved = await repository.updatePreference(
+      enabled: true,
+      adultConfirmed: true,
+      noticeVersion: initial.requiredNoticeVersion,
+    );
+
+    expect(saved.enabled, isTrue);
+    expect(saved.adultConfirmed, isTrue);
+    expect(saved.requiresNotice, isFalse);
+    expect(adapter.requests.last.data, {
+      'enabled': true,
+      'adultConfirmed': true,
+      'noticeVersion': 'beta-evidence-v2',
+    });
+  });
+
   test('submits only the reviewed content-free event envelope', () async {
     final adapter = _EvidenceAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'http://localhost/api/v1'))
@@ -99,6 +124,26 @@ class _EvidenceAdapter implements HttpClientAdapter {
       throw DioException.connectionError(
         requestOptions: options,
         reason: 'offline',
+      );
+    }
+    if (options.path.endsWith('/me/preferences/beta-evidence')) {
+      final enabled =
+          options.method == 'PUT' && options.data['enabled'] == true;
+      return ResponseBody.fromString(
+        '''
+        {
+          "available": true,
+          "enabled": $enabled,
+          "adultConfirmed": ${options.method == 'PUT'},
+          "requiredNoticeVersion": "beta-evidence-v2",
+          "acceptedNoticeVersion": ${options.method == 'PUT' ? '"beta-evidence-v2"' : 'null'},
+          "choiceChangedAt": ${options.method == 'PUT' ? '"2026-07-23T00:00:00Z"' : 'null'}
+        }
+        ''',
+        200,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
       );
     }
     return ResponseBody.fromString(

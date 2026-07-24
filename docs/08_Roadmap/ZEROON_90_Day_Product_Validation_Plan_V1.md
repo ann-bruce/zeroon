@@ -306,7 +306,7 @@ The accepted plan is
 completed on 2026-07-23 with a first-party typed event boundary, explicit and
 revocable collection, 180-day maximum, account-deletion hard deletion,
 aggregate-only reporting, and small-cell suppression at five participants.
-The first cohort remains capped at 20 invited adults. `chao.fan` is the named
+The first cohort remains capped at 20 invited adults. Chao Fan is the named
 backup support operator; mailbox and ADMIN access testing remains a blocker
 before the first invitation.
 
@@ -318,8 +318,22 @@ on 2026-07-23 with content-free mobile instrumentation across the approved
 core loop, a bounded seven-day/50-item retry queue, truthful
 new/existing-account and companion execution metadata, and best-effort failure
 isolation. Support content remains outside analytics because no support event
-was approved. Full backend/mobile tests and OpenAPI lint pass. S12-04 cohort
-and retention computation is next.
+was approved. Full backend/mobile tests and OpenAPI lint pass. S12-04 completed
+on 2026-07-23 with reproducible Asia/Shanghai activation, D1/D7/D30, week-two,
+continuity/chat-only, reliability, consent-control, export, and deletion-demand
+calculations. A reviewed content-free Profile AI-control visibility event and
+PostgreSQL V15 close the activation measurement gap. S12-05 completed on
+2026-07-23 with an ADMIN-only aggregate cohort endpoint, whole-report
+suppression below five subjects, distinct-subject small-cell suppression, and
+a restrained read-only React operations view. S12-06 engineering and local
+runtime acceptance is complete: bilingual adult-only notice, default-off
+evidence choice, truthful fresh-login/re-introduction ordering, Settings
+control, export V5, PostgreSQL V16, recruitment/interview materials, and launch
+runbook are ready. Email verification replaces SMS for the first closed Beta;
+legacy SMS remains disabled. The first invitation remains blocked by intended-
+environment SMTP delivery/one-time/outage acceptance, real-provider checks,
+both operators' mailbox/ADMIN access evidence, and the production-like
+isolation/outage/deletion rehearsal.
 
 ## 7. Operating Rhythm
 

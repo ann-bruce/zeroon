@@ -21,7 +21,12 @@ import org.springframework.test.web.servlet.MockMvc;
     "zeroon.auth.verification-code-mobile-hourly-limit=5",
     "zeroon.auth.verification-code-ip-hourly-limit=20",
     "zeroon.auth.verification-code-device-login-limit=10",
-    "zeroon.auth.verification-code-ip-login-limit=30"
+    "zeroon.auth.verification-code-ip-login-limit=30",
+    "zeroon.auth.email-verification-code-request-cooldown-seconds=0",
+    "zeroon.auth.email-verification-code-hourly-limit=10000",
+    "zeroon.auth.email-verification-code-ip-hourly-limit=10000",
+    "zeroon.auth.email-verification-code-device-login-limit=10000",
+    "zeroon.auth.email-verification-code-ip-login-limit=10000"
 })
 @AutoConfigureMockMvc
 class AuthControllerTest {
@@ -132,6 +137,59 @@ class AuthControllerTest {
                                 }
                                 """))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void emailLoginCreatesAndReusesAnEmailAccount() throws Exception {
+        String email = "Person@Example.com";
+        mockMvc.perform(post("/api/v1/auth/email/codes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\"}"))
+                .andExpect(status().isAccepted());
+
+        String firstLogin = mockMvc.perform(post("/api/v1/auth/email/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\",\"code\":\"000000\",\"deviceId\":\"email-device\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.newAccount").value(true))
+                .andExpect(jsonPath("$.user.email").value("person@example.com"))
+                .andExpect(jsonPath("$.user.mobile").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        mockMvc.perform(post("/api/v1/auth/email/codes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"person@example.com\"}"))
+                .andExpect(status().isAccepted());
+        mockMvc.perform(post("/api/v1/auth/email/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "person@example.com",
+                                  "code": "000000",
+                                  "deviceId": "email-device"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.newAccount").value(false))
+                .andExpect(jsonPath("$.user.uid").value(
+                        objectMapper.readTree(firstLogin).path("user").path("uid").asText()));
+    }
+
+    @Test
+    void emailLoginValidatesCodeAndDeviceShape() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/email/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "person@example.com",
+                                  "code": "123",
+                                  "deviceId": "short"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("bad_request"));
     }
 
     @Test

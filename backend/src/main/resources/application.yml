@@ -18,6 +18,18 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+  mail:
+    host: ${ZEROON_SMTP_HOST:}
+    port: ${ZEROON_SMTP_PORT:587}
+    username: ${ZEROON_SMTP_USERNAME:}
+    password: ${ZEROON_SMTP_PASSWORD:}
+    properties:
+      "[mail.smtp.auth]": true
+      "[mail.smtp.starttls.enable]": ${ZEROON_SMTP_STARTTLS_ENABLED:true}
+      "[mail.smtp.ssl.enable]": ${ZEROON_SMTP_SSL_ENABLED:false}
+      "[mail.smtp.connectiontimeout]": ${ZEROON_SMTP_CONNECTION_TIMEOUT_MILLIS:5000}
+      "[mail.smtp.timeout]": ${ZEROON_SMTP_READ_TIMEOUT_MILLIS:10000}
+      "[mail.smtp.writetimeout]": ${ZEROON_SMTP_WRITE_TIMEOUT_MILLIS:10000}
 
 management:
   endpoints:
@@ -35,6 +47,7 @@ server:
 
 zeroon:
   auth:
+    sms-enabled: ${ZEROON_SMS_ENABLED:false}
     access-token-secret: ${ZEROON_ACCESS_TOKEN_SECRET:dev-only-change-this-secret-with-at-least-32-chars}
     access-token-ttl-minutes: ${ZEROON_ACCESS_TOKEN_TTL_MINUTES:30}
     refresh-token-ttl-days: ${ZEROON_REFRESH_TOKEN_TTL_DAYS:30}
@@ -49,6 +62,15 @@ zeroon:
     verification-code-max-failed-attempts: ${ZEROON_VERIFICATION_CODE_MAX_FAILED_ATTEMPTS:5}
     verification-code-sender-url: ${ZEROON_VERIFICATION_CODE_SENDER_URL:}
     verification-code-sender-token: ${ZEROON_VERIFICATION_CODE_SENDER_TOKEN:}
+    email-verification-code-ttl-minutes: ${ZEROON_EMAIL_VERIFICATION_CODE_TTL_MINUTES:10}
+    email-verification-code-request-cooldown-seconds: ${ZEROON_EMAIL_VERIFICATION_CODE_REQUEST_COOLDOWN_SECONDS:60}
+    email-verification-code-hourly-limit: ${ZEROON_EMAIL_VERIFICATION_CODE_HOURLY_LIMIT:5}
+    email-verification-code-ip-hourly-limit: ${ZEROON_EMAIL_VERIFICATION_CODE_IP_HOURLY_LIMIT:20}
+    email-verification-code-device-login-limit: ${ZEROON_EMAIL_VERIFICATION_CODE_DEVICE_LOGIN_LIMIT:10}
+    email-verification-code-ip-login-limit: ${ZEROON_EMAIL_VERIFICATION_CODE_IP_LOGIN_LIMIT:30}
+    email-verification-code-login-window-minutes: ${ZEROON_EMAIL_VERIFICATION_CODE_LOGIN_WINDOW_MINUTES:15}
+    email-verification-code-max-failed-attempts: ${ZEROON_EMAIL_VERIFICATION_CODE_MAX_FAILED_ATTEMPTS:5}
+    email-from: ${ZEROON_EMAIL_FROM:}
   ai:
     provider: ${ZEROON_LLM_PROVIDER:openai-compatible}
     base-url: ${LLM_BASE_URL:}
@@ -62,7 +84,7 @@ zeroon:
     retention-cron: ${ZEROON_SUPPORT_RETENTION_CRON:0 17 * * * *}
   evidence:
     ingestion-enabled: ${ZEROON_EVIDENCE_INGESTION_ENABLED:false}
-    notice-version: ${ZEROON_EVIDENCE_NOTICE_VERSION:beta-evidence-v1}
+    notice-version: ${ZEROON_EVIDENCE_NOTICE_VERSION:beta-evidence-v2}
     event-hourly-limit: ${ZEROON_EVIDENCE_EVENT_HOURLY_LIMIT:200}
     retention-days: ${ZEROON_EVIDENCE_RETENTION_DAYS:180}
     retention-cron: ${ZEROON_EVIDENCE_RETENTION_CRON:0 29 * * * *}

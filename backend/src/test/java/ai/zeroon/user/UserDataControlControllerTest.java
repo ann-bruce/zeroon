@@ -135,7 +135,7 @@ class UserDataControlControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string(
                         "Content-Disposition", "attachment; filename=zeroon-data-export.json"))
-                .andExpect(jsonPath("$.schemaVersion").value("zeroon-beta-export-v4"))
+                .andExpect(jsonPath("$.schemaVersion").value("zeroon-beta-export-v5"))
                 .andExpect(jsonPath("$.account.mobile").value("13700805001"))
                 .andExpect(jsonPath("$.account.languagePreference").value("EN"))
                 .andExpect(jsonPath("$.profile.nickname").value("River"))
@@ -216,6 +216,40 @@ class UserDataControlControllerTest {
                                 + "\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.languagePreference").value("ZH_CN"));
+    }
+
+    @Test
+    void emailAccountIdentityIsVisibleInCurrentUserAndOwnedExport() throws Exception {
+        String email = "export-owner@example.com";
+        mockMvc.perform(post("/api/v1/auth/email/codes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\"}"))
+                .andExpect(status().isAccepted());
+        String sessionBody = mockMvc.perform(post("/api/v1/auth/email/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "%s",
+                                  "code": "000000",
+                                  "deviceId": "email-export-device"
+                                }
+                                """.formatted(email)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String accessToken = objectMapper.readTree(sessionBody).path("accessToken").asText();
+
+        mockMvc.perform(get("/api/v1/me")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(email))
+                .andExpect(jsonPath("$.mobile").doesNotExist());
+        mockMvc.perform(get("/api/v1/me/export")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.account.email").value(email))
+                .andExpect(jsonPath("$.account.mobile").doesNotExist());
     }
 
     @Test

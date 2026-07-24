@@ -57,6 +57,42 @@ body {
   max-width: 1400px;
 }
 
+.evidence-panel {
+  max-width: 1240px;
+}
+
+.evidence-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.evidence-filters label {
+  display: grid;
+  gap: 6px;
+  color: rgba(24, 32, 42, 0.68);
+  font-size: 13px;
+}
+
+.evidence-metric-card {
+  min-height: 142px;
+  border-color: rgba(24, 32, 42, 0.09);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.evidence-value,
+.evidence-subject-count {
+  margin: 10px 0 4px !important;
+  color: #263d46 !important;
+}
+
+.evidence-empty-card {
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.48);
+  text-align: center;
+}
+
 .full-width {
   width: 100%;
 }
@@ -113,5 +149,9 @@ body {
 
   .panel {
     padding: 20px;
+  }
+
+  .evidence-filters {
+    grid-template-columns: 1fr;
   }
 }

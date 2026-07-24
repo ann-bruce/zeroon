@@ -35,7 +35,7 @@ class EvidenceRateLimitControllerTest {
                         .header("Authorization", bearer(token))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"enabled":true,"noticeVersion":"beta-evidence-v1"}
+                                {"enabled":true,"adultConfirmed":true,"noticeVersion":"beta-evidence-v2"}
                                 """))
                 .andExpect(status().isOk());
 

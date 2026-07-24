@@ -31,6 +31,9 @@ public class EvidenceSubjectEntity {
     @Column(name = "collection_enabled", nullable = false)
     private boolean collectionEnabled;
 
+    @Column(name = "adult_confirmed", nullable = false)
+    private boolean adultConfirmed;
+
     @Column(name = "accepted_notice_version", nullable = false, length = 40)
     private String acceptedNoticeVersion;
 
@@ -47,11 +50,13 @@ public class EvidenceSubjectEntity {
             UserEntity user,
             UUID subjectUuid,
             boolean collectionEnabled,
+            boolean adultConfirmed,
             String acceptedNoticeVersion,
             Instant now) {
         this.user = user;
         this.subjectUuid = subjectUuid;
         this.collectionEnabled = collectionEnabled;
+        this.adultConfirmed = adultConfirmed;
         this.acceptedNoticeVersion = acceptedNoticeVersion;
         this.choiceChangedAt = now;
         this.createdAt = now;
@@ -69,15 +74,21 @@ public class EvidenceSubjectEntity {
         return acceptedNoticeVersion;
     }
 
+    public boolean isAdultConfirmed() {
+        return adultConfirmed;
+    }
+
     public Instant getChoiceChangedAt() {
         return choiceChangedAt;
     }
 
     public void changeCollectionChoice(
             boolean enabled,
+            boolean confirmedAdult,
             String noticeVersion,
             Instant now) {
         collectionEnabled = enabled;
+        adultConfirmed = confirmedAdult;
         acceptedNoticeVersion = noticeVersion;
         choiceChangedAt = now;
     }

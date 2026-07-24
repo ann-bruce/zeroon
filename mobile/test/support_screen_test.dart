@@ -10,6 +10,10 @@ import 'package:zeroon_mobile/support/support_repository.dart';
 import 'package:zeroon_mobile/support/support_screen.dart';
 
 void main() {
+  test('uses the approved Outlook fallback by default', () {
+    expect(zeroonSupportEmail, 'zeroon_ai@outlook.com');
+  });
+
   testWidgets('signed-out support stays available without calling the API', (
     tester,
   ) async {

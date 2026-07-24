@@ -15,10 +15,11 @@ spring:
 zeroon:
   evidence:
     ingestion-enabled: true
-    notice-version: beta-evidence-v1
+    notice-version: beta-evidence-v2
     event-hourly-limit: 10000
     retention-days: 180
   auth:
+    sms-enabled: true
     access-token-secret: test-secret-with-at-least-32-characters
     access-token-ttl-minutes: 30
     refresh-token-ttl-days: 30

@@ -180,6 +180,10 @@ public class EvidenceEventEntity {
         return eventName;
     }
 
+    public Long getSubjectId() {
+        return subject.getId();
+    }
+
     public int getSchemaVersion() {
         return schemaVersion;
     }
@@ -190,6 +194,30 @@ public class EvidenceEventEntity {
 
     public String getEventFingerprint() {
         return eventFingerprint;
+    }
+
+    String getRetryCountBucket() {
+        return retryCountBucket;
+    }
+
+    String getLatencyBucket() {
+        return latencyBucket;
+    }
+
+    String getSurface() {
+        return surface;
+    }
+
+    String getOutcome() {
+        return outcome;
+    }
+
+    String getAction() {
+        return action;
+    }
+
+    Boolean getEnabled() {
+        return enabled;
     }
 
     public Map<String, Object> exportProperties() {

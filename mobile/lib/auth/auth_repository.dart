@@ -13,20 +13,21 @@ class AuthRepository {
 
   final Dio _dio;
 
-  Future<void> requestCode(String mobile) async {
-    await _dio.post<void>('/auth/codes', data: {'mobile': mobile});
+  Future<void> requestEmailCode(String email) async {
+    await _dio.post<void>('/auth/email/codes', data: {'email': email});
   }
 
   Future<AuthSession> login({
-    required String mobile,
+    required String email,
     required String code,
     required String deviceId,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/auth/login',
-      data: {'mobile': mobile, 'code': code, 'deviceId': deviceId},
+      '/auth/email/login',
+      data: {'email': email, 'code': code, 'deviceId': deviceId},
     );
-    return AuthSession.fromJson(response.data!);
+    return AuthSession.fromJson(response.data!)
+        .copyWith(freshAuthentication: true);
   }
 
   Future<void> logout(String refreshToken) async {

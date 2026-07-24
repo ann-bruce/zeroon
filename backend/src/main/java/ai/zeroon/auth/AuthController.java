@@ -3,6 +3,8 @@ package ai.zeroon.auth;
 import ai.zeroon.auth.AuthDtos.AuthResponse;
 import ai.zeroon.auth.AuthDtos.CodeRequest;
 import ai.zeroon.auth.AuthDtos.LoginRequest;
+import ai.zeroon.auth.AuthDtos.EmailCodeRequest;
+import ai.zeroon.auth.AuthDtos.EmailLoginRequest;
 import ai.zeroon.auth.AuthDtos.RefreshRequest;
 import ai.zeroon.security.UserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,10 +33,22 @@ public class AuthController {
         authService.requestCode(request.mobile(), httpRequest.getRemoteAddr());
     }
 
+    @PostMapping("/email/codes")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    void requestEmailCode(@Valid @RequestBody EmailCodeRequest request, HttpServletRequest httpRequest) {
+        authService.requestEmailCode(request.email(), httpRequest.getRemoteAddr());
+    }
+
     @PostMapping("/login")
     AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         return authService.login(
                 request.mobile(), request.code(), request.deviceId(), httpRequest.getRemoteAddr());
+    }
+
+    @PostMapping("/email/login")
+    AuthResponse loginWithEmail(@Valid @RequestBody EmailLoginRequest request, HttpServletRequest httpRequest) {
+        return authService.loginWithEmail(
+                request.email(), request.code(), request.deviceId(), httpRequest.getRemoteAddr());
     }
 
     @PostMapping("/refresh")

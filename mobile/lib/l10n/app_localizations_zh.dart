@@ -96,7 +96,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mobileNumber => '手机号';
 
   @override
+  String get emailAddress => '邮箱地址';
+
+  @override
+  String get emailAddressInvalid => '请输入有效的邮箱地址。';
+
+  @override
   String get verificationCode => '验证码';
+
+  @override
+  String get verificationCodeInvalid => '请输入邮件中的 6 位验证码。';
 
   @override
   String get requestCode => '获取验证码';
@@ -108,13 +117,72 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loginAgreement => '登录即代表同意《用户协议》与《隐私政策》';
 
   @override
-  String get localCodeReady => '本地验证码已生成，开发环境默认使用 000000。';
+  String get localCodeReady => '验证码已发送，请检查邮箱。';
 
   @override
   String get codeRequestFailed => '暂时没能获取验证码，请稍后再试。';
 
   @override
   String get loginUnavailable => '暂时无法登录。语言选择仍保存在这台设备上。';
+
+  @override
+  String get betaNoticeMark => '封闭测试说明';
+
+  @override
+  String get betaNoticeTitle => '开始之前，先把边界说清楚。';
+
+  @override
+  String get betaNoticeIntro => '这次封闭测试想了解：ZEROON 是否真的能陪你保存和回看长期生活，而不是评判你。';
+
+  @override
+  String get betaAdultTitle => '仅限成年人参与';
+
+  @override
+  String get betaAdultBody => '当前封闭测试只邀请年满 18 周岁的参与者。';
+
+  @override
+  String get betaAdultConfirm => '我确认自己已年满 18 周岁';
+
+  @override
+  String get betaAdultRequired => '请先确认你已年满 18 周岁。';
+
+  @override
+  String get betaUnderage => '我未满 18 周岁';
+
+  @override
+  String get betaEvidenceTitle => '帮助 ZEROON 变得更可靠（可选）';
+
+  @override
+  String get betaEvidenceCollected => '只记录不含内容的产品动作与日期，例如是否完成相遇、保存、回看或调整隐私控制。';
+
+  @override
+  String get betaEvidenceExcluded =>
+      '不收集你的 Record、Memory、资料、对话、支持内容、联系方式或 AI 回复正文。';
+
+  @override
+  String get betaEvidenceControl =>
+      '最多保留 180 天；团队只查看至少 5 人的聚合结果。你可以导出、关闭采集或删除账户与数据。';
+
+  @override
+  String get betaEvidenceChoice => '允许收集这些不含内容的产品证据';
+
+  @override
+  String get betaEvidenceOptional => '默认关闭。不开启也可以使用 ZEROON 的核心功能。';
+
+  @override
+  String get betaContinue => '继续与 ZEROON 相遇';
+
+  @override
+  String get betaInterviewSeparate => '如果之后邀请你参加访谈，我们会另行说明并再次征得同意。';
+
+  @override
+  String get betaNoticeSaveFailed => '这次选择没有保存。你仍停留在这里，可以再试一次。';
+
+  @override
+  String get betaUnavailableTitle => '现在还不能继续这次封闭测试';
+
+  @override
+  String get betaUnavailableBody => '当前测试仅面向成年人，或测试说明暂时无法读取。你的账户仍然可以安全退出。';
 
   @override
   String get encounterMark => 'ZEROON ENCOUNTER';
@@ -127,6 +195,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get confirmEncounter => '确认相遇';
+
+  @override
+  String get reencounterTitle => '再次与 ZEROON 相遇';
+
+  @override
+  String get reencounterBody => '测试说明已经更新。不是补记过去，而是从现在重新确认这段陪伴。';
+
+  @override
+  String get confirmReencounter => '从现在重新相遇';
 
   @override
   String get encounterCompleteTitle => '你的 ZEROON 已经在这里';
@@ -544,6 +621,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get profileSaveFailed => '这一次没有保存成功，请稍后再试。';
+
+  @override
+  String get betaEvidenceSettingMark => 'Beta 产品证据';
+
+  @override
+  String get betaEvidenceSettingBody => '只用于判断核心体验是否可靠，不包含你的私人内容。关闭后会立即停止新增采集。';
+
+  @override
+  String get betaEvidenceSettingOn => '已允许收集不含内容的产品证据';
+
+  @override
+  String get betaEvidenceSettingOff => '当前未收集新的产品证据';
+
+  @override
+  String get betaEvidenceSettingFailed => '暂时没能读取或更改这项选择。';
 
   @override
   String get dataControlTitle => '你的数据，由你决定';

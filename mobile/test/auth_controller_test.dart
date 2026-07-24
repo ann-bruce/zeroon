@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zeroon_mobile/auth/auth_controller.dart';
 import 'package:zeroon_mobile/auth/auth_models.dart';
 import 'package:zeroon_mobile/auth/auth_repository.dart';
+import 'package:zeroon_mobile/auth/device_id_store.dart';
 import 'package:zeroon_mobile/auth/token_store.dart';
 import 'package:zeroon_mobile/data_control/data_control_repository.dart';
 import 'package:zeroon_mobile/evidence/evidence_models.dart';
@@ -127,6 +128,7 @@ void main() {
     final authRepository = _FakeAuthRepository(
       loginSession: _sessionWithPreference(LocalePreference.followSystem),
     );
+    final deviceIdStore = _FakeDeviceIdStore();
     final localeRepository = _FakeLocalePreferenceRepository();
     final localeStore = _MemoryLocalePreferenceStore();
     final container = ProviderContainer(
@@ -134,6 +136,7 @@ void main() {
         evidenceRepositoryProvider.overrideWithValue(_NoopEvidenceRepository()),
         tokenStoreProvider.overrideWithValue(tokenStore),
         authRepositoryProvider.overrideWithValue(authRepository),
+        deviceIdStoreProvider.overrideWithValue(deviceIdStore),
         localePreferenceRepositoryProvider.overrideWithValue(localeRepository),
         localePreferenceStoreProvider.overrideWithValue(localeStore),
         initialLocaleStateProvider.overrideWithValue(
@@ -149,9 +152,8 @@ void main() {
     await container.read(authControllerProvider.future);
 
     await container.read(authControllerProvider.notifier).login(
-          mobile: '13800138000',
+          email: 'person@example.com',
           code: '000000',
-          deviceId: 'language-device',
         );
     await pumpEventQueue(times: 10);
 
@@ -163,6 +165,7 @@ void main() {
       (await tokenStore.read())?.user.languagePreference,
       LocalePreference.english,
     );
+    expect(authRepository.lastDeviceId, 'install-device-123');
   });
 }
 
@@ -199,13 +202,15 @@ class _FakeAuthRepository extends AuthRepository {
   final bool failLogout;
   final AuthSession? loginSession;
   String? loggedOutRefreshToken;
+  String? lastDeviceId;
 
   @override
   Future<AuthSession> login({
-    required String mobile,
+    required String email,
     required String code,
     required String deviceId,
   }) async {
+    lastDeviceId = deviceId;
     return loginSession ?? _session;
   }
 
@@ -216,6 +221,11 @@ class _FakeAuthRepository extends AuthRepository {
       throw StateError('remote unavailable');
     }
   }
+}
+
+class _FakeDeviceIdStore implements DeviceIdStore {
+  @override
+  Future<String> readOrCreate() async => 'install-device-123';
 }
 
 class _FakeDataControlRepository extends DataControlRepository {

@@ -101,7 +101,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mobileNumber => 'Mobile number';
 
   @override
+  String get emailAddress => 'Email address';
+
+  @override
+  String get emailAddressInvalid => 'Enter a valid email address.';
+
+  @override
   String get verificationCode => 'Verification code';
+
+  @override
+  String get verificationCodeInvalid =>
+      'Enter the 6-digit code from your email.';
 
   @override
   String get requestCode => 'Get code';
@@ -114,8 +124,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'By signing in, you agree to the Terms of Use and Privacy Policy.';
 
   @override
-  String get localCodeReady =>
-      'A local code was created. The development default is 000000.';
+  String get localCodeReady => 'Code sent. Check your inbox.';
 
   @override
   String get codeRequestFailed =>
@@ -124,6 +133,75 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get loginUnavailable =>
       'Sign-in is unavailable just now. Your language choice is still saved on this device.';
+
+  @override
+  String get betaNoticeMark => 'CLOSED BETA';
+
+  @override
+  String get betaNoticeTitle => 'Before we begin, a clear boundary.';
+
+  @override
+  String get betaNoticeIntro =>
+      'This closed beta asks whether ZEROON can help you keep and revisit life over time—not judge you.';
+
+  @override
+  String get betaAdultTitle => 'Adults only';
+
+  @override
+  String get betaAdultBody =>
+      'The current closed beta is open only to participants aged 18 or older.';
+
+  @override
+  String get betaAdultConfirm => 'I confirm that I am 18 or older';
+
+  @override
+  String get betaAdultRequired =>
+      'Confirm that you are 18 or older before continuing.';
+
+  @override
+  String get betaUnderage => 'I am under 18';
+
+  @override
+  String get betaEvidenceTitle => 'Help make ZEROON more reliable (optional)';
+
+  @override
+  String get betaEvidenceCollected =>
+      'Only content-free product actions and dates are collected, such as completing the encounter, saving, revisiting, or changing a privacy control.';
+
+  @override
+  String get betaEvidenceExcluded =>
+      'Your Records, Memory, profile, conversations, support content, contact details, and AI reply text are not collected.';
+
+  @override
+  String get betaEvidenceControl =>
+      'Data is kept for at most 180 days, and the team sees only aggregates of at least 5 people. You can export, turn collection off, or delete your account and data.';
+
+  @override
+  String get betaEvidenceChoice =>
+      'Allow collection of this content-free product evidence';
+
+  @override
+  String get betaEvidenceOptional =>
+      'Off by default. ZEROON\'s core features remain available when it is off.';
+
+  @override
+  String get betaContinue => 'Continue to meet ZEROON';
+
+  @override
+  String get betaInterviewSeparate =>
+      'If we later invite you to an interview, we will explain it separately and ask again.';
+
+  @override
+  String get betaNoticeSaveFailed =>
+      'Your choice wasn\'t saved. You are still here and can try again.';
+
+  @override
+  String get betaUnavailableTitle =>
+      'This closed beta cannot continue just now';
+
+  @override
+  String get betaUnavailableBody =>
+      'The current beta is for adults only, or the beta notice could not be read. You can still sign out safely.';
 
   @override
   String get encounterMark => 'ZEROON ENCOUNTER';
@@ -137,6 +215,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirmEncounter => 'Meet ZEROON';
+
+  @override
+  String get reencounterTitle => 'Meet ZEROON again';
+
+  @override
+  String get reencounterBody =>
+      'The Beta notice has changed. Nothing is backfilled; this companionship begins again from now.';
+
+  @override
+  String get confirmReencounter => 'Meet again from now';
 
   @override
   String get encounterCompleteTitle => 'Your ZEROON is here';
@@ -602,6 +690,25 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get profileSaveFailed =>
       'Your information wasn\'t saved. Please try again.';
+
+  @override
+  String get betaEvidenceSettingMark => 'BETA PRODUCT EVIDENCE';
+
+  @override
+  String get betaEvidenceSettingBody =>
+      'Used only to understand whether the core experience is reliable. It excludes your private content. Turning it off stops new collection immediately.';
+
+  @override
+  String get betaEvidenceSettingOn =>
+      'Content-free product evidence is allowed';
+
+  @override
+  String get betaEvidenceSettingOff =>
+      'No new product evidence is being collected';
+
+  @override
+  String get betaEvidenceSettingFailed =>
+      'This choice couldn\'t be read or changed just now.';
 
   @override
   String get dataControlTitle => 'Your data, your choice';

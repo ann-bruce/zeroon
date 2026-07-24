@@ -8,6 +8,40 @@ const zeroonAppVersion = String.fromEnvironment(
   defaultValue: '1.0.0',
 );
 
+class EvidencePreference {
+  const EvidencePreference({
+    required this.available,
+    required this.enabled,
+    required this.adultConfirmed,
+    required this.requiredNoticeVersion,
+    this.acceptedNoticeVersion,
+    this.choiceChangedAt,
+  });
+
+  final bool available;
+  final bool enabled;
+  final bool adultConfirmed;
+  final String requiredNoticeVersion;
+  final String? acceptedNoticeVersion;
+  final DateTime? choiceChangedAt;
+
+  bool get requiresNotice =>
+      !adultConfirmed || acceptedNoticeVersion != requiredNoticeVersion;
+
+  factory EvidencePreference.fromJson(Map<String, dynamic> json) {
+    return EvidencePreference(
+      available: json['available'] as bool,
+      enabled: json['enabled'] as bool,
+      adultConfirmed: json['adultConfirmed'] as bool? ?? false,
+      requiredNoticeVersion: json['requiredNoticeVersion'] as String,
+      acceptedNoticeVersion: json['acceptedNoticeVersion'] as String?,
+      choiceChangedAt: json['choiceChangedAt'] == null
+          ? null
+          : DateTime.parse(json['choiceChangedAt'] as String),
+    );
+  }
+}
+
 class EvidenceEvent {
   EvidenceEvent(
     this.eventName,

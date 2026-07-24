@@ -38,14 +38,28 @@ public class ProductionSafetyEnvironmentPostProcessor implements EnvironmentPost
                 12,
                 Set.of(DEVELOPMENT_REDIS_PASSWORD));
         validateSharedRedisHost(environment.getProperty("spring.data.redis.host"));
-        validateHttpsUrl(
-                "ZEROON_VERIFICATION_CODE_SENDER_URL",
-                environment.getProperty("zeroon.auth.verification-code-sender-url"));
+        if (Boolean.parseBoolean(environment.getProperty("zeroon.auth.sms-enabled", "false"))) {
+            validateHttpsUrl(
+                    "ZEROON_VERIFICATION_CODE_SENDER_URL",
+                    environment.getProperty("zeroon.auth.verification-code-sender-url"));
+            validateSecret(
+                    "ZEROON_VERIFICATION_CODE_SENDER_TOKEN",
+                    environment.getProperty("zeroon.auth.verification-code-sender-token"),
+                    16,
+                    Set.of());
+        }
+        validateNonBlank("ZEROON_SMTP_HOST", environment.getProperty("spring.mail.host"));
         validateSecret(
-                "ZEROON_VERIFICATION_CODE_SENDER_TOKEN",
-                environment.getProperty("zeroon.auth.verification-code-sender-token"),
+                "ZEROON_SMTP_USERNAME",
+                environment.getProperty("spring.mail.username"),
+                3,
+                Set.of());
+        validateSecret(
+                "ZEROON_SMTP_PASSWORD",
+                environment.getProperty("spring.mail.password"),
                 16,
                 Set.of());
+        validateEmailFrom(environment.getProperty("zeroon.auth.email-from"));
     }
 
     private void validateSharedRedisHost(String value) {
@@ -75,6 +89,20 @@ public class ProductionSafetyEnvironmentPostProcessor implements EnvironmentPost
         }
         if (disallowed.contains(value)) {
             throw unsafe(environmentName, "still uses a development or example value");
+        }
+    }
+
+    private void validateNonBlank(String environmentName, String value) {
+        if (value == null || value.isBlank()) {
+            throw unsafe(environmentName, "is required");
+        }
+    }
+
+    private void validateEmailFrom(String value) {
+        if (value == null
+                || value.isBlank()
+                || !value.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            throw unsafe("ZEROON_EMAIL_FROM", "is required and must be an email address");
         }
     }
 

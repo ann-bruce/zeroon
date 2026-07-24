@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("prod")
+@Profile({"prod", "smtp-smoke"})
 public class SecureRandomVerificationCodeGenerator implements VerificationCodeGenerator {
 
     private final SecureRandom secureRandom = new SecureRandom();

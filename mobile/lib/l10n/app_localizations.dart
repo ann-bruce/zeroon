@@ -273,11 +273,29 @@ abstract class AppLocalizations {
   /// **'手机号'**
   String get mobileNumber;
 
+  /// No description provided for @emailAddress.
+  ///
+  /// In zh, this message translates to:
+  /// **'邮箱地址'**
+  String get emailAddress;
+
+  /// No description provided for @emailAddressInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入有效的邮箱地址。'**
+  String get emailAddressInvalid;
+
   /// No description provided for @verificationCode.
   ///
   /// In zh, this message translates to:
   /// **'验证码'**
   String get verificationCode;
+
+  /// No description provided for @verificationCodeInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入邮件中的 6 位验证码。'**
+  String get verificationCodeInvalid;
 
   /// No description provided for @requestCode.
   ///
@@ -300,7 +318,7 @@ abstract class AppLocalizations {
   /// No description provided for @localCodeReady.
   ///
   /// In zh, this message translates to:
-  /// **'本地验证码已生成，开发环境默认使用 000000。'**
+  /// **'验证码已发送，请检查邮箱。'**
   String get localCodeReady;
 
   /// No description provided for @codeRequestFailed.
@@ -314,6 +332,120 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'暂时无法登录。语言选择仍保存在这台设备上。'**
   String get loginUnavailable;
+
+  /// No description provided for @betaNoticeMark.
+  ///
+  /// In zh, this message translates to:
+  /// **'封闭测试说明'**
+  String get betaNoticeMark;
+
+  /// No description provided for @betaNoticeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始之前，先把边界说清楚。'**
+  String get betaNoticeTitle;
+
+  /// No description provided for @betaNoticeIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'这次封闭测试想了解：ZEROON 是否真的能陪你保存和回看长期生活，而不是评判你。'**
+  String get betaNoticeIntro;
+
+  /// No description provided for @betaAdultTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅限成年人参与'**
+  String get betaAdultTitle;
+
+  /// No description provided for @betaAdultBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前封闭测试只邀请年满 18 周岁的参与者。'**
+  String get betaAdultBody;
+
+  /// No description provided for @betaAdultConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'我确认自己已年满 18 周岁'**
+  String get betaAdultConfirm;
+
+  /// No description provided for @betaAdultRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先确认你已年满 18 周岁。'**
+  String get betaAdultRequired;
+
+  /// No description provided for @betaUnderage.
+  ///
+  /// In zh, this message translates to:
+  /// **'我未满 18 周岁'**
+  String get betaUnderage;
+
+  /// No description provided for @betaEvidenceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'帮助 ZEROON 变得更可靠（可选）'**
+  String get betaEvidenceTitle;
+
+  /// No description provided for @betaEvidenceCollected.
+  ///
+  /// In zh, this message translates to:
+  /// **'只记录不含内容的产品动作与日期，例如是否完成相遇、保存、回看或调整隐私控制。'**
+  String get betaEvidenceCollected;
+
+  /// No description provided for @betaEvidenceExcluded.
+  ///
+  /// In zh, this message translates to:
+  /// **'不收集你的 Record、Memory、资料、对话、支持内容、联系方式或 AI 回复正文。'**
+  String get betaEvidenceExcluded;
+
+  /// No description provided for @betaEvidenceControl.
+  ///
+  /// In zh, this message translates to:
+  /// **'最多保留 180 天；团队只查看至少 5 人的聚合结果。你可以导出、关闭采集或删除账户与数据。'**
+  String get betaEvidenceControl;
+
+  /// No description provided for @betaEvidenceChoice.
+  ///
+  /// In zh, this message translates to:
+  /// **'允许收集这些不含内容的产品证据'**
+  String get betaEvidenceChoice;
+
+  /// No description provided for @betaEvidenceOptional.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认关闭。不开启也可以使用 ZEROON 的核心功能。'**
+  String get betaEvidenceOptional;
+
+  /// No description provided for @betaContinue.
+  ///
+  /// In zh, this message translates to:
+  /// **'继续与 ZEROON 相遇'**
+  String get betaContinue;
+
+  /// No description provided for @betaInterviewSeparate.
+  ///
+  /// In zh, this message translates to:
+  /// **'如果之后邀请你参加访谈，我们会另行说明并再次征得同意。'**
+  String get betaInterviewSeparate;
+
+  /// No description provided for @betaNoticeSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'这次选择没有保存。你仍停留在这里，可以再试一次。'**
+  String get betaNoticeSaveFailed;
+
+  /// No description provided for @betaUnavailableTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'现在还不能继续这次封闭测试'**
+  String get betaUnavailableTitle;
+
+  /// No description provided for @betaUnavailableBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前测试仅面向成年人，或测试说明暂时无法读取。你的账户仍然可以安全退出。'**
+  String get betaUnavailableBody;
 
   /// No description provided for @encounterMark.
   ///
@@ -338,6 +470,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'确认相遇'**
   String get confirmEncounter;
+
+  /// No description provided for @reencounterTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'再次与 ZEROON 相遇'**
+  String get reencounterTitle;
+
+  /// No description provided for @reencounterBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试说明已经更新。不是补记过去，而是从现在重新确认这段陪伴。'**
+  String get reencounterBody;
+
+  /// No description provided for @confirmReencounter.
+  ///
+  /// In zh, this message translates to:
+  /// **'从现在重新相遇'**
+  String get confirmReencounter;
 
   /// No description provided for @encounterCompleteTitle.
   ///
@@ -1136,6 +1286,36 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'这一次没有保存成功，请稍后再试。'**
   String get profileSaveFailed;
+
+  /// No description provided for @betaEvidenceSettingMark.
+  ///
+  /// In zh, this message translates to:
+  /// **'Beta 产品证据'**
+  String get betaEvidenceSettingMark;
+
+  /// No description provided for @betaEvidenceSettingBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'只用于判断核心体验是否可靠，不包含你的私人内容。关闭后会立即停止新增采集。'**
+  String get betaEvidenceSettingBody;
+
+  /// No description provided for @betaEvidenceSettingOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已允许收集不含内容的产品证据'**
+  String get betaEvidenceSettingOn;
+
+  /// No description provided for @betaEvidenceSettingOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前未收集新的产品证据'**
+  String get betaEvidenceSettingOff;
+
+  /// No description provided for @betaEvidenceSettingFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂时没能读取或更改这项选择。'**
+  String get betaEvidenceSettingFailed;
 
   /// No description provided for @dataControlTitle.
   ///

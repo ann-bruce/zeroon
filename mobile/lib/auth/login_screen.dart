@@ -17,14 +17,15 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _mobileController = TextEditingController(text: '13800138000');
-  final _codeController = TextEditingController(text: '000000');
+  final _emailController = TextEditingController();
+  final _codeController = TextEditingController();
   String? _message;
+  bool _messageIsError = false;
   bool _requestingCode = false;
 
   @override
   void dispose() {
-    _mobileController.dispose();
+    _emailController.dispose();
     _codeController.dispose();
     super.dispose();
   }
@@ -102,17 +103,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           Text(l10n.loginBody),
           const SizedBox(height: 28),
           TextField(
-            controller: _mobileController,
-            keyboardType: TextInputType.phone,
+            key: const Key('login-email'),
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            textCapitalization: TextCapitalization.none,
+            autocorrect: false,
+            enableSuggestions: false,
+            autofillHints: const [AutofillHints.email],
+            textInputAction: TextInputAction.next,
             decoration: InputDecoration(
-              labelText: l10n.mobileNumber,
-              prefixText: '+86  ',
+              labelText: l10n.emailAddress,
             ),
           ),
           const SizedBox(height: 14),
           TextField(
+            key: const Key('login-code'),
             controller: _codeController,
             keyboardType: TextInputType.number,
+            autofillHints: const [AutofillHints.oneTimeCode],
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => isLoading ? null : _login(),
             decoration: InputDecoration(
               labelText: l10n.verificationCode,
               suffixIcon: TextButton(
@@ -135,7 +145,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
           if (_message != null) ...[
             const SizedBox(height: 16),
-            Text(_message!, style: const TextStyle(color: Color(0xFF2F6F78))),
+            Text(
+              _message!,
+              style: TextStyle(
+                color: _messageIsError
+                    ? Theme.of(context).colorScheme.error
+                    : const Color(0xFF2F6F78),
+              ),
+            ),
           ],
           if (hasError) ...[
             const SizedBox(height: 16),
@@ -150,20 +167,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _requestCode() async {
+    if (!_hasValidEmail()) {
+      setState(() {
+        _message = context.l10n.emailAddressInvalid;
+        _messageIsError = true;
+      });
+      return;
+    }
     setState(() {
       _requestingCode = true;
       _message = null;
+      _messageIsError = false;
     });
     try {
       await ref
           .read(authControllerProvider.notifier)
-          .requestCode(_mobileController.text.trim());
+          .requestEmailCode(_emailController.text.trim());
       if (mounted) {
-        setState(() => _message = context.l10n.localCodeReady);
+        setState(() {
+          _message = context.l10n.localCodeReady;
+          _messageIsError = false;
+        });
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _message = context.l10n.codeRequestFailed);
+        setState(() {
+          _message = context.l10n.codeRequestFailed;
+          _messageIsError = true;
+        });
       }
     } finally {
       if (mounted) {
@@ -173,10 +204,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _login() {
+    if (!_hasValidEmail()) {
+      setState(() {
+        _message = context.l10n.emailAddressInvalid;
+        _messageIsError = true;
+      });
+      return Future.value();
+    }
+    if (!RegExp(r'^[0-9]{6}$').hasMatch(_codeController.text.trim())) {
+      setState(() {
+        _message = context.l10n.verificationCodeInvalid;
+        _messageIsError = true;
+      });
+      return Future.value();
+    }
+    setState(() => _message = null);
     return ref.read(authControllerProvider.notifier).login(
-          mobile: _mobileController.text.trim(),
+          email: _emailController.text.trim(),
           code: _codeController.text.trim(),
-          deviceId: 'zeroon-mobile-dev',
         );
+  }
+
+  bool _hasValidEmail() {
+    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+        .hasMatch(_emailController.text.trim());
   }
 }

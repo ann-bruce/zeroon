@@ -120,6 +120,7 @@ Start from the already reviewed Beta event dictionary:
 - `reflection_completed`;
 - `memory_control_changed`;
 - `profile_ai_context_changed`;
+- `profile_ai_context_control_viewed`;
 - `data_export_requested`;
 - `account_delete_requested`.
 
@@ -130,6 +131,12 @@ S12-01 does not approve support events. Support category, subject, body, reply,
 diagnostic code, escalation, internal note, and audit reason must not become
 analytics properties. Any future content-free support measurement requires a
 new reviewed contract.
+
+S12-04 adds one reviewed, content-free activation signal:
+`profile_ai_context_control_viewed` with only the current enabled boolean and
+fixed Profile surface. Bruce Ann approved this narrow extension on 2026-07-23
+because the original dictionary could prove control mutation but not control
+visibility. No generic screen-view analytics is approved.
 
 ## Measurement Rules
 
@@ -150,12 +157,14 @@ new reviewed contract.
 
 ## Operations Gates Before Recruitment
 
-- Name and access-test one backup operator for `zeroon_ai@gmail.com` and the
+- Name and access-test one backup operator for `zeroon_ai@outlook.com` and the
   ADMIN support queue.
 - Verify ownership and escalation routing for privacy, safety, complaint, and
   engineering cases.
-- Complete a real verification-code delivery smoke in the intended Beta
-  environment; local fixed codes are not recruitment evidence.
+- Complete a real email verification-code delivery smoke in the intended Beta
+  environment, including one-time consumption, domestic/international
+  delivery, spam placement, and outage behavior; local fixed codes are not
+  recruitment evidence.
 - Publish the adult-only Chinese and English Beta notice and interview consent.
 - Prepare an incident stop rule: pause invitations when authentication,
   record durability, deletion, support reachability, or private-content
@@ -195,7 +204,7 @@ and fixes:
 
 The first cohort is limited to at most 20 invited adults aged 25-45 from the
 documented reflective knowledge-worker cohort. Bruce Ann remains the
-accountable primary support operator. `chao.fan` is the named backup operator,
+accountable primary support operator. Chao Fan is the named backup operator,
 but the first invitation remains blocked until mailbox and ADMIN access are
 actually tested and recorded. Naming a person is not evidence of access.
 
@@ -269,4 +278,110 @@ Completed on 2026-07-23:
   corrected the built-in Companion prompt being mislabeled as a safety prompt;
   it now uses `COMPANION_REFLECTION_FALLBACK_V1`.
 
-S12-04 cohort and retention computation is next.
+## S12-04 Verification
+
+Completed on 2026-07-23:
+
+- A pure calendar-day calculator and read-only service derive authentication
+  cohort size, full activation, D1/D7/D30, week-two saved Record, rolling
+  seven-day continuity review, chat-only share, subject-level Reset completion,
+  Record save reliability/recovered retry, bounded reflection outcome/latency
+  distributions, AI-context disable, Memory deletion, export demand, and
+  deletion intent.
+- Every metric returns numerator, denominator, and a four-decimal half-up rate.
+  An immature or empty denominator returns a null rate rather than a false zero.
+  Retention anchors on first completed activation and uses only the fixed
+  Asia/Shanghai `occurred_date`.
+- The implementation returns aggregates only and has no controller. S12-05
+  still owns ADMIN authorization, five-subject minimums, and derived-cell
+  suppression; no subject id or per-person timeline is exposed.
+- Review found that the original contract could prove a control mutation but
+  not that the user saw the current AI-context state. The approved
+  `PROFILE_AI_CONTEXT_CONTROL_VIEWED` event closes that gap with only the
+  current boolean and fixed Profile surface. PostgreSQL V15 extends the event
+  check without adding a private-data column.
+- The S12-06 consent sequence is fixed: notice/choice occurs after
+  authentication but before the measured encounter, accepted collection sends
+  the current login event within that same flow, existing invited users
+  complete a real re-introduction encounter, and no past session/day is
+  backfilled.
+- Four focused computation tests cover rates, maturity, exact calendar days,
+  continuity versus chat-only behavior, reliability, trust controls, zero
+  denominators, invalid windows, and the control-visibility regression. All 126
+  backend tests and all 46 mobile tests pass; Flutter analyze, OpenAPI lint, and
+  whitespace validation pass.
+- PostgreSQL 16.14 migrated from V14 to V15. A temporary account enabled
+  collection, stored and exported
+  `PROFILE_AI_CONTEXT_CONTROL_VIEWED(enabled=false, surface=PROFILE)`, then
+  deleted with `204`; database checks confirmed zero remaining temporary user
+  and evidence rows.
+
+## S12-05 Verification
+
+Completed on 2026-07-23:
+
+- `GET /api/v1/admin/evidence/cohorts` exposes only bounded aggregate cohort,
+  continuity, reliability, and trust-control evidence behind the existing
+  ADMIN authorization boundary.
+- Cohorts below five authenticated evidence subjects return a whole-report
+  suppression envelope without the actual subject count. Eligible reports
+  independently suppress non-zero numerator groups, denominators, event
+  counts, outcome cells, and latency cells involving fewer than five distinct
+  subjects.
+- The public response contains no evidence subject id, event row, fingerprint,
+  receipt timestamp, per-person timeline, or private ZEROON content.
+- The React admin adds a restrained read-only Beta Evidence workspace with
+  explicit date boundaries, interpretation cautions, and honest
+  “暂不显示” states rather than scores, rankings, or false zeros.
+- Controller tests cover unauthenticated `401`, USER `403`, ADMIN aggregate
+  access, invalid windows, and whole-report suppression. Unit tests cover
+  safe-zero release and small derived-cell suppression.
+
+## S12-06 Engineering and Local Runtime Verification
+
+Engineering and local runtime acceptance completed on 2026-07-23:
+
+- A bilingual, adult-only notice appears after authentication and before the
+  first measured encounter. Adult acknowledgement is explicit; evidence
+  collection remains optional and off by default.
+- The notice states the content-free event boundary, exclusions, 180-day
+  maximum, aggregate use, export/deletion controls, and that interview
+  participation requires separate consent. Declining evidence does not block
+  normal product use; selecting the underage path blocks this adult-only Beta.
+- New notice version `beta-evidence-v2` and PostgreSQL V16 persist only an
+  adult-confirmed boolean, not a date of birth or age. Owned export schema V5
+  includes the preference.
+- A genuinely fresh login can emit `AUTH_COMPLETED` only after accepted
+  collection is known. Existing invited users then complete a real
+  re-introduction encounter; no restored session or historical day is
+  backfilled.
+- Settings exposes a recoverable evidence control. Turning it off immediately
+  stops new event storage without changing the primary product flow.
+- Recruitment, interview, synthesis, incident, staged-wave, and acceptance
+  materials are documented in the closed-Beta kit and launch runbook.
+- Local PostgreSQL runtime acceptance proved default-off state, rejection of
+  missing adult acknowledgement, opt-in, ordered
+  `AUTH_COMPLETED` → `ZEROON_ENCOUNTER_VIEWED`, export V5, disable/no-store,
+  V16 migration, account deletion, and zero temporary users.
+- The full gate passes with 142 backend tests and 51 mobile tests, Flutter
+  analyze, Admin lint/build, OpenAPI lint, and whitespace validation. Admin
+  retains its two previously documented non-blocking Hook warnings.
+- The 2026-07-24 authentication-channel review replaces unavailable SMS with
+  email verification while keeping the same secure-random, Redis one-time,
+  rate-limit, and five-attempt boundaries. Review fixed production credential
+  prefill, shared device identity, owned email export, SMTP timeouts, and
+  disabled-SMS fail-closed behavior. Local PostgreSQL acceptance proved email
+  login, `/me`, Export V5, SMS `503`, deletion `204`, revoked refresh,
+  consumed code, and zero temporary users. Real SMTP delivery was deliberately
+  not triggered during code review and remains an external launch gate.
+
+S12-06 is not operationally closed and no invitation should be sent until all
+external launch gates are recorded:
+
+- prove real SMTP email delivery, one-time consumption, spam placement, and
+  outage behavior in the intended Beta environment;
+- approved real AI-provider success-path recheck in that environment;
+- mailbox and least-privilege ADMIN access tests for Bruce Ann and backup
+  operator Chao Fan;
+- production-like cross-user isolation, evidence-outage isolation, and account
+  deletion rehearsal.

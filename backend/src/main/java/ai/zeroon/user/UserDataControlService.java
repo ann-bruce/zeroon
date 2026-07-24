@@ -34,7 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserDataControlService {
 
-    private static final String EXPORT_SCHEMA_VERSION = "zeroon-beta-export-v4";
+    private static final String EXPORT_SCHEMA_VERSION = "zeroon-beta-export-v5";
 
     private final UserRepository userRepository;
     private final JdbcTemplate jdbcTemplate;
@@ -107,6 +107,7 @@ public class UserDataControlService {
         return new CurrentUserResponse(
                 user.getUid(),
                 user.getMobile(),
+                user.getEmail(),
                 user.getCurrentState().name(),
                 user.getStatus().name(),
                 user.getRoles().stream().map(Enum::name).sorted().toList(),

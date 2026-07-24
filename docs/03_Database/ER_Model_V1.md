@@ -25,7 +25,8 @@ evolution.
 - `support_admin_audit`: content-free administrator mutation evidence scoped
   to one support request
 - `evidence_subjects`: private account-to-random-subject mapping, explicit
-  collection choice, accepted notice version, and choice timestamp
+  collection choice, adult acknowledgement, accepted notice version, and
+  choice timestamp
 - `evidence_events`: reviewed content-free event enums and typed property
   columns; no arbitrary JSON, private text, direct identity, or user id
 
@@ -83,6 +84,15 @@ fingerprint, and reviewed typed columns. It has no JSON property bag, user id,
 exact client timestamp, or private product/support content. An hourly UTC
 worker removes event rows after at most 180 days, then removes stale
 event-free subjects whose collection choice is beyond the same boundary.
+
+V15 extends only the constrained event-name check with
+`PROFILE_AI_CONTEXT_CONTROL_VIEWED`. It adds no column or private data: the
+existing `enabled` boolean and fixed `surface` enum store the reviewed Profile
+control-visibility signal.
+
+V16 adds only the required adult-notice acknowledgement to
+`evidence_subjects`. It stores a boolean rather than a birth date or age, is
+exported with the owned evidence preference, and hard-deletes with the account.
 
 ## Query Baseline
 

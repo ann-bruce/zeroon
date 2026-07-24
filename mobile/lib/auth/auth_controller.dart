@@ -10,6 +10,7 @@ import '../locale/locale_preference.dart';
 import '../locale/locale_preference_repository.dart';
 import 'auth_models.dart';
 import 'auth_repository.dart';
+import 'device_id_store.dart';
 import 'token_store.dart';
 
 final authControllerProvider =
@@ -25,29 +26,22 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     return session;
   }
 
-  Future<void> requestCode(String mobile) {
-    return ref.read(authRepositoryProvider).requestCode(mobile);
+  Future<void> requestEmailCode(String email) {
+    return ref.read(authRepositoryProvider).requestEmailCode(email);
   }
 
   Future<void> login({
-    required String mobile,
+    required String email,
     required String code,
-    required String deviceId,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      final deviceId = await ref.read(deviceIdStoreProvider).readOrCreate();
       final session = await ref
           .read(authRepositoryProvider)
-          .login(mobile: mobile, code: code, deviceId: deviceId);
+          .login(email: email, code: code, deviceId: deviceId);
       await ref.read(tokenStoreProvider).save(session);
       await _synchronizeLocaleFromSession(session);
-      unawaited(ref.read(evidenceRepositoryProvider).record(
-            EvidenceEvent('AUTH_COMPLETED', {
-              'accountType': session.newAccount ? 'NEW' : 'EXISTING',
-              'platform': evidencePlatform(),
-              'appVersion': zeroonAppVersion,
-            }),
-          ));
       return session;
     });
   }

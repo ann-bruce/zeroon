@@ -222,7 +222,14 @@ class ZeroonPrimaryButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const SizedBox(width: 18),
-            Text(loading ? context.l10n.processing : label),
+            Expanded(
+              child: Text(
+                loading ? context.l10n.processing : label,
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             const Icon(Icons.arrow_forward, size: 18),
           ],
         ),

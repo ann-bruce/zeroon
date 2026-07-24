@@ -7,6 +7,7 @@ class AuthSession {
     required this.expiresIn,
     required this.user,
     this.newAccount = false,
+    this.freshAuthentication = false,
   });
 
   final String accessToken;
@@ -14,6 +15,7 @@ class AuthSession {
   final int expiresIn;
   final ZeroonUser user;
   final bool newAccount;
+  final bool freshAuthentication;
 
   factory AuthSession.fromJson(Map<String, dynamic> json) {
     return AuthSession(
@@ -35,12 +37,16 @@ class AuthSession {
     };
   }
 
-  AuthSession copyWith({ZeroonUser? user}) {
+  AuthSession copyWith({
+    ZeroonUser? user,
+    bool? freshAuthentication,
+  }) {
     return AuthSession(
       accessToken: accessToken,
       refreshToken: refreshToken,
       expiresIn: expiresIn,
       newAccount: newAccount,
+      freshAuthentication: freshAuthentication ?? this.freshAuthentication,
       user: user ?? this.user,
     );
   }
@@ -50,12 +56,14 @@ class ZeroonUser {
   const ZeroonUser({
     required this.uid,
     required this.mobile,
+    this.email,
     required this.currentState,
     this.languagePreference,
   });
 
   final String uid;
   final String? mobile;
+  final String? email;
   final String currentState;
   final LocalePreference? languagePreference;
 
@@ -63,6 +71,7 @@ class ZeroonUser {
     return ZeroonUser(
       uid: json['uid'] as String,
       mobile: json['mobile'] as String?,
+      email: json['email'] as String?,
       currentState: json['currentState'] as String,
       languagePreference: json.containsKey('languagePreference')
           ? LocalePreference.fromWireValue(
@@ -76,6 +85,7 @@ class ZeroonUser {
     return {
       'uid': uid,
       'mobile': mobile,
+      'email': email,
       'currentState': currentState,
       if (languagePreference != null)
         'languagePreference': languagePreference!.wireValue,
@@ -86,6 +96,7 @@ class ZeroonUser {
     return ZeroonUser(
       uid: uid,
       mobile: mobile,
+      email: email,
       currentState: currentState,
       languagePreference: languagePreference ?? this.languagePreference,
     );

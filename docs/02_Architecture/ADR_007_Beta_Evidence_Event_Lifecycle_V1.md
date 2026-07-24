@@ -125,8 +125,23 @@ rejected rather than stored.
 | `reflection_completed` | outcome enum, latency bucket, prompt version, model alias |
 | `memory_control_changed` | action enum, source-type enum |
 | `profile_ai_context_changed` | enabled boolean, surface enum |
+| `profile_ai_context_control_viewed` | current enabled boolean, Profile surface enum |
 | `data_export_requested` | surface enum, outcome enum |
 | `account_delete_requested` | surface enum, outcome enum, optional fixed reason category |
+
+S12-04 extends the reviewed dictionary with
+`profile_ai_context_control_viewed`, approved by Bruce Ann on 2026-07-23. It
+contains only the current boolean and fixed `PROFILE` surface, emits once when
+the authenticated Profile control is actually rendered, and exists solely to
+close the PRD activation-visibility gap. It does not identify a Profile,
+Memory, Record, screen dwell time, click target, or private content.
+
+The S12-06 notice sequence must finish after authentication but before the
+first measured encounter. When collection is accepted, `auth_completed` is
+sent as part of that same login flow; past sessions or calendar days are never
+backfilled. Existing invited users must complete a real re-introduction
+encounter after acceptance rather than receiving a fabricated historical
+encounter event.
 
 Subscription events remain outside Sprint 12. Support request category,
 subject, body, reply, diagnostic code, escalation, internal note, and audit
@@ -215,6 +230,10 @@ must never report success while evidence rows remain.
   trust-control, and reliability cells.
 - Any cell representing fewer than five distinct evidence subjects is
   suppressed and returned as suppressed, not zero.
+- `GET /api/v1/admin/evidence/cohorts` enforces that boundary before
+  serialization. A cohort below five returns neither its actual size nor
+  metrics; eligible reports also hide non-zero numerator groups and
+  event/distribution cells contributed by fewer than five subjects.
 - Filters may use reviewed cohort and calendar windows only. Combining filters
   to reconstruct an individual timeline is prohibited.
 - There is no per-subject ADMIN event list, search, export, drill-down, or
@@ -255,12 +274,12 @@ must never report success while evidence rows remain.
 
 ## Operations Gate
 
-Bruce Ann is the accountable primary support operator. `chao.fan` is the named
+Bruce Ann is the accountable primary support operator. Chao Fan is the named
 backup. Before the first invitation is sent, both of the following must be
 tested and recorded:
 
-1. `chao.fan` can access and respond through `zeroon_ai@gmail.com`;
-2. `chao.fan` can authenticate to the ADMIN support queue with only the
+1. Chao Fan can access and respond through `zeroon_ai@outlook.com`;
+2. Chao Fan can authenticate to the ADMIN support queue with only the
    required role.
 
 The test must not use or expose real participant content. Until both checks
@@ -305,5 +324,5 @@ Approved by Bruce Ann on 2026-07-23:
   SDK;
 - lifecycle: 180-day maximum and account-deletion hard deletion;
 - aggregate privacy: small-cell suppression at five distinct subjects;
-- support: Bruce Ann primary and `chao.fan` named backup, with mailbox and ADMIN
+- support: Bruce Ann primary and Chao Fan named backup, with mailbox and ADMIN
   access testing still required before recruitment.

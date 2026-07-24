@@ -1,6 +1,7 @@
 package ai.zeroon.evidence;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,6 +15,9 @@ public interface EvidenceEventRepository extends JpaRepository<EvidenceEventEnti
     Optional<EvidenceEventEntity> findBySubject_IdAndClientEventId(Long subjectId, UUID clientEventId);
 
     List<EvidenceEventEntity> findBySubject_IdOrderByOccurredDateAscReceivedAtAsc(Long subjectId);
+
+    List<EvidenceEventEntity> findByOccurredDateLessThanEqualOrderByOccurredDateAscReceivedAtAsc(
+            LocalDate occurredDate);
 
     long countBySubject_IdAndReceivedAtAfter(Long subjectId, Instant receivedAfter);
 

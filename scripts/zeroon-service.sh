@@ -9,6 +9,13 @@ MOBILE_API_BASE_URL="${ZEROON_API_BASE_URL:-http://127.0.0.1:8080/api/v1}"
 
 mkdir -p "${RUN_DIR}" "${LOG_DIR}"
 
+if [[ -f "${ROOT_DIR}/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "${ROOT_DIR}/.env"
+  set +a
+fi
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -23,6 +30,7 @@ Examples:
 Environment:
   JAVA_HOME              Java home for backend. Defaults to local Corretto 17 path.
   ZEROON_API_BASE_URL   API URL passed to Flutter mobile web. Defaults to http://127.0.0.1:8080/api/v1.
+  .env                  Loaded from the repository root when present; do not commit secrets.
 EOF
 }
 

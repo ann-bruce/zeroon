@@ -36,8 +36,10 @@ paths:
       tags: [Auth]
       summary: Request an SMS verification code
       description: >-
-        Requests an expiring one-time code. Production applies a 60-second
-        mobile cooldown plus hourly mobile and source-IP limits.
+        Disabled by default. When ZEROON_SMS_ENABLED=true and a reviewed sender
+        is configured, requests an expiring one-time code with a 60-second
+        mobile cooldown plus hourly mobile and source-IP limits. A disabled
+        channel fails closed with 503.
       operationId: requestLoginCode
       security: []
       requestBody:
@@ -60,7 +62,8 @@ paths:
       tags: [Auth]
       summary: Login or register with a verification code
       description: >-
-        Consumes a valid code once. Production limits attempts by device and
+        Mobile-number compatibility endpoint, disabled by default. When
+        enabled, consumes a valid code once, limits attempts by device and
         source IP, and deletes a code after five failed attempts.
       operationId: login
       security: []
@@ -85,6 +88,46 @@ paths:
           $ref: "#/components/responses/AuthRateLimited"
         "503":
           $ref: "#/components/responses/AuthUnavailable"
+  /auth/email/codes:
+    post:
+      tags: [Auth]
+      summary: Request an email verification code
+      description: Requests an expiring one-time code for an email address. Production applies email and source-IP limits.
+      operationId: requestEmailLoginCode
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailCodeRequest"
+      responses:
+        "202": {description: Code accepted for delivery}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "429": {$ref: "#/components/responses/AuthRateLimited"}
+        "503": {$ref: "#/components/responses/AuthUnavailable"}
+  /auth/email/login:
+    post:
+      tags: [Auth]
+      summary: Login or register with an email verification code
+      operationId: loginWithEmail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailLoginRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AuthResponse"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/AuthRateLimited"}
+        "503": {$ref: "#/components/responses/AuthUnavailable"}
   /auth/refresh:
     post:
       tags: [Auth]
@@ -472,6 +515,55 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminSupportRequestPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /admin/evidence/cohorts:
+    get:
+      tags: [Admin, Evidence]
+      summary: Read a privacy-suppressed closed-Beta cohort report
+      description: >-
+        ADMIN-only and aggregate-only. The entire report is suppressed below
+        five authenticated evidence subjects. For an eligible cohort, every
+        derived metric or distribution cell whose distinct-subject population
+        is below five is independently suppressed. No subject id, event row,
+        per-person timeline, receipt timestamp, or private product content is
+        returned.
+      operationId: readAdminEvidenceCohort
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cohortStart
+          in: query
+          required: true
+          description: Inclusive first-authentication date in Asia/Shanghai.
+          schema:
+            type: string
+            format: date
+        - name: cohortEnd
+          in: query
+          required: true
+          description: Inclusive last-authentication date in Asia/Shanghai.
+          schema:
+            type: string
+            format: date
+        - name: asOfDate
+          in: query
+          required: true
+          description: Inclusive calculation cutoff in Asia/Shanghai.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Aggregate report or a whole-report suppression envelope
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceOperationsResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1257,6 +1349,29 @@ components:
           type: string
           minLength: 8
           maxLength: 128
+    EmailCodeRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 100
+    EmailLoginRequest:
+      type: object
+      required: [email, code, deviceId]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        code:
+          type: string
+          pattern: "^[0-9]{6}$"
+        deviceId:
+          type: string
+          minLength: 8
+          maxLength: 128
     RefreshRequest:
       type: object
       required: [refreshToken]
@@ -1295,6 +1410,10 @@ components:
         mobile:
           type: string
           nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
         currentState:
           $ref: "#/components/schemas/State"
         languagePreference:
@@ -1307,6 +1426,10 @@ components:
           type: string
         mobile:
           type: string
+          nullable: true
+        email:
+          type: string
+          format: email
           nullable: true
         currentState:
           $ref: "#/components/schemas/State"
@@ -1345,10 +1468,13 @@ components:
     EvidencePreferenceRequest:
       type: object
       additionalProperties: false
-      required: [enabled, noticeVersion]
+      required: [enabled, adultConfirmed, noticeVersion]
       properties:
         enabled:
           type: boolean
+        adultConfirmed:
+          type: boolean
+          description: Must be true for the current adult-only closed Beta.
         noticeVersion:
           type: string
           minLength: 1
@@ -1357,12 +1483,14 @@ components:
     EvidencePreferenceResponse:
       type: object
       required:
-        [available, enabled, requiredNoticeVersion]
+        [available, enabled, adultConfirmed, requiredNoticeVersion]
       properties:
         available:
           type: boolean
           description: Whether this environment currently accepts evidence events.
         enabled:
+          type: boolean
+        adultConfirmed:
           type: boolean
         requiredNoticeVersion:
           type: string
@@ -1389,6 +1517,7 @@ components:
         - REFLECTION_COMPLETED
         - MEMORY_CONTROL_CHANGED
         - PROFILE_AI_CONTEXT_CHANGED
+        - PROFILE_AI_CONTEXT_CONTROL_VIEWED
         - DATA_EXPORT_REQUESTED
         - ACCOUNT_DELETE_REQUESTED
     EvidenceEventRequest:
@@ -1409,6 +1538,7 @@ components:
         REFLECTION_COMPLETED requires outcome, latencyBucket, promptVersion,
         modelAlias; MEMORY_CONTROL_CHANGED requires action, sourceType;
         PROFILE_AI_CONTEXT_CHANGED requires enabled, surface;
+        PROFILE_AI_CONTEXT_CONTROL_VIEWED requires enabled, surface;
         DATA_EXPORT_REQUESTED requires surface, outcome;
         ACCOUNT_DELETE_REQUESTED requires surface, outcome and optionally
         reasonCategory. Properties not listed for the selected event are
@@ -1934,7 +2064,7 @@ components:
       properties:
         schemaVersion:
           type: string
-          enum: [zeroon-beta-export-v4]
+          enum: [zeroon-beta-export-v5]
         exportedAt:
           type: string
           format: date-time
@@ -1995,9 +2125,11 @@ components:
             $ref: "#/components/schemas/UserDataAiUsage"
     UserDataEvidencePreference:
       type: object
-      required: [enabled]
+      required: [enabled, adultConfirmed]
       properties:
         enabled:
+          type: boolean
+        adultConfirmed:
           type: boolean
         acceptedNoticeVersion:
           type: string
@@ -2810,6 +2942,156 @@ components:
         content:
           type: string
           maxLength: 20000
+    EvidenceOperationsResponse:
+      type: object
+      required:
+        [cohortStart, cohortEnd, asOfDate, minimumCohortSize, suppressed,
+         interpretationNotice]
+      properties:
+        cohortStart:
+          type: string
+          format: date
+        cohortEnd:
+          type: string
+          format: date
+        asOfDate:
+          type: string
+          format: date
+        minimumCohortSize:
+          type: integer
+          enum: [5]
+        suppressed:
+          type: boolean
+          description: True when the whole cohort is below the release threshold.
+        activationCoverage:
+          type: string
+          nullable: true
+        authenticatedSubjects:
+          type: integer
+          nullable: true
+          minimum: 5
+        activation:
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/EvidenceMetricCell"
+          nullable: true
+        dayOneRetention:
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/EvidenceMetricCell"
+          nullable: true
+        daySevenRetention:
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/EvidenceMetricCell"
+          nullable: true
+        dayThirtyRetention:
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/EvidenceMetricCell"
+          nullable: true
+        weekTwoRecord:
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/EvidenceMetricCell"
+          nullable: true
+        currentWeekContinuityReview:
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/EvidenceMetricCell"
+          nullable: true
+        currentWeekChatOnly:
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/EvidenceMetricCell"
+          nullable: true
+        recordFlowCompletion:
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/EvidenceMetricCell"
+          nullable: true
+        reliability:
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/EvidenceReliabilityView"
+          nullable: true
+        trustControls:
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/EvidenceTrustControlsView"
+          nullable: true
+        interpretationNotice:
+          type: string
+    EvidenceMetricCell:
+      type: object
+      required: [suppressed]
+      properties:
+        suppressed:
+          type: boolean
+        numerator:
+          type: integer
+          format: int64
+          nullable: true
+        denominator:
+          type: integer
+          format: int64
+          nullable: true
+        rate:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 1
+    EvidenceCountCell:
+      type: object
+      required: [suppressed]
+      properties:
+        suppressed:
+          type: boolean
+        events:
+          type: integer
+          format: int64
+          nullable: true
+        subjects:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 5
+    EvidenceDistribution:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/EvidenceCountCell"
+    EvidenceReliabilityView:
+      type: object
+      required:
+        [recordSaved, recordSaveFailed, recordSaveSuccess, recoveredRetry,
+         reflectionOutcomes, reflectionLatencyBuckets]
+      properties:
+        recordSaved:
+          $ref: "#/components/schemas/EvidenceCountCell"
+        recordSaveFailed:
+          $ref: "#/components/schemas/EvidenceCountCell"
+        recordSaveSuccess:
+          $ref: "#/components/schemas/EvidenceMetricCell"
+        recoveredRetry:
+          $ref: "#/components/schemas/EvidenceMetricCell"
+        reflectionOutcomes:
+          $ref: "#/components/schemas/EvidenceDistribution"
+        reflectionLatencyBuckets:
+          $ref: "#/components/schemas/EvidenceDistribution"
+    EvidenceTrustControlsView:
+      type: object
+      required:
+        [aiContextDisabledSubjects, memoryDeletionSubjects, dataExportDemand,
+         accountDeletionDemand]
+      properties:
+        aiContextDisabledSubjects:
+          $ref: "#/components/schemas/EvidenceMetricCell"
+        memoryDeletionSubjects:
+          $ref: "#/components/schemas/EvidenceMetricCell"
+        dataExportDemand:
+          $ref: "#/components/schemas/EvidenceMetricCell"
+        accountDeletionDemand:
+          $ref: "#/components/schemas/EvidenceMetricCell"
     PromptTemplateListResponse:
       type: object
       required: [items]

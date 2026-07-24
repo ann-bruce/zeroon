@@ -16,6 +16,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import {
   DashboardOutlined,
+  BarChartOutlined,
   CustomerServiceOutlined,
   MessageOutlined,
   ReloadOutlined,
@@ -23,10 +24,11 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 import SupportPanel from './SupportPanel'
+import EvidencePanel from './EvidencePanel'
 
 const { Header, Sider, Content } = Layout
 
-type MenuKey = 'overview' | 'users' | 'support' | 'prompts' | 'settings'
+type MenuKey = 'overview' | 'users' | 'support' | 'evidence' | 'prompts' | 'settings'
 
 type PromptTemplateSummary = {
   id: number
@@ -63,6 +65,7 @@ export default function App() {
             { key: 'overview', icon: <DashboardOutlined />, label: '概览' },
             { key: 'users', icon: <TeamOutlined />, label: '用户' },
             { key: 'support', icon: <CustomerServiceOutlined />, label: '用户支持' },
+            { key: 'evidence', icon: <BarChartOutlined />, label: 'Beta 证据' },
             { key: 'prompts', icon: <MessageOutlined />, label: 'Prompt' },
             { key: 'settings', icon: <SettingOutlined />, label: '系统配置' },
           ]}
@@ -72,12 +75,14 @@ export default function App() {
         <Header className="header">
           <Space>
             <Typography.Text strong>ZEROON 管理后台</Typography.Text>
-            <Tag color="cyan">Sprint 11</Tag>
+            <Tag color="cyan">Sprint 12</Tag>
           </Space>
         </Header>
         <Content className="content">
           {selectedKey === 'support' ? (
             <SupportPanel />
+          ) : selectedKey === 'evidence' ? (
+            <EvidencePanel />
           ) : selectedKey === 'prompts' ? (
             <PromptTemplatesPanel />
           ) : (
@@ -94,8 +99,8 @@ function OverviewPanel() {
     <section className="panel">
       <Typography.Title level={2}>研发基线已建立</Typography.Title>
       <Typography.Paragraph>
-        当前 Sprint 11 已接入人工支持工单处理与 Prompt 模板只读管理。支持工作台使用独立的
-        ADMIN 权限，并保留不复制正文的操作审计。
+        当前 Sprint 12 已接入人工支持、Prompt 模板与 Beta 聚合证据的只读管理。运营视图使用
+        独立的 ADMIN 权限，并对小样本结果执行服务端隐私抑制。
       </Typography.Paragraph>
     </section>
   )

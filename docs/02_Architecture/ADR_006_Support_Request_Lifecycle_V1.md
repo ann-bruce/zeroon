@@ -37,7 +37,7 @@ verified HTTPS or `mailto` destination. Missing, malformed, or empty remote
 configuration falls back to the packaged value and can never hide the contact
 entry.
 
-The packaged fallback is `mailto:zeroon_ai@gmail.com`. Bruce Ann monitors this
+The packaged fallback is `mailto:zeroon_ai@outlook.com`. Bruce Ann monitors this
 mailbox for the closed Beta. It must be present in build-time configuration and
 tested before S11-03 is complete.
 
@@ -54,7 +54,7 @@ tested before S11-03 is complete.
 
 Roles are authorization and routing responsibilities, not labels shown as a
 promise to users. Bruce Ann is the accountable primary for all roles during the
-closed Beta. `chao.fan` is the named backup, but mailbox and ADMIN access must
+closed Beta. Chao Fan is the named backup, but mailbox and ADMIN access must
 be tested before recruitment. Naming a backup does not establish continuous
 coverage, so no response SLA may be shown. An unassigned request remains
 visible in the queue and cannot be auto-closed.
@@ -231,12 +231,13 @@ the pre-auth and outage route.
 
 Approved on 2026-07-23 for engineering and the one-person closed Beta:
 
-- packaged fallback: `zeroon_ai@gmail.com`;
+- packaged fallback: `zeroon_ai@outlook.com`;
 - accountable primary: Bruce Ann;
 - external mail retention/deletion: the recommended 180-day maximum and
   separately disclosed verified-deletion process are accepted;
 - service expectation: no SLA or continuous-monitoring claim.
 
-`chao.fan` was named as backup on 2026-07-23. Mailbox and ADMIN access testing
-remains a recruitment-readiness gate, not a reason to invent coverage or delay
-Sprint 12 engineering.
+The operations decision was amended on 2026-07-24: the packaged mailbox is now
+`zeroon_ai@outlook.com` and Chao Fan is the named backup. Mailbox and ADMIN
+access testing remains a recruitment-readiness gate, not a reason to invent
+coverage or delay Sprint 12 engineering.
