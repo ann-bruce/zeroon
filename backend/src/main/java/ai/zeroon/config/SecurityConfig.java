@@ -55,7 +55,8 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "http://127.0.0.1:5173"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        // Mobile web (Dio) sends Accept-Language on every request; browsers preflight it.
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept-Language", "Accept"));
         configuration.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

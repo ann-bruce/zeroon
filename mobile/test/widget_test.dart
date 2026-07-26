@@ -152,7 +152,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('今天的 ZEROON'), findsWidgets);
+    expect(find.text('今天的 ZEROON'), findsOneWidget);
     expect(find.text('平静'), findsWidgets);
     expect(find.text('见到你了， 8000'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
@@ -211,7 +211,7 @@ void main() {
     await tester.tap(find.text('进入 ZEROON'));
     await tester.pumpAndSettle();
 
-    expect(find.text('今天的 ZEROON'), findsWidgets);
+    expect(find.text('今天的 ZEROON'), findsOneWidget);
   });
 
   testWidgets('existing user completes adult notice and a real reintroduction',
@@ -370,7 +370,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('今天的 ZEROON'), findsWidgets);
+    expect(find.text('今天的 ZEROON'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('7 天'), findsOneWidget);
@@ -386,6 +386,7 @@ void main() {
 
     await tester.tap(find.text('成长'));
     await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.chevron_left), findsNothing);
     expect(find.text('连续归零'), findsOneWidget);
     expect(find.text('累计缓存'), findsOneWidget);
     expect(find.text('第一次记录'), findsOneWidget);
@@ -474,7 +475,6 @@ void main() {
     expect(find.text('你的 ZEROON 已经在这里'), findsOneWidget);
     expect(find.text('ZR-20260703-A8K2'), findsOneWidget);
     expect(find.text('这是我的 ZEROON'), findsNothing);
-    expect(find.text('帮助与联系'), findsOneWidget);
     final viewedEvents = evidenceRepository.events
         .where(
             (event) => event.eventName == 'PROFILE_AI_CONTEXT_CONTROL_VIEWED')
@@ -484,12 +484,13 @@ void main() {
       'enabled': false,
       'surface': 'PROFILE',
     });
+    // Profile sections: companion → personal form → preferences → support → data
     await tester.scrollUntilVisible(
-      find.textContaining('让 ZEROON 更懂你'),
+      find.textContaining('以下信息都可以留空'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.textContaining('让 ZEROON 更懂你'), findsOneWidget);
+    expect(find.textContaining('让 ZEROON 更懂你'), findsWidgets);
     await tester.scrollUntilVisible(
       find.byType(TextField).first,
       200,
@@ -518,13 +519,18 @@ void main() {
     expect(profileRepository.saved?.aiProfileContextEnabled, isTrue);
     expect(find.text('已经保存。'), findsOneWidget);
 
-    await tester.drag(find.byType(ListView).last, const Offset(0, -600));
-    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('当前未收集新的产品证据'),
-      240,
+      find.textContaining('选择 ZEROON 与你交流的语言'),
+      220,
       scrollable: find.byType(Scrollable).first,
     );
+    expect(find.textContaining('选择 ZEROON 与你交流的语言'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('当前未收集新的产品证据'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('帮助与联系'), findsWidgets);
     expect(find.text('当前未收集新的产品证据'), findsOneWidget);
     final visibleSwitches = find.byType(Switch);
     expect(visibleSwitches, findsWidgets);
@@ -533,13 +539,21 @@ void main() {
     expect(evidenceRepository.lastPreferenceEnabled, isTrue);
     expect(find.text('已允许收集不含内容的产品证据'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('复制我的数据副本'));
+    await tester.scrollUntilVisible(
+      find.text('复制我的数据副本'),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('复制我的数据副本'));
     await tester.pumpAndSettle();
     expect(dataControlRepository.exportCalls, 1);
     expect(find.text('你的数据副本已复制为 JSON。'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('删除账户与数据'));
+    await tester.scrollUntilVisible(
+      find.text('删除账户与数据'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('删除账户与数据'));
     await tester.pumpAndSettle();
     expect(find.text('删除账户与全部数据？'), findsOneWidget);
@@ -547,8 +561,6 @@ void main() {
     await tester.tap(find.text('先保留'));
     await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(ListView).last, const Offset(0, -300));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('删除账户与数据'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('确认删除'));
@@ -661,8 +673,14 @@ void main() {
           ),
           recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
           companionRepositoryProvider.overrideWithValue(companionRepository),
+          initialLocaleStateProvider.overrideWithValue(_zhLocaleState),
+          localePreferenceStoreProvider.overrideWithValue(
+            VolatileLocalePreferenceStore(),
+          ),
         ],
-        child: _localizedApp(const HomeShell(session: _session)),
+        child: const _ReactiveLocalizedApp(
+          home: HomeShell(session: _session),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -681,6 +699,63 @@ void main() {
     expect(companionRepository.lastMessage, isNot(contains('first step')));
     expect(companionRepository.lastMessage, isNot(contains('CALM')));
     expect(find.text('只参考你允许用于陪伴回应的记忆'), findsOneWidget);
+  });
+
+  testWidgets('archive observation reuses session cache when records unchanged',
+      (tester) async {
+    final companionRepository = _FakeCompanionRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          companionRepositoryProvider.overrideWithValue(companionRepository),
+          initialLocaleStateProvider.overrideWithValue(_zhLocaleState),
+          localePreferenceStoreProvider.overrideWithValue(
+            VolatileLocalePreferenceStore(),
+          ),
+        ],
+        child: const _ReactiveLocalizedApp(
+          home: HomeShell(session: _session),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('缓存'));
+    await tester.pumpAndSettle();
+    expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
+    expect(companionRepository.callCount, 1);
+
+    await tester.tap(find.text('此刻'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('缓存'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
+    expect(companionRepository.callCount, 1);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.text('你已经把这一刻安放下来了。')),
+    );
+    await container
+        .read(localeControllerProvider.notifier)
+        .selectDevicePreference(LocalePreference.english);
+    await tester.pumpAndSettle();
+
+    expect(find.text('你已经把这一刻安放下来了。'), findsOneWidget);
+    expect(find.text('Observe again'), findsOneWidget);
+    expect(companionRepository.callCount, 1);
+
+    await tester.tap(find.text('Observe again'));
+    await tester.pumpAndSettle();
+    expect(companionRepository.callCount, 2);
+    expect(
+      companionRepository.lastMessage,
+      startsWith('Using only the memories'),
+    );
   });
 
   testWidgets('archive observation keeps a gentle local loading state', (
@@ -1236,11 +1311,13 @@ class _FakeCompanionRepository extends CompanionRepository {
   _FakeCompanionRepository() : super(Dio());
 
   String? lastMessage;
+  var callCount = 0;
 
   @override
   Future<CompanionMessageResponse> sendMessage(
     CompanionMessageRequest request,
   ) async {
+    callCount += 1;
     lastMessage = request.message;
     return const CompanionMessageResponse(
       conversationId: 1,

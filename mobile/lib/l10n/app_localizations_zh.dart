@@ -212,7 +212,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get encounterCompleteBody => '我在这里。以后你留下的此刻，我都会陪你一起回看。';
 
   @override
-  String get nameplate => 'NAMEPLATE';
+  String get nameplate => '铭牌';
 
   @override
   String get encounterUnavailableTitle => '暂时没有见到 ZEROON';
@@ -430,6 +430,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get observationConsentNote => '只参考你允许用于陪伴回应的记忆';
 
   @override
+  String get observeAgain => '再次观察';
+
+  @override
   String get today => '今天';
 
   @override
@@ -578,6 +581,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get profileTitle => '我与 ZEROON';
+
+  @override
+  String get profileSectionMark => '让 ZEROON 更懂你';
 
   @override
   String get profileIntro => '让 ZEROON 更懂你。以下信息都可以留空，只用于帮助它理解你留下的记录。';

@@ -504,7 +504,7 @@ abstract class AppLocalizations {
   /// No description provided for @nameplate.
   ///
   /// In zh, this message translates to:
-  /// **'NAMEPLATE'**
+  /// **'铭牌'**
   String get nameplate;
 
   /// No description provided for @encounterUnavailableTitle.
@@ -915,6 +915,12 @@ abstract class AppLocalizations {
   /// **'只参考你允许用于陪伴回应的记忆'**
   String get observationConsentNote;
 
+  /// No description provided for @observeAgain.
+  ///
+  /// In zh, this message translates to:
+  /// **'再次观察'**
+  String get observeAgain;
+
   /// No description provided for @today.
   ///
   /// In zh, this message translates to:
@@ -1202,6 +1208,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'我与 ZEROON'**
   String get profileTitle;
+
+  /// No description provided for @profileSectionMark.
+  ///
+  /// In zh, this message translates to:
+  /// **'让 ZEROON 更懂你'**
+  String get profileSectionMark;
 
   /// No description provided for @profileIntro.
   ///

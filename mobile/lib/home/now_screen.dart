@@ -116,17 +116,9 @@ class _StatePanel extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Page title already uses todayZeroon in the header — avoid repeating it here.
         Column(
           children: [
-            Text(
-              context.l10n.todayZeroon,
-              style: TextStyle(
-                color: zeroonMuted,
-                fontSize: 10,
-                letterSpacing: 1.4,
-              ),
-            ),
-            const SizedBox(height: 14),
             StateCore(
                 state: snapshot.hasActiveSession ? snapshot.state : 'IDLE'),
             const SizedBox(height: 12),

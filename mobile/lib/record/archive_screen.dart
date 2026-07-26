@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../auth/auth_controller.dart';
 import '../companion/companion_models.dart';
 import '../companion/companion_repository.dart';
 import '../common/zeroon_design.dart';
@@ -13,6 +14,32 @@ import '../memory/memory_screen.dart';
 import 'record_controller.dart';
 import 'record_detail_screen.dart';
 import 'record_models.dart';
+
+/// Session-scoped archive observation reply. Reused while record fingerprint
+/// is unchanged (language switches do not invalidate).
+class ArchiveObservationCache {
+  const ArchiveObservationCache({
+    required this.fingerprint,
+    required this.reply,
+  });
+
+  final String fingerprint;
+  final String reply;
+}
+
+final archiveObservationCacheProvider =
+    StateProvider<ArchiveObservationCache?>((ref) => null);
+
+String archiveObservationFingerprint({
+  required String userKey,
+  required RecordPage page,
+}) {
+  if (page.items.isEmpty) {
+    return '$userKey:empty:${page.totalElements}';
+  }
+  final latest = page.items.first;
+  return '$userKey:${page.totalElements}:${latest.id}:${latest.createdAt.toUtc().toIso8601String()}';
+}
 
 class ArchiveScreen extends ConsumerStatefulWidget {
   const ArchiveScreen({
@@ -69,8 +96,15 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                     }),
                   ));
             }
+            final userKey =
+                ref.read(authControllerProvider).valueOrNull?.user.uid ??
+                    'anon';
             return _ArchiveList(
               page: page,
+              observationFingerprint: archiveObservationFingerprint(
+                userKey: userKey,
+                page: page,
+              ),
               selectedDate: _selectedDate,
               onClearDate: () => setState(() => _selectedDate = null),
               onSelectDate: (date) => setState(() => _selectedDate = date),
@@ -85,12 +119,14 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
 class _ArchiveList extends StatelessWidget {
   const _ArchiveList({
     required this.page,
+    required this.observationFingerprint,
     required this.selectedDate,
     required this.onClearDate,
     required this.onSelectDate,
   });
 
   final RecordPage page;
+  final String observationFingerprint;
   final DateTime? selectedDate;
   final VoidCallback onClearDate;
   final ValueChanged<DateTime> onSelectDate;
@@ -182,7 +218,9 @@ class _ArchiveList extends StatelessWidget {
       );
       if (currentDay != day) {
         if (currentDay != null && !insertedObservation) {
-          children.add(const _ArchiveObservationCard());
+          children.add(
+            _ArchiveObservationCard(fingerprint: observationFingerprint),
+          );
           insertedObservation = true;
         }
         currentDay = day;
@@ -191,7 +229,9 @@ class _ArchiveList extends StatelessWidget {
       children.add(_RecordMemoryCard(record: record));
     }
     if (!insertedObservation) {
-      children.add(const _ArchiveObservationCard());
+      children.add(
+        _ArchiveObservationCard(fingerprint: observationFingerprint),
+      );
     }
 
     return ListView.separated(
@@ -391,7 +431,9 @@ class _RecordMemoryCard extends StatelessWidget {
 }
 
 class _ArchiveObservationCard extends ConsumerStatefulWidget {
-  const _ArchiveObservationCard();
+  const _ArchiveObservationCard({required this.fingerprint});
+
+  final String fingerprint;
 
   @override
   ConsumerState<_ArchiveObservationCard> createState() =>
@@ -407,7 +449,31 @@ class _ArchiveObservationCardState
   @override
   void initState() {
     super.initState();
-    Future.microtask(_loadObservation);
+    Future.microtask(_resolveObservation);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ArchiveObservationCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.fingerprint != widget.fingerprint) {
+      Future.microtask(_resolveObservation);
+    }
+  }
+
+  Future<void> _resolveObservation() async {
+    final cached = ref.read(archiveObservationCacheProvider);
+    if (cached != null && cached.fingerprint == widget.fingerprint) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _reply = cached.reply;
+        _error = null;
+        _loading = false;
+      });
+      return;
+    }
+    await _loadObservation();
   }
 
   Future<void> _loadObservation() async {
@@ -439,6 +505,11 @@ class _ArchiveObservationCardState
       if (!mounted) {
         return;
       }
+      ref.read(archiveObservationCacheProvider.notifier).state =
+          ArchiveObservationCache(
+        fingerprint: widget.fingerprint,
+        reply: response.reply,
+      );
       setState(() {
         _reply = response.reply;
         _loading = false;
@@ -515,13 +586,24 @@ class _ArchiveObservationCardState
               child: Text(context.l10n.retryShort),
             ),
           ] else
-            Text(
-              _reply ?? '',
-              style: const TextStyle(
-                color: Color(0xFFE6DCC9),
-                fontSize: 13,
-                height: 1.65,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _reply ?? '',
+                  style: const TextStyle(
+                    color: Color(0xFFE6DCC9),
+                    fontSize: 13,
+                    height: 1.65,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: _loadObservation,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: Text(context.l10n.observeAgain),
+                ),
+              ],
             ),
           const SizedBox(height: 10),
           Text(

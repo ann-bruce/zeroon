@@ -180,7 +180,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ClipboardData(text: const JsonEncoder.withIndent('  ').convert(data)),
       );
       if (mounted) {
-        setState(() => _message = context.l10n.dataCopied);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.dataCopied)),
+        );
       }
       unawaited(evidence.record(EvidenceEvent('DATA_EXPORT_REQUESTED', {
         'surface': 'DATA_CONTROL',
@@ -192,7 +194,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         'outcome': 'FAILED',
       })));
       if (mounted) {
-        setState(() => _message = context.l10n.dataExportFailed);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.dataExportFailed)),
+        );
       }
     } finally {
       if (mounted) {
@@ -369,16 +373,16 @@ class _ProfileForm extends StatelessWidget {
             onPressed: () => Navigator.of(context).maybePop(),
           ),
         ),
+
+        // 1. Companion identity
         const SizedBox(height: 20),
         _MyZeroonCard(
           state: myZeroonState,
           onRetry: onRetryMyZeroon,
         ),
-        const SizedBox(height: 12),
-        const LanguageSettingCard(),
-        const SizedBox(height: 12),
-        const SupportSettingCard(),
-        const SizedBox(height: 18),
+
+        // 2. Personal profile (form + save)
+        const SizedBox(height: 28),
         const _ProfileSectionIntro(),
         const SizedBox(height: 12),
         TextField(
@@ -425,6 +429,7 @@ class _ProfileForm extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
+        // Saved with the profile form (same API payload).
         ZeroonCard(
           padding: const EdgeInsets.fromLTRB(16, 13, 12, 13),
           child: Row(
@@ -460,7 +465,29 @@ class _ProfileForm extends StatelessWidget {
           const SizedBox(height: 12),
           Text(message!, style: const TextStyle(color: Color(0xFF2F6F78))),
         ],
+
+        // 3. Preferences
         const SizedBox(height: 28),
+        SectionMark(context.l10n.languageSetting),
+        const SizedBox(height: 7),
+        Text(
+          context.l10n.languageSettingHint,
+          style: const TextStyle(color: zeroonMuted, height: 1.45),
+        ),
+        const SizedBox(height: 12),
+        const LanguageSettingCard(),
+
+        // 4. Support & beta
+        const SizedBox(height: 28),
+        SectionMark(context.l10n.helpAndContact),
+        const SizedBox(height: 7),
+        Text(
+          context.l10n.supportSettingHint,
+          style: const TextStyle(color: zeroonMuted, height: 1.45),
+        ),
+        const SizedBox(height: 12),
+        const SupportSettingCard(),
+        const SizedBox(height: 12),
         _BetaEvidenceSettingCard(
           preference: betaEvidencePreference,
           loading: betaEvidenceLoading,
@@ -469,7 +496,9 @@ class _ProfileForm extends StatelessWidget {
           onChanged: onBetaEvidenceChanged,
           onRetry: onRetryBetaEvidence,
         ),
-        const SizedBox(height: 24),
+
+        // 5. Account & data
+        const SizedBox(height: 28),
         _DataControlSection(
           exporting: exporting,
           deleting: deleting,
@@ -645,8 +674,6 @@ class _MyZeroonNotMetCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const _ZeroonFigure(size: 168),
-        const SizedBox(height: 8),
-        const SectionMark('MY ZEROON'),
         const SizedBox(height: 10),
         Text(context.l10n.companionNotMetTitle,
             style: zeroonSerif(context, size: 23)),
@@ -671,8 +698,6 @@ class _MyZeroonMetCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const _ZeroonFigure(size: 178),
-        const SizedBox(height: 8),
-        const SectionMark('MY ZEROON'),
         const SizedBox(height: 10),
         Text(context.l10n.companionHereTitle,
             style: zeroonSerif(context, size: 23)),
@@ -745,7 +770,7 @@ class _ProfileSectionIntro extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionMark('LET ZEROON KNOW YOU'),
+        SectionMark(context.l10n.profileSectionMark),
         const SizedBox(height: 7),
         Text(
           context.l10n.profileIntro,
@@ -784,8 +809,6 @@ class _MyZeroonErrorCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionMark('MY ZEROON'),
-        const SizedBox(height: 8),
         Text(context.l10n.encounterUnavailableTitle,
             style: zeroonSerif(context, size: 22)),
         const SizedBox(height: 6),

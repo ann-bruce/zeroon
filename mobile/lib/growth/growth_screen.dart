@@ -15,15 +15,31 @@ class GrowthScreen extends ConsumerWidget {
     final statePattern = ref.watch(statePatternSummaryProvider);
 
     return ZeroonScreen(
-      child: summary.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => _GrowthError(
-          onRetry: () => ref.invalidate(growthSummaryProvider),
-        ),
-        data: (data) => _GrowthContent(
-          summary: data,
-          statePattern: statePattern,
-          onRetryPattern: () => ref.invalidate(statePatternSummaryProvider),
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(growthSummaryProvider);
+          ref.invalidate(statePatternSummaryProvider);
+          await Future.wait([
+            ref.read(growthSummaryProvider.future),
+            ref.read(statePatternSummaryProvider.future),
+          ]);
+        },
+        child: summary.when(
+          loading: () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(height: 180),
+              Center(child: CircularProgressIndicator()),
+            ],
+          ),
+          error: (error, stackTrace) => _GrowthError(
+            onRetry: () => ref.invalidate(growthSummaryProvider),
+          ),
+          data: (data) => _GrowthContent(
+            summary: data,
+            statePattern: statePattern,
+            onRetryPattern: () => ref.invalidate(statePatternSummaryProvider),
+          ),
         ),
       ),
     );
@@ -44,17 +60,15 @@ class _GrowthContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
       children: [
+        // Tab root page: no back control (matches Archive).
         ZeroonHeader(
           mark: 'COMPANION GROWTH',
           title: context.l10n.growthTitle,
           center: true,
-          leading: ZeroonIconButton(
-            semanticLabel: context.l10n.back,
-            child: const Icon(Icons.chevron_left),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
+          leading: const SizedBox.shrink(),
           action: ZeroonIconButton(
             semanticLabel: context.l10n.growthInfoTooltip,
             onPressed: () => _showGrowthInfo(context),
@@ -85,7 +99,7 @@ class _GrowthContent extends StatelessWidget {
           crossAxisSpacing: 10,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 1.24,
+          childAspectRatio: 1.5,
           children: [
             _GrowthMetricCard(
               title: context.l10n.metricContinuous,
@@ -264,16 +278,23 @@ class _GrowthMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ZeroonCard(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(color: zeroonMuted, fontSize: 9)),
+          Text(
+            title,
+            style: const TextStyle(
+              color: zeroonMuted,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const Spacer(),
           RichText(
             text: TextSpan(
               text: value,
-              style: zeroonSerif(context, size: value.length > 6 ? 18 : 26),
+              style: zeroonSerif(context, size: value.length > 6 ? 18 : 24),
               children: [
                 if (unit.isNotEmpty)
                   TextSpan(
@@ -290,7 +311,7 @@ class _GrowthMetricCard extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             description,
-            style: const TextStyle(color: Color(0xFFAAA8A3), fontSize: 8),
+            style: const TextStyle(color: Color(0xFFAAA8A3), fontSize: 9),
           ),
         ],
       ),
@@ -413,6 +434,7 @@ class _GrowthError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(24),
       children: [
         Text(context.l10n.growthLoadFailed,

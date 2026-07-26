@@ -479,6 +479,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only memories you allowed for companion responses are referenced';
 
   @override
+  String get observeAgain => 'Observe again';
+
+  @override
   String get today => 'Today';
 
   @override
@@ -643,6 +646,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileTitle => 'Me and ZEROON';
+
+  @override
+  String get profileSectionMark => 'LET ZEROON KNOW YOU';
 
   @override
   String get profileIntro =>

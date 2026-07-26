@@ -18,15 +18,25 @@ class GrowthSummary {
   factory GrowthSummary.fromJson(Map<String, dynamic> json) {
     final firstRecordDate = json['firstRecordDate'] as String?;
     return GrowthSummary(
-      continuousResetDays: json['continuousResetDays'] as int,
-      cachedEntries: json['cachedEntries'] as int,
+      continuousResetDays: _asInt(json['continuousResetDays']),
+      cachedEntries: _asInt(json['cachedEntries']),
       firstRecordDate:
           firstRecordDate == null ? null : DateTime.parse(firstRecordDate),
-      companionDays: json['companionDays'] as int,
+      companionDays: _asInt(json['companionDays']),
       timezone: json['timezone'] as String,
       calculatedAt: DateTime.parse(json['calculatedAt'] as String),
     );
   }
+}
+
+int _asInt(Object? value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  throw FormatException('Expected int for growth metric, got $value');
 }
 
 class StatePatternSummary {
