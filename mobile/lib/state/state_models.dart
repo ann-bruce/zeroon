@@ -29,6 +29,20 @@ class StateSnapshot {
   }
 
   bool get hasActiveSession => sessionId != null;
+
+  int elapsedSecondsAt(DateTime now) {
+    final started = startedAt;
+    if (started == null) {
+      return elapsedSeconds;
+    }
+    final liveSeconds = now.difference(started).inSeconds;
+    return liveSeconds > elapsedSeconds ? liveSeconds : elapsedSeconds;
+  }
+
+  bool hasLastedLongerThan(Duration duration, {DateTime? now}) {
+    return hasActiveSession &&
+        elapsedSecondsAt(now ?? DateTime.now()) > duration.inSeconds;
+  }
 }
 
 const zeroonStates = [

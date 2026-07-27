@@ -233,7 +233,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navProfile => '我的';
 
   @override
-  String get greeting => '见到你了，';
+  String get greeting => '见到你了';
+
+  @override
+  String greetingWithName(String name) {
+    return '见到你了，$name';
+  }
 
   @override
   String get todayZeroon => '今天的 ZEROON';
@@ -243,6 +248,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chooseStateFirst => '先选择一个最接近的状态，ZEROON 会从这一刻开始记录。';
+
+  @override
+  String stateSwitchTitle(String state) {
+    return '要切换到“$state”吗？';
+  }
+
+  @override
+  String stateSwitchBody(String state) {
+    return '你已经在“$state”停留了一会儿。如果想留下这一刻，可以先完成一次归零。';
+  }
+
+  @override
+  String get resetBeforeSwitch => '先去归零';
+
+  @override
+  String get switchDirectly => '直接切换';
 
   @override
   String get startReset => '开始一次归零';

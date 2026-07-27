@@ -13,6 +13,18 @@ final tokenStoreProvider = Provider<TokenStore>((ref) {
   return SecureTokenStore(ref.watch(secureStorageProvider));
 });
 
+/// Changes whenever the active account changes or becomes invalid.
+///
+/// API-backed repositories indirectly depend on this epoch through the shared
+/// API client, so private cached state is rebuilt before another account enters
+/// the authenticated UI.
+final accountDataEpochProvider = StateProvider<int>((ref) => 0);
+
+/// Notifies the authentication controller that credentials were invalidated
+/// outside an explicit login/logout action, for example after a terminal
+/// refresh failure.
+final sessionExpiryEpochProvider = StateProvider<int>((ref) => 0);
+
 abstract interface class TokenStore {
   Future<AuthSession?> read();
 

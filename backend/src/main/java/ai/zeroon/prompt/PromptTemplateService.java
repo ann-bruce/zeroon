@@ -16,16 +16,17 @@ public class PromptTemplateService {
             Keep the tone calm and concrete.
             """;
 
-    private final PromptTemplateRepository promptTemplateRepository;
+    private final PromptActivationRepository promptActivationRepository;
 
-    public PromptTemplateService(PromptTemplateRepository promptTemplateRepository) {
-        this.promptTemplateRepository = promptTemplateRepository;
+    public PromptTemplateService(PromptActivationRepository promptActivationRepository) {
+        this.promptActivationRepository = promptActivationRepository;
     }
 
     @Transactional(readOnly = true)
     public PromptTemplateSelection companionReflectionPrompt() {
-        return promptTemplateRepository
-                .findFirstByCodeAndEnabledTrueOrderByVersionDesc(COMPANION_REFLECTION_CODE)
+        return promptActivationRepository
+                .findActiveByCode(COMPANION_REFLECTION_CODE)
+                .map(PromptActivationEntity::getPromptTemplate)
                 .map(template -> new PromptTemplateSelection(
                         template.getCode(),
                         template.getContent(),

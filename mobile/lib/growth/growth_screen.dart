@@ -67,7 +67,6 @@ class _GrowthContent extends StatelessWidget {
         ZeroonHeader(
           mark: 'COMPANION GROWTH',
           title: context.l10n.growthTitle,
-          center: true,
           leading: const SizedBox.shrink(),
           action: ZeroonIconButton(
             semanticLabel: context.l10n.growthInfoTooltip,
@@ -168,32 +167,35 @@ class _StatePatternCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(15, 13, 15, 14),
-      decoration: BoxDecoration(
-        color: zeroonNight,
-        borderRadius: BorderRadius.circular(15),
-        gradient: RadialGradient(
-          center: const Alignment(0.9, -1),
-          radius: 0.9,
-          colors: [
-            zeroonCyan.withValues(alpha: 0.20),
-            zeroonNight,
-          ],
-        ),
-      ),
+      decoration: zeroonInsightDecoration(radius: 15),
       child: statePattern.when(
         loading: () => Text(
           context.l10n.growthObservationLoading,
-          style: const TextStyle(color: Color(0xFFE9DFCC), fontSize: 10),
+          style: const TextStyle(
+            color: zeroonInsightText,
+            fontSize: 12,
+            height: 1.5,
+          ),
         ),
         error: (error, stackTrace) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SectionMark(context.l10n.growthYearTitle),
+            _InsightLabel(context.l10n.growthYearTitle),
             const SizedBox(height: 8),
-            Text(context.l10n.growthObservationUnavailable,
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              context.l10n.growthObservationUnavailable,
+              style: const TextStyle(
+                color: zeroonInsightText,
+                fontSize: 13,
+                height: 1.55,
+              ),
+            ),
             const SizedBox(height: 8),
             OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: zeroonInsightText,
+                side: const BorderSide(color: zeroonInsightMuted),
+              ),
               onPressed: onRetry,
               child: Text(context.l10n.growthRetryObservation),
             ),
@@ -202,15 +204,15 @@ class _StatePatternCard extends StatelessWidget {
         data: (data) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SectionMark(context.l10n.growthYearTitle),
+            _InsightLabel(context.l10n.growthYearTitle),
             const SizedBox(height: 6),
             Text(
               _yearlyZeroonCopy(context, data),
               style: const TextStyle(
-                color: Color(0xFFE9DFCC),
+                color: zeroonInsightText,
                 fontFamily: 'serif',
-                fontSize: 10,
-                height: 1.55,
+                fontSize: 12,
+                height: 1.65,
               ),
             ),
           ],
@@ -228,6 +230,25 @@ class _StatePatternCard extends StatelessWidget {
       return context.l10n.growthFocusNarrative(label);
     }
     return context.l10n.growthStateNarrative(label);
+  }
+}
+
+class _InsightLabel extends StatelessWidget {
+  const _InsightLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: const TextStyle(
+        color: zeroonInsightLabel,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.8,
+      ),
+    );
   }
 }
 

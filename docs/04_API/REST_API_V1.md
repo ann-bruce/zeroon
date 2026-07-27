@@ -127,6 +127,7 @@ POST /companion/messages
 Request
 
 {
+  "purpose": "COMPANION_CHAT",
   "message": "今天有点累"
 }
 
@@ -143,6 +144,16 @@ Response
 
 Evidence metadata is content-free. `contextClasses` names only the enabled
 context class used for the turn and never contains the context itself.
+`purpose` is one of `COMPANION_CHAT`, `RESET_COMPLETION`,
+`ARCHIVE_OBSERVATION`, or `GROWTH_OBSERVATION`. It selects a server-owned task
+layer; user or mobile-authored prose remains untrusted data and cannot redefine
+the task, Persona, privacy, or safety policy.
+
+Before Prompt selection or context assembly, the server evaluates deterministic
+safety boundaries. A reviewed self-harm signal bypasses the provider and
+returns `promptVersion: SAFETY_SELF_HARM_V1_REVIEW_PENDING` with a content-free
+path label retained only in usage metadata. The API does not expose a clinical
+risk score and does not contact another person or emergency service.
 
 ---
 
@@ -177,6 +188,19 @@ GET /admin/prompts
 GET /admin/prompts/{promptId}
 
 POST /admin/prompts
+
+POST /admin/prompts/{promptId}/review
+
+POST /admin/prompts/{promptId}/evaluations
+
+POST /admin/prompts/{promptId}/activate
+
+Prompt content is immutable. A new version starts in `PENDING`, must be
+approved by an administrator other than its creator, and becomes runtime-active
+only through the explicit activation endpoint. A forward activation also
+requires the latest content-free evaluation record to pass the Persona
+thresholds. Activating an older approved version is recorded as a rollback and
+remains available when a new candidate fails.
 
 ---
 

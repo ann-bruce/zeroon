@@ -8,6 +8,7 @@ import '../auth/auth_models.dart';
 import '../common/zeroon_design.dart';
 import '../growth/growth_controller.dart';
 import '../l10n/l10n_extensions.dart';
+import '../profile/profile_controller.dart';
 import '../profile/profile_screen.dart';
 import '../record/record_controller.dart';
 import '../record/archive_screen.dart';
@@ -27,6 +28,7 @@ class NowScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final nickname = ref.watch(profileProvider).valueOrNull?.nickname?.trim();
     return ZeroonScreen(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
@@ -38,8 +40,12 @@ class NowScreen extends ConsumerWidget {
                 children: [
                   SectionMark(context.l10n.todayZeroon),
                   const SizedBox(height: 4),
-                  Text('${context.l10n.greeting} ${_displayName(session)}',
-                      style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    nickname == null || nickname.isEmpty
+                        ? context.l10n.greeting
+                        : context.l10n.greetingWithName(nickname),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ],
               ),
               const Spacer(),
@@ -58,14 +64,6 @@ class NowScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  String _displayName(AuthSession session) {
-    final value = session.user.mobile ?? session.user.uid;
-    if (value.length <= 4) {
-      return value;
-    }
-    return value.substring(value.length - 4);
   }
 }
 
@@ -157,8 +155,7 @@ class _StatePanel extends ConsumerWidget {
               _StateChoice(
                 state: state,
                 selected: snapshot.hasActiveSession && snapshot.state == state,
-                onTap: () =>
-                    ref.read(currentStateProvider.notifier).changeState(state),
+                onTap: () => _selectState(context, ref, state),
               ),
           ],
         ),
@@ -231,7 +228,78 @@ class _StatePanel extends ConsumerWidget {
       _ => context.l10n.stateHintDefault,
     };
   }
+
+  Future<void> _selectState(
+    BuildContext context,
+    WidgetRef ref,
+    String nextState,
+  ) async {
+    if (nextState == snapshot.state) {
+      return;
+    }
+    if (!snapshot.hasLastedLongerThan(const Duration(minutes: 5))) {
+      await ref.read(currentStateProvider.notifier).changeState(nextState);
+      return;
+    }
+
+    final decision = await showModalBottomSheet<_StateSwitchDecision>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                context.l10n.stateSwitchTitle(
+                  localizedStateLabel(context, nextState),
+                ),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                context.l10n.stateSwitchBody(
+                  localizedStateLabel(context, snapshot.state),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ZeroonPrimaryButton(
+                key: const Key('state-switch-reset'),
+                label: context.l10n.resetBeforeSwitch,
+                onPressed: () =>
+                    Navigator.of(sheetContext).pop(_StateSwitchDecision.reset),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                key: const Key('state-switch-direct'),
+                onPressed: () => Navigator.of(sheetContext)
+                    .pop(_StateSwitchDecision.switchDirectly),
+                child: Text(context.l10n.switchDirectly),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!context.mounted) {
+      return;
+    }
+    switch (decision) {
+      case _StateSwitchDecision.reset:
+        onStartReset();
+        return;
+      case _StateSwitchDecision.switchDirectly:
+        await ref.read(currentStateProvider.notifier).changeState(nextState);
+        return;
+      case null:
+        return;
+    }
+  }
 }
+
+enum _StateSwitchDecision { reset, switchDirectly }
 
 class _ResetTrackCard extends StatelessWidget {
   const _ResetTrackCard({

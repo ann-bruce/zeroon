@@ -28,6 +28,10 @@ public class CompanionController {
             @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage,
             @Valid @RequestBody ChatRequest request) {
         return companionService.sendMessage(
-                principal.userId(), request.conversationId(), request.message(), acceptLanguage);
+                principal.userId(),
+                request.conversationId(),
+                request.resolvedPurpose(),
+                request.message(),
+                acceptLanguage);
     }
 }

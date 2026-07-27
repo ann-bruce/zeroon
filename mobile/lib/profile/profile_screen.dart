@@ -40,6 +40,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _betaEvidenceLoading = true;
   bool _betaEvidenceSaving = false;
   bool _betaEvidenceFailed = false;
+  bool _saving = false;
   String? _message;
 
   @override
@@ -61,20 +62,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final profileState = ref.watch(profileProvider);
     final myZeroonState = ref.watch(myZeroonProvider);
 
-    ref.listen(profileProvider, (previous, next) {
-      next.whenOrNull(
-        data: (profile) {
-          _syncFromProfile(profile);
-          if (previous?.isLoading == true) {
-            setState(() => _message = context.l10n.profileSaved);
-          }
-        },
-        error: (error, stackTrace) {
-          setState(() => _message = context.l10n.profileSaveFailed);
-        },
-      );
-    });
-
     return ZeroonScreen(
       child: profileState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -94,7 +81,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ageRange: _ageRange,
             aiProfileContextEnabled: _aiProfileContextEnabled,
             message: _message,
-            saving: profileState.isLoading,
+            saving: _saving,
             exporting: _exporting,
             deleting: _deleting,
             betaEvidencePreference: _betaEvidencePreference,
@@ -144,7 +131,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _save() async {
-    setState(() => _message = null);
+    if (_saving) {
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _message = null;
+    });
     final request = UpdateUserProfileRequest(
       nickname: _blankToNull(_nicknameController.text),
       avatarPreset: _avatarPreset,
@@ -153,7 +146,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       selfDescription: _blankToNull(_selfDescriptionController.text),
       aiProfileContextEnabled: _aiProfileContextEnabled,
     );
-    await ref.read(profileProvider.notifier).save(request);
+    try {
+      await ref.read(profileProvider.notifier).save(request);
+      if (mounted) {
+        setState(() => _message = context.l10n.profileSaved);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _message = context.l10n.profileSaveFailed);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
   }
 
   Future<void> _logout() async {

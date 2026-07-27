@@ -155,6 +155,9 @@ public class CompanionTurnPersistenceService {
 
     private String promptVersion(AiUsageDetails usage) {
         if (usage.outcome() == AiUsageOutcome.REFUSAL) {
+            if (usage.errorCode() != null && usage.errorCode().startsWith("SELF_HARM_")) {
+                return "SAFETY_SELF_HARM_V1_REVIEW_PENDING";
+            }
             return "SAFETY_V1";
         }
         if (usage.promptTemplateVersion() == null) {

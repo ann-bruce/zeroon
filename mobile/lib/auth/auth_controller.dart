@@ -19,6 +19,7 @@ final authControllerProvider =
 class AuthController extends AsyncNotifier<AuthSession?> {
   @override
   Future<AuthSession?> build() async {
+    ref.watch(sessionExpiryEpochProvider);
     final session = await ref.watch(tokenStoreProvider).read();
     if (session != null) {
       await _synchronizeLocaleFromSession(session);
@@ -35,7 +36,7 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     required String code,
   }) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       final deviceId = await ref.read(deviceIdStoreProvider).readOrCreate();
       final session = await ref
           .read(authRepositoryProvider)
@@ -44,6 +45,10 @@ class AuthController extends AsyncNotifier<AuthSession?> {
       await _synchronizeLocaleFromSession(session);
       return session;
     });
+    state = result;
+    if (result.hasValue) {
+      _advanceAccountDataEpoch();
+    }
   }
 
   Future<void> logout() async {
@@ -57,6 +62,7 @@ class AuthController extends AsyncNotifier<AuthSession?> {
       // Local exit must remain available when remote session revocation fails.
     } finally {
       await tokenStore.clear();
+      _advanceAccountDataEpoch();
       state = const AsyncData(null);
     }
   }
@@ -70,6 +76,7 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     try {
       await ref.read(dataControlRepositoryProvider).deleteAccount();
       await ref.read(tokenStoreProvider).clear();
+      _advanceAccountDataEpoch();
       state = const AsyncData(null);
     } catch (_) {
       unawaited(evidence.record(EvidenceEvent('ACCOUNT_DELETE_REQUESTED', {
@@ -82,6 +89,11 @@ class AuthController extends AsyncNotifier<AuthSession?> {
 
   void replaceSession(AuthSession? session) {
     state = AsyncData(session);
+  }
+
+  void _advanceAccountDataEpoch() {
+    final epoch = ref.read(accountDataEpochProvider.notifier);
+    epoch.state += 1;
   }
 
   Future<void> selectLanguagePreference(LocalePreference preference) async {

@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import {
   Alert,
   Button,
   Card,
+  Checkbox,
   Descriptions,
   Drawer,
   Input,
+  InputNumber,
   Layout,
   Menu,
+  Modal,
   Space,
   Table,
   Tag,
@@ -36,11 +39,53 @@ type PromptTemplateSummary = {
   name: string
   version: number
   enabled: boolean
+  reviewStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
+  active: boolean
+  createdByUid: string | null
+  reviewedByUid: string | null
+  reviewedAt: string | null
   createdAt: string
 }
 
 type PromptTemplateDetail = PromptTemplateSummary & {
   content: string
+  latestEvaluation: PromptEvaluation | null
+  audit: PromptAudit[]
+}
+
+type PromptAudit = {
+  action:
+    | 'CREATE'
+    | 'REVIEW_APPROVED'
+    | 'REVIEW_REJECTED'
+    | 'EVALUATION_PASSED'
+    | 'EVALUATION_FAILED'
+    | 'ACTIVATE'
+    | 'ROLLBACK'
+  actorUid: string | null
+  fromVersion: number | null
+  toVersion: number | null
+  reasonCode: string
+  createdAt: string
+}
+
+type PromptEvaluation = {
+  id: number
+  evaluatorUid: string | null
+  corpusVersion: string
+  modelAlias: string
+  hardFailureCount: number
+  safetyScore: number
+  consentScore: number
+  privacyScore: number
+  minimumDimensionScore: number
+  averageScore: number
+  bilingualReviewed: boolean
+  productReviewer: string
+  engineeringReviewer: string
+  defectCategories: string | null
+  passed: boolean
+  createdAt: string
 }
 
 type PromptTemplateListResponse = {
@@ -112,10 +157,28 @@ function PromptTemplatesPanel() {
   const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplateDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [mutationLoading, setMutationLoading] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createName, setCreateName] = useState('')
+  const [createContent, setCreateContent] = useState('')
+  const [createReason, setCreateReason] = useState('PERSONA_VERSION_CREATE')
+  const [actionReason, setActionReason] = useState('')
+  const [evaluationOpen, setEvaluationOpen] = useState(false)
+  const [corpusVersion, setCorpusVersion] = useState('PERSONA_V2_V1')
+  const [modelAlias, setModelAlias] = useState('RELEASE_MODEL')
+  const [hardFailureCount, setHardFailureCount] = useState(0)
+  const [safetyScore, setSafetyScore] = useState(2)
+  const [consentScore, setConsentScore] = useState(2)
+  const [privacyScore, setPrivacyScore] = useState(2)
+  const [minimumDimensionScore, setMinimumDimensionScore] = useState(1)
+  const [averageScore, setAverageScore] = useState(1.75)
+  const [bilingualReviewed, setBilingualReviewed] = useState(false)
+  const [productReviewer, setProductReviewer] = useState('')
+  const [engineeringReviewer, setEngineeringReviewer] = useState('')
+  const [defectCategories, setDefectCategories] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const columns = useMemo<ColumnsType<PromptTemplateSummary>>(
-    () => [
+  const columns: ColumnsType<PromptTemplateSummary> = [
       {
         title: 'Code',
         dataIndex: 'code',
@@ -135,11 +198,23 @@ function PromptTemplatesPanel() {
       },
       {
         title: '状态',
-        dataIndex: 'enabled',
-        key: 'enabled',
-        width: 96,
-        render: (enabled: boolean) => (
-          <Tag color={enabled ? 'green' : 'default'}>{enabled ? '启用' : '停用'}</Tag>
+        key: 'status',
+        width: 176,
+        render: (_, record) => (
+          <Space size={4} wrap>
+            <Tag
+              color={
+                record.reviewStatus === 'APPROVED'
+                  ? 'green'
+                  : record.reviewStatus === 'REJECTED'
+                    ? 'red'
+                    : 'gold'
+              }
+            >
+              {reviewStatusLabel(record.reviewStatus)}
+            </Tag>
+            {record.active ? <Tag color="cyan">运行中</Tag> : null}
+          </Space>
         ),
       },
       {
@@ -158,15 +233,7 @@ function PromptTemplatesPanel() {
           </Button>
         ),
       },
-    ],
-    [token],
-  )
-
-  useEffect(() => {
-    if (token) {
-      void loadPrompts()
-    }
-  }, [])
+    ]
 
   async function loadPrompts() {
     if (!token.trim()) {
@@ -211,13 +278,148 @@ function PromptTemplatesPanel() {
     }
   }
 
+  async function createPrompt() {
+    if (!createName.trim() || !createContent.trim() || !createReason.trim()) {
+      setError('名称、Prompt 内容和原因码不能为空。')
+      return
+    }
+    setMutationLoading(true)
+    setError(null)
+    try {
+      const response = await fetch('/api/v1/admin/prompts', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token.trim()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: 'COMPANION_REFLECTION',
+          name: createName.trim(),
+          content: createContent.trim(),
+          reasonCode: createReason.trim(),
+        }),
+      })
+      if (!response.ok) {
+        throw new Error(await mutationError(response, '创建失败'))
+      }
+      const created = (await response.json()) as PromptTemplateDetail
+      setCreateOpen(false)
+      setCreateName('')
+      setCreateContent('')
+      setSelectedPrompt(created)
+      await loadPrompts()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : '创建失败')
+    } finally {
+      setMutationLoading(false)
+    }
+  }
+
+  async function reviewPrompt(decision: 'APPROVE' | 'REJECT') {
+    if (!selectedPrompt || !actionReason.trim()) {
+      setError('审核前请填写原因码。')
+      return
+    }
+    await mutatePrompt(
+      `/api/v1/admin/prompts/${selectedPrompt.id}/review`,
+      { decision, reasonCode: actionReason.trim() },
+      '审核失败',
+    )
+  }
+
+  async function recordEvaluation() {
+    if (
+      !selectedPrompt ||
+      !corpusVersion.trim() ||
+      !modelAlias.trim() ||
+      !productReviewer.trim() ||
+      !engineeringReviewer.trim() ||
+      !actionReason.trim()
+    ) {
+      setError('请填写语料版本、模型别名、两位评测人和原因码。')
+      return
+    }
+    await mutatePrompt(
+      `/api/v1/admin/prompts/${selectedPrompt.id}/evaluations`,
+      {
+        corpusVersion: corpusVersion.trim().toUpperCase(),
+        modelAlias: modelAlias.trim().toUpperCase(),
+        hardFailureCount,
+        safetyScore,
+        consentScore,
+        privacyScore,
+        minimumDimensionScore,
+        averageScore,
+        bilingualReviewed,
+        productReviewer: productReviewer.trim(),
+        engineeringReviewer: engineeringReviewer.trim(),
+        defectCategories: defectCategories.trim() || null,
+        reasonCode: actionReason.trim(),
+      },
+      '评测记录失败',
+    )
+    setEvaluationOpen(false)
+  }
+
+  function confirmActivation() {
+    if (!selectedPrompt || !actionReason.trim()) {
+      setError('启用或回滚前请填写原因码。')
+      return
+    }
+    const activeVersion = items.find(
+      (item) => item.code === selectedPrompt.code && item.active,
+    )?.version
+    const rollback = activeVersion !== undefined && selectedPrompt.version < activeVersion
+    Modal.confirm({
+      title: rollback ? `回滚到 v${selectedPrompt.version}？` : `启用 v${selectedPrompt.version}？`,
+      content: rollback
+        ? '运行时将立即改用这个已审核的旧版本，并留下回滚审计。'
+        : '运行时将立即改用这个已审核版本。',
+      okText: rollback ? '确认回滚' : '确认启用',
+      cancelText: '取消',
+      onOk: () =>
+        mutatePrompt(
+          `/api/v1/admin/prompts/${selectedPrompt.id}/activate`,
+          { reasonCode: actionReason.trim() },
+          rollback ? '回滚失败' : '启用失败',
+        ),
+    })
+  }
+
+  async function mutatePrompt(path: string, body: object, fallback: string) {
+    setMutationLoading(true)
+    setError(null)
+    try {
+      const response = await fetch(path, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token.trim()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+      if (!response.ok) {
+        throw new Error(await mutationError(response, fallback))
+      }
+      const updated = (await response.json()) as PromptTemplateDetail
+      setSelectedPrompt(updated)
+      setActionReason('')
+      await loadPrompts()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : fallback)
+    } finally {
+      setMutationLoading(false)
+    }
+  }
+
   return (
     <section className="panel prompt-panel">
       <Space direction="vertical" size="large" className="full-width">
         <div>
           <Typography.Title level={2}>Prompt 模板</Typography.Title>
           <Typography.Paragraph>
-            只读查看当前后端 Prompt 模板版本。这里不提供编辑入口，避免绕过版本化和审计。
+            Prompt 内容创建后不可修改。新版本需要另一名管理员审核，明确启用后才进入运行时；
+            启用旧版本会记录为回滚。
           </Typography.Paragraph>
         </div>
 
@@ -228,8 +430,11 @@ function PromptTemplatesPanel() {
               value={token}
               onChange={(event) => setToken(event.target.value)}
             />
-            <Button icon={<ReloadOutlined />} type="primary" onClick={loadPrompts}>
+            <Button icon={<ReloadOutlined />} onClick={loadPrompts}>
               读取
+            </Button>
+            <Button type="primary" onClick={() => setCreateOpen(true)}>
+              新建版本
             </Button>
           </Space.Compact>
         </Card>
@@ -258,7 +463,14 @@ function PromptTemplatesPanel() {
               <Descriptions.Item label="名称">{selectedPrompt.name}</Descriptions.Item>
               <Descriptions.Item label="版本">v{selectedPrompt.version}</Descriptions.Item>
               <Descriptions.Item label="状态">
-                {selectedPrompt.enabled ? '启用' : '停用'}
+                {reviewStatusLabel(selectedPrompt.reviewStatus)}
+                {selectedPrompt.active ? ' · 运行中' : ''}
+              </Descriptions.Item>
+              <Descriptions.Item label="创建人">
+                {selectedPrompt.createdByUid ?? '历史版本'}
+              </Descriptions.Item>
+              <Descriptions.Item label="审核人">
+                {selectedPrompt.reviewedByUid ?? '尚未审核'}
               </Descriptions.Item>
               <Descriptions.Item label="创建时间">
                 {new Date(selectedPrompt.createdAt).toLocaleString()}
@@ -266,11 +478,280 @@ function PromptTemplatesPanel() {
             </Descriptions>
             <Typography.Title level={4}>内容</Typography.Title>
             <pre className="prompt-content">{selectedPrompt.content}</pre>
+            <Card size="small" title="最新 Persona 评测">
+              {selectedPrompt.latestEvaluation ? (
+                <Descriptions column={2} size="small">
+                  <Descriptions.Item label="门禁">
+                    <Tag color={selectedPrompt.latestEvaluation.passed ? 'green' : 'red'}>
+                      {selectedPrompt.latestEvaluation.passed ? '通过' : '未通过'}
+                    </Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="语料">
+                    {selectedPrompt.latestEvaluation.corpusVersion}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="模型别名">
+                    {selectedPrompt.latestEvaluation.modelAlias}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="平均分">
+                    {selectedPrompt.latestEvaluation.averageScore}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="硬失败">
+                    {selectedPrompt.latestEvaluation.hardFailureCount}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="双语复核">
+                    {selectedPrompt.latestEvaluation.bilingualReviewed ? '是' : '否'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="产品评测人">
+                    {selectedPrompt.latestEvaluation.productReviewer}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="工程评测人">
+                    {selectedPrompt.latestEvaluation.engineeringReviewer}
+                  </Descriptions.Item>
+                </Descriptions>
+              ) : (
+                <Typography.Text type="secondary">尚无评测记录，不能前向启用。</Typography.Text>
+              )}
+            </Card>
+            <Card size="small" title="受控操作">
+              <Space direction="vertical" className="full-width">
+                <Input
+                  placeholder="原因码，例如 PERSONA_V2_APPROVAL"
+                  value={actionReason}
+                  onChange={(event) => setActionReason(event.target.value.toUpperCase())}
+                />
+                <Space wrap>
+                  {selectedPrompt.reviewStatus === 'PENDING' ? (
+                    <>
+                      <Button
+                        type="primary"
+                        loading={mutationLoading}
+                        onClick={() => reviewPrompt('APPROVE')}
+                      >
+                        审核通过
+                      </Button>
+                      <Button
+                        danger
+                        loading={mutationLoading}
+                        onClick={() => reviewPrompt('REJECT')}
+                      >
+                        审核拒绝
+                      </Button>
+                    </>
+                  ) : null}
+                  {selectedPrompt.reviewStatus === 'APPROVED' && !selectedPrompt.active ? (
+                    <>
+                      <Button onClick={() => setEvaluationOpen(true)}>记录评测结果</Button>
+                      <Button
+                        type="primary"
+                        loading={mutationLoading}
+                        disabled={
+                          !selectedPrompt.latestEvaluation?.passed &&
+                          !isRollback(selectedPrompt, items)
+                        }
+                        onClick={confirmActivation}
+                      >
+                        启用或回滚到此版本
+                      </Button>
+                    </>
+                  ) : null}
+                </Space>
+              </Space>
+            </Card>
+            <Typography.Title level={4}>审计记录</Typography.Title>
+            <Space direction="vertical" className="full-width">
+              {selectedPrompt.audit.map((entry, index) => (
+                <Card key={`${entry.createdAt}-${index}`} size="small">
+                  <Space wrap>
+                    <Tag>{auditActionLabel(entry.action)}</Tag>
+                    <Typography.Text>{entry.actorUid ?? '系统迁移'}</Typography.Text>
+                    <Typography.Text code>{entry.reasonCode}</Typography.Text>
+                    <Typography.Text type="secondary">
+                      {new Date(entry.createdAt).toLocaleString()}
+                    </Typography.Text>
+                  </Space>
+                </Card>
+              ))}
+            </Space>
           </Space>
         ) : (
           <Typography.Text>正在读取详情...</Typography.Text>
         )}
       </Drawer>
+
+      <Modal
+        title="新建 Prompt 版本"
+        open={createOpen}
+        okText="创建待审核版本"
+        cancelText="取消"
+        confirmLoading={mutationLoading}
+        onOk={createPrompt}
+        onCancel={() => setCreateOpen(false)}
+        width={760}
+      >
+        <Space direction="vertical" className="full-width">
+          <Alert
+            type="info"
+            showIcon
+            message="新版本不会自动启用，且必须由另一名管理员审核。"
+          />
+          <Input value="COMPANION_REFLECTION" disabled addonBefore="Code" />
+          <Input
+            placeholder="版本名称"
+            value={createName}
+            onChange={(event) => setCreateName(event.target.value)}
+          />
+          <Input
+            placeholder="创建原因码"
+            value={createReason}
+            onChange={(event) => setCreateReason(event.target.value.toUpperCase())}
+          />
+          <Input.TextArea
+            rows={16}
+            placeholder="完整 Prompt 内容"
+            value={createContent}
+            onChange={(event) => setCreateContent(event.target.value)}
+          />
+        </Space>
+      </Modal>
+
+      <Modal
+        title="记录 Persona 评测"
+        open={evaluationOpen}
+        okText="记录并计算门禁"
+        cancelText="取消"
+        confirmLoading={mutationLoading}
+        onOk={recordEvaluation}
+        onCancel={() => setEvaluationOpen(false)}
+        width={720}
+      >
+        <Space direction="vertical" className="full-width">
+          <Alert
+            type="warning"
+            showIcon
+            message="这里只记录合成语料的汇总分数和缺陷分类，不要粘贴用户内容、测试输入或模型回复。"
+          />
+          <Input
+            addonBefore="语料版本"
+            value={corpusVersion}
+            onChange={(event) => setCorpusVersion(event.target.value)}
+          />
+          <Input
+            addonBefore="模型别名"
+            value={modelAlias}
+            onChange={(event) => setModelAlias(event.target.value)}
+          />
+          <Space wrap>
+            <InputNumber
+              addonBefore="硬失败"
+              min={0}
+              value={hardFailureCount}
+              onChange={(value) => setHardFailureCount(value ?? 0)}
+            />
+            <InputNumber
+              addonBefore="安全"
+              min={0}
+              max={2}
+              value={safetyScore}
+              onChange={(value) => setSafetyScore(value ?? 0)}
+            />
+            <InputNumber
+              addonBefore="同意"
+              min={0}
+              max={2}
+              value={consentScore}
+              onChange={(value) => setConsentScore(value ?? 0)}
+            />
+            <InputNumber
+              addonBefore="隐私"
+              min={0}
+              max={2}
+              value={privacyScore}
+              onChange={(value) => setPrivacyScore(value ?? 0)}
+            />
+            <InputNumber
+              addonBefore="最低维度"
+              min={0}
+              max={2}
+              value={minimumDimensionScore}
+              onChange={(value) => setMinimumDimensionScore(value ?? 0)}
+            />
+            <InputNumber
+              addonBefore="平均分"
+              min={0}
+              max={2}
+              step={0.01}
+              value={averageScore}
+              onChange={(value) => setAverageScore(value ?? 0)}
+            />
+          </Space>
+          <Checkbox
+            checked={bilingualReviewed}
+            onChange={(event) => setBilingualReviewed(event.target.checked)}
+          >
+            中文与英文均已完成评测
+          </Checkbox>
+          <Input
+            addonBefore="产品评测人"
+            value={productReviewer}
+            onChange={(event) => setProductReviewer(event.target.value)}
+          />
+          <Input
+            addonBefore="工程评测人"
+            value={engineeringReviewer}
+            onChange={(event) => setEngineeringReviewer(event.target.value)}
+          />
+          <Input
+            addonBefore="缺陷分类"
+            placeholder="仅填内容无关的分类码，例如 STYLE_MINOR"
+            value={defectCategories}
+            onChange={(event) => setDefectCategories(event.target.value.toUpperCase())}
+          />
+          <Input
+            addonBefore="原因码"
+            placeholder="例如 PERSONA_V2_EVALUATION"
+            value={actionReason}
+            onChange={(event) => setActionReason(event.target.value.toUpperCase())}
+          />
+        </Space>
+      </Modal>
     </section>
   )
+}
+
+function reviewStatusLabel(status: PromptTemplateSummary['reviewStatus']) {
+  if (status === 'APPROVED') return '已审核'
+  if (status === 'REJECTED') return '已拒绝'
+  return '待审核'
+}
+
+function auditActionLabel(action: PromptAudit['action']) {
+  const labels: Record<PromptAudit['action'], string> = {
+    CREATE: '创建',
+    REVIEW_APPROVED: '审核通过',
+    REVIEW_REJECTED: '审核拒绝',
+    EVALUATION_PASSED: '评测通过',
+    EVALUATION_FAILED: '评测未通过',
+    ACTIVATE: '启用',
+    ROLLBACK: '回滚',
+  }
+  return labels[action]
+}
+
+function isRollback(
+  selectedPrompt: PromptTemplateDetail,
+  items: PromptTemplateSummary[],
+) {
+  const activeVersion = items.find(
+    (item) => item.code === selectedPrompt.code && item.active,
+  )?.version
+  return activeVersion !== undefined && selectedPrompt.version < activeVersion
+}
+
+async function mutationError(response: Response, fallback: string) {
+  try {
+    const body = (await response.json()) as { message?: string }
+    return body.message ?? `${fallback}：${response.status}`
+  } catch {
+    return `${fallback}：${response.status}`
+  }
 }

@@ -899,7 +899,12 @@ paths:
         weight selects Simplified Chinese or English response behavior; otherwise
         a concrete account preference applies, then Simplified Chinese fallback.
         Language is never inferred from message, Profile, Record, Memory, or
-        conversation content. Titles, summaries, and other private Memory text
+        conversation content. The optional purpose selects a reviewed,
+        server-owned surface task; mobile prompt prose cannot replace that task
+        or change safety and privacy rules. Deterministic self-harm paths run
+        before Prompt or context assembly, bypass the provider, and return
+        direct bilingual action guidance without exposing a clinical risk score.
+        Titles, summaries, and other private Memory text
         are excluded from usage logs and error metadata.
       operationId: sendCompanionMessage
       security:
@@ -1142,6 +1147,10 @@ paths:
       responses:
         "201":
           description: Prompt created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromptTemplateDetail"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1175,6 +1184,117 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+  /admin/prompts/{promptId}/review:
+    post:
+      tags: [Admin]
+      summary: Independently approve or reject an immutable prompt version
+      operationId: reviewPrompt
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: promptId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromptReviewRequest"
+      responses:
+        "200":
+          description: Prompt review recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromptTemplateDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /admin/prompts/{promptId}/activate:
+    post:
+      tags: [Admin]
+      summary: Activate an approved prompt version or roll back to an older one
+      operationId: activatePrompt
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: promptId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromptActivationRequest"
+      responses:
+        "200":
+          description: Prompt activation pointer updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromptTemplateDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /admin/prompts/{promptId}/evaluations:
+    post:
+      tags: [Admin]
+      summary: Record a content-free Persona evaluation result
+      operationId: recordPromptEvaluation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: promptId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromptEvaluationRequest"
+      responses:
+        "200":
+          description: Evaluation recorded and activation gate recalculated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromptTemplateDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 components:
   securitySchemes:
     bearerAuth:
@@ -2744,6 +2864,13 @@ components:
         conversationId:
           type: integer
           format: int64
+        purpose:
+          type: string
+          default: COMPANION_CHAT
+          enum:
+            [COMPANION_CHAT, RESET_COMPLETION, ARCHIVE_OBSERVATION,
+             GROWTH_OBSERVATION]
+          description: Reviewed server-owned surface task selected for this turn.
         message:
           type: string
           minLength: 1
@@ -2931,7 +3058,7 @@ components:
           format: date-time
     PromptRequest:
       type: object
-      required: [code, name, content]
+      required: [code, name, content, reasonCode]
       properties:
         code:
           type: string
@@ -2942,6 +3069,78 @@ components:
         content:
           type: string
           maxLength: 20000
+        reasonCode:
+          type: string
+          pattern: "^[A-Z0-9_]{3,60}$"
+    PromptReviewRequest:
+      type: object
+      required: [decision, reasonCode]
+      properties:
+        decision:
+          type: string
+          enum: [APPROVE, REJECT]
+        reasonCode:
+          type: string
+          pattern: "^[A-Z0-9_]{3,60}$"
+    PromptActivationRequest:
+      type: object
+      required: [reasonCode]
+      properties:
+        reasonCode:
+          type: string
+          pattern: "^[A-Z0-9_]{3,60}$"
+    PromptEvaluationRequest:
+      type: object
+      required:
+        [corpusVersion, modelAlias, hardFailureCount, safetyScore,
+         consentScore, privacyScore, minimumDimensionScore, averageScore,
+         bilingualReviewed, productReviewer, engineeringReviewer, reasonCode]
+      properties:
+        corpusVersion:
+          type: string
+          pattern: "^[A-Z0-9_.-]{2,40}$"
+        modelAlias:
+          type: string
+          pattern: "^[A-Z0-9_.-]{2,40}$"
+        hardFailureCount:
+          type: integer
+          minimum: 0
+        safetyScore:
+          type: integer
+          minimum: 0
+          maximum: 2
+        consentScore:
+          type: integer
+          minimum: 0
+          maximum: 2
+        privacyScore:
+          type: integer
+          minimum: 0
+          maximum: 2
+        minimumDimensionScore:
+          type: integer
+          minimum: 0
+          maximum: 2
+        averageScore:
+          type: number
+          minimum: 0
+          maximum: 2
+        bilingualReviewed:
+          type: boolean
+        productReviewer:
+          type: string
+          maxLength: 100
+        engineeringReviewer:
+          type: string
+          maxLength: 100
+        defectCategories:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Content-free defect-category codes only.
+        reasonCode:
+          type: string
+          pattern: "^[A-Z0-9_]{3,60}$"
     EvidenceOperationsResponse:
       type: object
       required:
@@ -3102,7 +3301,8 @@ components:
             $ref: "#/components/schemas/PromptTemplateSummary"
     PromptTemplateSummary:
       type: object
-      required: [id, code, name, version, enabled, createdAt]
+      required:
+        [id, code, name, version, enabled, reviewStatus, active, createdAt]
       properties:
         id:
           type: integer
@@ -3115,6 +3315,23 @@ components:
           type: integer
         enabled:
           type: boolean
+          description: Whether the reviewed version is eligible for activation.
+        reviewStatus:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED]
+        active:
+          type: boolean
+          description: True only for the explicitly active version of this code.
+        createdByUid:
+          type: string
+          nullable: true
+        reviewedByUid:
+          type: string
+          nullable: true
+        reviewedAt:
+          type: string
+          format: date-time
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -3122,10 +3339,84 @@ components:
       allOf:
         - $ref: "#/components/schemas/PromptTemplateSummary"
         - type: object
-          required: [content]
+          required: [content, audit]
           properties:
             content:
               type: string
+            latestEvaluation:
+              $ref: "#/components/schemas/PromptEvaluation"
+              nullable: true
+            audit:
+              type: array
+              items:
+                $ref: "#/components/schemas/PromptAudit"
+    PromptAudit:
+      type: object
+      required: [action, reasonCode, createdAt]
+      properties:
+        action:
+          type: string
+          enum:
+            [CREATE, REVIEW_APPROVED, REVIEW_REJECTED, EVALUATION_PASSED,
+             EVALUATION_FAILED, ACTIVATE, ROLLBACK]
+        actorUid:
+          type: string
+          nullable: true
+        fromVersion:
+          type: integer
+          nullable: true
+        toVersion:
+          type: integer
+          nullable: true
+        reasonCode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    PromptEvaluation:
+      type: object
+      required:
+        [id, corpusVersion, modelAlias, hardFailureCount,
+         safetyScore, consentScore, privacyScore, minimumDimensionScore,
+         averageScore, bilingualReviewed, productReviewer,
+         engineeringReviewer, passed, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        evaluatorUid:
+          type: string
+          nullable: true
+        corpusVersion:
+          type: string
+        modelAlias:
+          type: string
+        hardFailureCount:
+          type: integer
+        safetyScore:
+          type: integer
+        consentScore:
+          type: integer
+        privacyScore:
+          type: integer
+        minimumDimensionScore:
+          type: integer
+        averageScore:
+          type: number
+        bilingualReviewed:
+          type: boolean
+        productReviewer:
+          type: string
+        engineeringReviewer:
+          type: string
+        defectCategories:
+          type: string
+          nullable: true
+        passed:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
     Problem:
       type: object
       required: [type, title, status, traceId]

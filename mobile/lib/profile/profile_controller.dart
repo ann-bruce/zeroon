@@ -17,14 +17,11 @@ class ProfileController extends AsyncNotifier<UserProfile> {
     return ref.watch(profileRepositoryProvider).get();
   }
 
-  Future<void> save(UpdateUserProfileRequest request) async {
+  Future<UserProfile> save(UpdateUserProfileRequest request) async {
     final previous = state.valueOrNull?.aiProfileContextEnabled;
-    state = const AsyncLoading<UserProfile>().copyWithPrevious(state);
-    state = await AsyncValue.guard(
-      () => ref.read(profileRepositoryProvider).update(request),
-    );
-    final saved = state.valueOrNull;
-    if (saved != null && previous != saved.aiProfileContextEnabled) {
+    final saved = await ref.read(profileRepositoryProvider).update(request);
+    state = AsyncData(saved);
+    if (previous != saved.aiProfileContextEnabled) {
       unawaited(ref.read(evidenceRepositoryProvider).record(
             EvidenceEvent('PROFILE_AI_CONTEXT_CHANGED', {
               'enabled': saved.aiProfileContextEnabled,
@@ -32,5 +29,6 @@ class ProfileController extends AsyncNotifier<UserProfile> {
             }),
           ));
     }
+    return saved;
   }
 }

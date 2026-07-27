@@ -4,6 +4,7 @@ import ai.zeroon.auth.RateLimitExceededException;
 import ai.zeroon.auth.VerificationCodeDeliveryException;
 import ai.zeroon.auth.VerificationCodeInfrastructureException;
 import ai.zeroon.evidence.EvidenceConflictException;
+import ai.zeroon.prompt.PromptGovernanceConflictException;
 import ai.zeroon.support.SupportConflictException;
 import java.util.Map;
 import jakarta.persistence.EntityNotFoundException;
@@ -85,6 +86,12 @@ public class ApiExceptionHandler {
     @ExceptionHandler(EvidenceConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     Map<String, String> evidenceConflict(EvidenceConflictException ex) {
+        return Map.of("error", "conflict", "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(PromptGovernanceConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    Map<String, String> promptGovernanceConflict(PromptGovernanceConflictException ex) {
         return Map.of("error", "conflict", "message", ex.getMessage());
     }
 }

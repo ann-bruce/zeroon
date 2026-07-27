@@ -188,6 +188,7 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
     try {
       final response = await ref.read(companionRepositoryProvider).sendMessage(
             CompanionMessageRequest(
+              purpose: CompanionPurpose.resetCompletion,
               message: context.l10n.completionPrompt,
             ),
           );

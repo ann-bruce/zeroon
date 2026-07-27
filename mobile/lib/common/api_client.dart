@@ -11,6 +11,8 @@ const zeroonApiBaseUrl = String.fromEnvironment(
 );
 
 final dioProvider = Provider<Dio>((ref) {
+  ref.watch(accountDataEpochProvider);
+  final refreshCoordinator = SessionRefreshCoordinator();
   final dio = Dio(
     BaseOptions(
       baseUrl: zeroonApiBaseUrl,
@@ -35,14 +37,22 @@ final dioProvider = Provider<Dio>((ref) {
       },
       onError: (error, handler) async {
         if (error.response?.statusCode == 401 &&
+            error.requestOptions.headers.containsKey('Authorization') &&
+            error.requestOptions.extra[_sessionRetryKey] != true &&
             !_isSessionMutationRequest(error.requestOptions)) {
-          final refreshed = await _tryRefresh(ref);
+          final refreshed = await refreshCoordinator.run(
+            () => _tryRefresh(ref),
+          );
           if (refreshed != null) {
-            final retry = await dio.fetch<dynamic>(
-              error.requestOptions
-                ..headers['Authorization'] = 'Bearer ${refreshed.accessToken}',
-            );
-            handler.resolve(retry);
+            error.requestOptions
+              ..headers['Authorization'] = 'Bearer ${refreshed.accessToken}'
+              ..extra[_sessionRetryKey] = true;
+            try {
+              final retry = await dio.fetch<dynamic>(error.requestOptions);
+              handler.resolve(retry);
+            } on DioException catch (retryError) {
+              handler.next(retryError);
+            }
             return;
           }
         }
@@ -54,10 +64,10 @@ final dioProvider = Provider<Dio>((ref) {
   return dio;
 });
 
+const _sessionRetryKey = 'zeroon.session-retried';
+
 bool _isSessionMutationRequest(RequestOptions options) =>
-    options.path.endsWith('/auth/refresh') ||
-    options.path.endsWith('/auth/logout') ||
-    options.path.endsWith('/me/deletion');
+    options.path.contains('/auth/') || options.path.endsWith('/me/deletion');
 
 Future<AuthSession?> _tryRefresh(Ref ref) async {
   final tokenStore = ref.read(tokenStoreProvider);
@@ -92,7 +102,34 @@ Future<AuthSession?> _tryRefresh(Ref ref) async {
     }
     return refreshed;
   } catch (_) {
-    await tokenStore.clear();
+    final latest = await tokenStore.read();
+    if (latest?.refreshToken == session.refreshToken) {
+      final accountEpoch = ref.read(accountDataEpochProvider.notifier);
+      final expiryEpoch = ref.read(sessionExpiryEpochProvider.notifier);
+      await tokenStore.clear();
+      accountEpoch.state += 1;
+      expiryEpoch.state += 1;
+    }
     return null;
+  }
+}
+
+class SessionRefreshCoordinator {
+  Future<AuthSession?>? _inFlight;
+
+  Future<AuthSession?> run(Future<AuthSession?> Function() refresh) {
+    final current = _inFlight;
+    if (current != null) {
+      return current;
+    }
+
+    late final Future<AuthSession?> started;
+    started = refresh().whenComplete(() {
+      if (identical(_inFlight, started)) {
+        _inFlight = null;
+      }
+    });
+    _inFlight = started;
+    return started;
   }
 }

@@ -13,6 +13,24 @@ const zeroonGold = Color(0xFFD7B46A);
 const zeroonCyan = Color(0xFF6CB7C8);
 const zeroonBlue = Color(0xFF4AA8FF);
 const zeroonLine = Color(0x1C1F2430);
+const zeroonInsightGlow = Color(0xFF2A3941);
+const zeroonInsightLabel = Color(0xFFE0C17D);
+const zeroonInsightText = Color(0xFFF1E8D9);
+const zeroonInsightMuted = Color(0xFFBBB3A6);
+
+BoxDecoration zeroonInsightDecoration({double radius = 16}) {
+  return BoxDecoration(
+    color: zeroonNight,
+    borderRadius: BorderRadius.circular(radius),
+    border: Border.all(color: zeroonGold.withValues(alpha: 0.16)),
+    gradient: const RadialGradient(
+      center: Alignment(1.28, -1.32),
+      radius: 1.36,
+      colors: [zeroonInsightGlow, zeroonNight],
+      stops: [0, 0.82],
+    ),
+  );
+}
 
 TextStyle zeroonSerif(
   BuildContext context, {

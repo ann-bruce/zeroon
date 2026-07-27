@@ -32,7 +32,11 @@ evolution.
 
 ## Operations
 
-- `prompt_templates`: immutable prompt versions
+- `prompt_templates`: immutable prompt content versions with independent
+  review status
+- `prompt_activations`: one explicit runtime version pointer per prompt code
+- `prompt_admin_audit`: content-free prompt create, review, activation, and
+  rollback evidence
 - `ai_usage_logs`: provider outcome, latency, prompt version, character counts,
   and optional provider-reported token counts without prompt or response text
 - `system_configs`: runtime configuration
@@ -93,6 +97,12 @@ control-visibility signal.
 V16 adds only the required adult-notice acknowledgement to
 `evidence_subjects`. It stores a boolean rather than a birth date or age, is
 exported with the owned evidence preference, and hard-deletes with the account.
+
+V17 makes Prompt content immutable and adds independent review, one explicit
+activation pointer per Prompt family, rollback, and content-free administrator
+audit. V18 adds immutable evaluation records. A forward activation requires
+the latest evaluation to satisfy the documented Persona release thresholds;
+an approved older version remains available for emergency rollback.
 
 ## Query Baseline
 

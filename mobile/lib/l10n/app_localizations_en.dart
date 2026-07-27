@@ -256,7 +256,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navProfile => 'Me';
 
   @override
-  String get greeting => 'Good to see you,';
+  String get greeting => 'Good to see you';
+
+  @override
+  String greetingWithName(String name) {
+    return 'Good to see you, $name';
+  }
 
   @override
   String get todayZeroon => 'TODAY\'S ZEROON';
@@ -267,6 +272,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get chooseStateFirst =>
       'Choose the state that feels closest. ZEROON will begin holding time from here.';
+
+  @override
+  String stateSwitchTitle(String state) {
+    return 'Switch to “$state”?';
+  }
+
+  @override
+  String stateSwitchBody(String state) {
+    return 'You\'ve been in “$state” for a while. If you want to keep this moment, you can complete a Reset first.';
+  }
+
+  @override
+  String get resetBeforeSwitch => 'Reset first';
+
+  @override
+  String get switchDirectly => 'Switch directly';
 
   @override
   String get startReset => 'Begin a Reset';

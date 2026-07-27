@@ -22,22 +22,29 @@ public class CompanionService {
     private final SafetyBoundaryService safetyBoundaryService;
     private final CompanionTurnPersistenceService turnPersistenceService;
     private final CompanionLanguageResolver languageResolver;
+    private final CompanionPromptAssembler promptAssembler;
 
     public CompanionService(
             LlmProvider llmProvider,
             PromptTemplateService promptTemplateService,
             SafetyBoundaryService safetyBoundaryService,
             CompanionTurnPersistenceService turnPersistenceService,
-            CompanionLanguageResolver languageResolver) {
+            CompanionLanguageResolver languageResolver,
+            CompanionPromptAssembler promptAssembler) {
         this.llmProvider = llmProvider;
         this.promptTemplateService = promptTemplateService;
         this.safetyBoundaryService = safetyBoundaryService;
         this.turnPersistenceService = turnPersistenceService;
         this.languageResolver = languageResolver;
+        this.promptAssembler = promptAssembler;
     }
 
     public ChatResponse sendMessage(
-            Long userId, Long conversationId, String message, String acceptLanguage) {
+            Long userId,
+            Long conversationId,
+            CompanionPurpose purpose,
+            String message,
+            String acceptLanguage) {
         String normalizedMessage = message.trim();
         CompanionLanguage language = languageResolver.resolve(userId, acceptLanguage);
         StartedTurn turn = turnPersistenceService.begin(userId, conversationId, normalizedMessage);
@@ -68,9 +75,7 @@ public class CompanionService {
         AssembledUserPrompt assembledPrompt =
                 turnPersistenceService.assembleUserPrompt(userId, normalizedMessage);
         String userPrompt = assembledPrompt.prompt();
-        String systemPrompt = prompt.content().stripTrailing()
-                + "\n\n"
-                + language.providerInstruction().strip();
+        String systemPrompt = promptAssembler.assemble(prompt, purpose, language);
         long providerStartedAt = System.nanoTime();
         try {
             LlmResponse response = llmProvider.generate(new LlmRequest(

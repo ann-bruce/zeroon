@@ -122,6 +122,27 @@ prompt_template
 
 No hardcoded prompt in controller.
 
+Prompt content versions are immutable. New versions require an independent
+administrator review and explicit activation. Runtime selection reads the
+single activation pointer for the Prompt code; choosing an older approved
+version is an audited rollback. Forward activation requires the latest
+`prompt_evaluations` row to have zero hard failures, score 2 for safety,
+consent, and privacy, have no zero dimension, average at least 1.75, and record
+both Chinese and English review by distinct product and engineering reviewers.
+
+`CompanionPromptAssembler` owns the fixed system-layer order: safety/privacy,
+active Persona, server-reviewed surface purpose, then resolved language.
+Profile, Memory, current state, and the current message remain in the untrusted
+user-data envelope. Flutter sends an explicit purpose for Reset completion and
+Archive observation; an omitted purpose remains `COMPANION_CHAT` for backward
+compatibility.
+
+`SafetyBoundaryService` runs before Prompt or context assembly. Reviewed
+self-harm signals use one of three deterministic labels, bypass the provider,
+and return bilingual direct-action copy. Negated, figurative, fictional, and
+educational examples have regression coverage, but the classifier remains a
+non-clinical engineering safeguard pending professional review.
+
 Companion provider calls use an orchestration boundary rather than a database
 transaction. `CompanionTurnPersistenceService` commits the user message,
 assembles current consent-aware context in a short read transaction, and later

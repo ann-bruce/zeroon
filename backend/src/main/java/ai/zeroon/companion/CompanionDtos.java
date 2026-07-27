@@ -11,7 +11,12 @@ public final class CompanionDtos {
 
     public record ChatRequest(
             Long conversationId,
+            CompanionPurpose purpose,
             @NotBlank @Size(max = 4000) String message) {
+
+        public CompanionPurpose resolvedPurpose() {
+            return purpose == null ? CompanionPurpose.COMPANION_CHAT : purpose;
+        }
     }
 
     public record ChatResponse(

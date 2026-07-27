@@ -132,7 +132,10 @@ class ZeroonApp extends ConsumerWidget {
             LoginScreen(initialError: error.toString()),
         data: (session) => session == null
             ? const LoginScreen()
-            : AuthenticatedEntry(session: session),
+            : AuthenticatedEntry(
+                key: ValueKey('authenticated-${session.user.uid}'),
+                session: session,
+              ),
       ),
     );
   }

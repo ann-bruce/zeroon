@@ -35,6 +35,7 @@ void main() {
     );
     addTearDown(container.dispose);
     await container.read(authControllerProvider.future);
+    expect(container.read(accountDataEpochProvider), 0);
     expect(
       container.read(localeControllerProvider).preference,
       LocalePreference.english,
@@ -45,6 +46,7 @@ void main() {
     expect(authRepository.loggedOutRefreshToken, 'refresh-token');
     expect(await tokenStore.read(), isNull);
     expect(container.read(authControllerProvider).valueOrNull, isNull);
+    expect(container.read(accountDataEpochProvider), 1);
     expect(
       container.read(localeControllerProvider).preference,
       LocalePreference.english,
@@ -69,6 +71,7 @@ void main() {
 
     expect(await tokenStore.read(), isNull);
     expect(container.read(authControllerProvider).valueOrNull, isNull);
+    expect(container.read(accountDataEpochProvider), 1);
   });
 
   test('successful account deletion clears the local session', () async {
@@ -89,6 +92,7 @@ void main() {
     expect(dataControlRepository.deleted, isTrue);
     expect(await tokenStore.read(), isNull);
     expect(container.read(authControllerProvider).valueOrNull, isNull);
+    expect(container.read(accountDataEpochProvider), 1);
   });
 
   test('account preference wins when the device has no pending choice',
@@ -166,6 +170,26 @@ void main() {
       LocalePreference.english,
     );
     expect(authRepository.lastDeviceId, 'install-device-123');
+    expect(container.read(accountDataEpochProvider), 1);
+  });
+
+  test('terminal session expiry leaves the authenticated UI', () async {
+    final tokenStore = _MemoryTokenStore(_session);
+    final container = ProviderContainer(
+      overrides: [
+        evidenceRepositoryProvider.overrideWithValue(_NoopEvidenceRepository()),
+        tokenStoreProvider.overrideWithValue(tokenStore),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(authControllerProvider.future);
+    expect(container.read(authControllerProvider).valueOrNull, _session);
+
+    await tokenStore.clear();
+    container.read(sessionExpiryEpochProvider.notifier).state += 1;
+    await container.read(authControllerProvider.future);
+
+    expect(container.read(authControllerProvider).valueOrNull, isNull);
   });
 }
 

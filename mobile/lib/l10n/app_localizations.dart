@@ -546,8 +546,14 @@ abstract class AppLocalizations {
   /// No description provided for @greeting.
   ///
   /// In zh, this message translates to:
-  /// **'见到你了，'**
+  /// **'见到你了'**
   String get greeting;
+
+  /// No description provided for @greetingWithName.
+  ///
+  /// In zh, this message translates to:
+  /// **'见到你了，{name}'**
+  String greetingWithName(String name);
 
   /// No description provided for @todayZeroon.
   ///
@@ -566,6 +572,30 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'先选择一个最接近的状态，ZEROON 会从这一刻开始记录。'**
   String get chooseStateFirst;
+
+  /// No description provided for @stateSwitchTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'要切换到“{state}”吗？'**
+  String stateSwitchTitle(String state);
+
+  /// No description provided for @stateSwitchBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'你已经在“{state}”停留了一会儿。如果想留下这一刻，可以先完成一次归零。'**
+  String stateSwitchBody(String state);
+
+  /// No description provided for @resetBeforeSwitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'先去归零'**
+  String get resetBeforeSwitch;
+
+  /// No description provided for @switchDirectly.
+  ///
+  /// In zh, this message translates to:
+  /// **'直接切换'**
+  String get switchDirectly;
 
   /// No description provided for @startReset.
   ///

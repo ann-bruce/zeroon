@@ -29,6 +29,7 @@ import 'package:zeroon_mobile/my_zeroon/my_zeroon_models.dart';
 import 'package:zeroon_mobile/my_zeroon/my_zeroon_repository.dart';
 import 'package:zeroon_mobile/profile/profile_models.dart';
 import 'package:zeroon_mobile/profile/profile_repository.dart';
+import 'package:zeroon_mobile/profile/profile_screen.dart';
 import 'package:zeroon_mobile/record/record_models.dart';
 import 'package:zeroon_mobile/record/record_repository.dart';
 import 'package:zeroon_mobile/record/reset_screen.dart';
@@ -144,6 +145,8 @@ void main() {
             () => _FakeCurrentStateController(),
           ),
           growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
         ],
         child: _localizedApp(
           NowScreen(session: session, onStartReset: () {}),
@@ -154,11 +157,102 @@ void main() {
 
     expect(find.text('今天的 ZEROON'), findsOneWidget);
     expect(find.text('平静'), findsWidgets);
-    expect(find.text('见到你了， 8000'), findsOneWidget);
+    expect(find.text('见到你了'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('7 天'), findsOneWidget);
     expect(find.text('点亮日期可回看'), findsOneWidget);
+  });
+
+  testWidgets('Now greeting uses the saved nickname', (tester) async {
+    final profileRepository = _FakeProfileRepository(
+      initialProfile: const UserProfile(
+        nickname: 'Bruce',
+        aiProfileContextEnabled: false,
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(elapsedSeconds: 60),
+          ),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          profileRepositoryProvider.overrideWithValue(profileRepository),
+        ],
+        child: _localizedApp(
+          const NowScreen(session: _session, onStartReset: _noop),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('见到你了，Bruce'), findsOneWidget);
+    expect(find.textContaining('8000'), findsNothing);
+  });
+
+  testWidgets('state switch after five minutes protects a pending Reset', (
+    tester,
+  ) async {
+    var resetRequested = false;
+    final stateController = _FakeCurrentStateController(elapsedSeconds: 301);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(() => stateController),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
+        ],
+        child: _localizedApp(
+          NowScreen(
+            session: _session,
+            onStartReset: () => resetRequested = true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('专注').last);
+    await tester.pumpAndSettle();
+    expect(find.text('要切换到“专注”吗？'), findsOneWidget);
+    expect(stateController.changedTo, isNull);
+
+    await tester.tap(find.byKey(const Key('state-switch-reset')));
+    await tester.pumpAndSettle();
+    expect(resetRequested, isTrue);
+    expect(stateController.changedTo, isNull);
+
+    await tester.tap(find.text('专注').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('state-switch-direct')));
+    await tester.pumpAndSettle();
+    expect(stateController.changedTo, 'FOCUS');
+  });
+
+  testWidgets('state switch at five minutes remains direct', (tester) async {
+    final stateController = _FakeCurrentStateController(elapsedSeconds: 300);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(() => stateController),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
+        ],
+        child: _localizedApp(
+          const NowScreen(session: _session, onStartReset: _noop),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('专注').last);
+    await tester.pumpAndSettle();
+    expect(find.text('要切换到“专注”吗？'), findsNothing);
+    expect(stateController.changedTo, 'FOCUS');
   });
 
   testWidgets('login screen shows initial error', (tester) async {
@@ -355,6 +449,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          tokenStoreProvider.overrideWithValue(
+            _FakeTokenStore(session: _session),
+          ),
           currentStateProvider.overrideWith(
             () => _FakeCurrentStateController(),
           ),
@@ -566,6 +663,69 @@ void main() {
     await tester.tap(find.text('确认删除'));
     await tester.pumpAndSettle();
     expect(dataControlRepository.deleted, isTrue);
+  });
+
+  testWidgets('failed profile save keeps the draft and can be retried', (
+    tester,
+  ) async {
+    final profileRepository = _FakeProfileRepository(failNextUpdate: true);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          profileRepositoryProvider.overrideWithValue(profileRepository),
+          myZeroonRepositoryProvider.overrideWithValue(
+            _FakeMyZeroonRepository(initialMet: true),
+          ),
+          evidenceRepositoryProvider.overrideWithValue(
+            _CapturingEvidenceRepository(),
+          ),
+          dataControlRepositoryProvider.overrideWithValue(
+            _FakeDataControlRepository(),
+          ),
+          tokenStoreProvider.overrideWithValue(
+            _FakeTokenStore(session: _session),
+          ),
+        ],
+        child: _localizedApp(const ProfileScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byType(TextField).first,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.enterText(find.byType(TextField).first, '保留的昵称');
+    await tester.scrollUntilVisible(
+      find.text('保存我的信息'),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('保存我的信息'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('这一次没有保存成功，请稍后再试。'), findsOneWidget);
+    expect(find.byType(ProfileScreen), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byType(TextField).first,
+      -240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      '保留的昵称',
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('保存我的信息'),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('保存我的信息'));
+    await tester.pumpAndSettle();
+    expect(profileRepository.saved?.nickname, '保留的昵称');
+    expect(find.text('已经保存。'), findsOneWidget);
   });
 
   testWidgets('reset screen opens completion after record is saved', (
@@ -1009,16 +1169,25 @@ class _ReactiveLocalizedApp extends ConsumerWidget {
 }
 
 class _FakeCurrentStateController extends CurrentStateController {
+  _FakeCurrentStateController({this.elapsedSeconds = 600});
+
+  final int elapsedSeconds;
+  String? changedTo;
+
   @override
   Future<StateSnapshot> build() async {
     return StateSnapshot(
       state: 'CALM',
       source: 'SYSTEM',
-      changedAt: DateTime.parse('2026-06-19T00:00:00Z'),
+      changedAt: DateTime.now(),
       sessionId: 1,
-      startedAt: DateTime.parse('2026-06-19T00:00:00Z'),
-      elapsedSeconds: 600,
+      elapsedSeconds: elapsedSeconds,
     );
+  }
+
+  @override
+  Future<void> changeState(String nextState) async {
+    changedTo = nextState;
   }
 }
 
@@ -1180,9 +1349,15 @@ class _FakeGrowthRepository extends GrowthRepository {
 }
 
 class _FakeProfileRepository extends ProfileRepository {
-  _FakeProfileRepository() : super(Dio());
+  _FakeProfileRepository({
+    UserProfile? initialProfile,
+    this.failNextUpdate = false,
+  })  : _profile =
+            initialProfile ?? const UserProfile(aiProfileContextEnabled: false),
+        super(Dio());
 
-  UserProfile _profile = const UserProfile(aiProfileContextEnabled: false);
+  UserProfile _profile;
+  bool failNextUpdate;
   UpdateUserProfileRequest? saved;
 
   @override
@@ -1192,6 +1367,10 @@ class _FakeProfileRepository extends ProfileRepository {
 
   @override
   Future<UserProfile> update(UpdateUserProfileRequest request) async {
+    if (failNextUpdate) {
+      failNextUpdate = false;
+      throw StateError('temporary save failure');
+    }
     saved = request;
     _profile = UserProfile(
       nickname: request.nickname,
@@ -1206,6 +1385,8 @@ class _FakeProfileRepository extends ProfileRepository {
     return _profile;
   }
 }
+
+void _noop() {}
 
 class _CapturingEvidenceRepository extends EvidenceRepository {
   _CapturingEvidenceRepository({

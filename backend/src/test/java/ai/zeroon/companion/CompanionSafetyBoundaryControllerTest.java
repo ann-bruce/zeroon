@@ -9,6 +9,7 @@ import ai.zeroon.ai.AiUsageLogRepository;
 import ai.zeroon.ai.AiUsageOutcome;
 import ai.zeroon.ai.LlmProvider;
 import ai.zeroon.ai.LlmResponse;
+import ai.zeroon.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ class CompanionSafetyBoundaryControllerTest {
 
     @Autowired
     private AiUsageLogRepository aiUsageLogRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Test
     void safetyBoundaryReturnsRefusalWithoutCallingLlm() throws Exception {
@@ -58,7 +62,8 @@ class CompanionSafetyBoundaryControllerTest {
                 .andExpect(jsonPath("$.reply", containsString("不能替代医疗、法律、财务或心理诊断建议")))
                 .andExpect(jsonPath("$.safetyNotice", containsString("非诊断性的陪伴式反思")));
 
-        var logs = aiUsageLogRepository.findByUserIdOrderByCreatedAtDesc(1L);
+        Long userId = userRepository.findByMobile("13800138103").orElseThrow().getId();
+        var logs = aiUsageLogRepository.findByUserIdOrderByCreatedAtDesc(userId);
         org.assertj.core.api.Assertions.assertThat(logs).hasSize(2);
         var usage = logs.get(0);
         org.assertj.core.api.Assertions.assertThat(usage.getOutcome()).isEqualTo(AiUsageOutcome.REFUSAL);
@@ -76,6 +81,51 @@ class CompanionSafetyBoundaryControllerTest {
                 .isEqualTo("PSYCHOLOGICAL_DIAGNOSIS");
         org.assertj.core.api.Assertions.assertThat(logs.get(1).getErrorCode())
                 .isEqualTo("MEDICAL");
+    }
+
+    @Test
+    void imminentSelfHarmUsesReviewedDraftPathWithoutCallingLlmOrLoggingContent()
+            throws Exception {
+        String accessToken = login("13800138109");
+        String privateMessage = "I am going to kill myself tonight. PRIVATE-SENTINEL-927";
+
+        mockMvc.perform(post("/api/v1/companion/messages")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("Accept-Language", "en")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                java.util.Map.of("message", privateMessage))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reply", containsString("local emergency services")))
+                .andExpect(jsonPath("$.reply", containsString("trusted person")))
+                .andExpect(jsonPath("$.outcome").value("REFUSAL"))
+                .andExpect(jsonPath("$.promptVersion")
+                        .value("SAFETY_SELF_HARM_V1_REVIEW_PENDING"))
+                .andExpect(jsonPath("$.modelAlias").value("SAFETY_BOUNDARY"))
+                .andExpect(jsonPath("$.contextClasses").isEmpty());
+
+        Long userId = userRepository.findByMobile("13800138109").orElseThrow().getId();
+        var logs = aiUsageLogRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        org.assertj.core.api.Assertions.assertThat(logs).hasSize(1);
+        var usage = logs.get(0);
+        org.assertj.core.api.Assertions.assertThat(usage.getErrorCode())
+                .isEqualTo("SELF_HARM_IMMINENT");
+        org.assertj.core.api.Assertions.assertThat(usage.getPromptTemplateCode()).isNull();
+        org.assertj.core.api.Assertions.assertThat(usage.getPromptTemplateVersion()).isNull();
+
+        String exported = mockMvc.perform(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                                .get("/api/v1/me/export")
+                                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String exportedUsage = objectMapper.readTree(exported).path("aiUsage").path(0).toString();
+        org.assertj.core.api.Assertions.assertThat(exportedUsage)
+                .contains("SELF_HARM_IMMINENT")
+                .doesNotContain("PRIVATE-SENTINEL-927")
+                .doesNotContain("kill myself tonight");
     }
 
     private String login(String mobile) throws Exception {

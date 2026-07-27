@@ -1,15 +1,29 @@
+enum CompanionPurpose {
+  companionChat('COMPANION_CHAT'),
+  resetCompletion('RESET_COMPLETION'),
+  archiveObservation('ARCHIVE_OBSERVATION'),
+  growthObservation('GROWTH_OBSERVATION');
+
+  const CompanionPurpose(this.wireName);
+
+  final String wireName;
+}
+
 class CompanionMessageRequest {
   const CompanionMessageRequest({
     this.conversationId,
+    this.purpose = CompanionPurpose.companionChat,
     required this.message,
   });
 
   final int? conversationId;
+  final CompanionPurpose purpose;
   final String message;
 
   Map<String, dynamic> toJson() {
     return {
       if (conversationId != null) 'conversationId': conversationId,
+      'purpose': purpose.wireName,
       'message': message.trim(),
     };
   }

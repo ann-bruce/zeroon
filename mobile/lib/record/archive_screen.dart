@@ -485,6 +485,7 @@ class _ArchiveObservationCardState
     try {
       final response = await ref.read(companionRepositoryProvider).sendMessage(
             CompanionMessageRequest(
+              purpose: CompanionPurpose.archiveObservation,
               message: context.l10n.observationPrompt,
             ),
           );
@@ -545,43 +546,44 @@ class _ArchiveObservationCardState
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: zeroonNight,
-        borderRadius: BorderRadius.circular(16),
-        gradient: RadialGradient(
-          center: const Alignment(0.9, -0.9),
-          radius: 1.1,
-          colors: [
-            zeroonCyan.withValues(alpha: 0.18),
-            zeroonNight,
-          ],
-        ),
-      ),
+      decoration: zeroonInsightDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             context.l10n.zeroonObservation,
             style: const TextStyle(
-              color: zeroonGold,
-              fontSize: 10,
+              color: zeroonInsightLabel,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
-              letterSpacing: 0.6,
+              letterSpacing: 0.8,
             ),
           ),
           const SizedBox(height: 8),
           if (_loading)
             Text(
               context.l10n.observationLoading,
-              style: const TextStyle(color: zeroonIvory, height: 1.6),
+              style: const TextStyle(
+                color: zeroonInsightText,
+                fontSize: 13,
+                height: 1.6,
+              ),
             )
           else if (_hasText(_error)) ...[
             Text(
               _error!,
-              style: const TextStyle(color: zeroonIvory, height: 1.6),
+              style: const TextStyle(
+                color: zeroonInsightText,
+                fontSize: 13,
+                height: 1.6,
+              ),
             ),
             const SizedBox(height: 8),
             OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: zeroonInsightText,
+                side: const BorderSide(color: zeroonInsightMuted),
+              ),
               onPressed: _loadObservation,
               child: Text(context.l10n.retryShort),
             ),
@@ -592,13 +594,16 @@ class _ArchiveObservationCardState
                 Text(
                   _reply ?? '',
                   style: const TextStyle(
-                    color: Color(0xFFE6DCC9),
+                    color: zeroonInsightText,
                     fontSize: 13,
                     height: 1.65,
                   ),
                 ),
                 const SizedBox(height: 8),
                 TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: zeroonInsightLabel,
+                  ),
                   onPressed: _loadObservation,
                   icon: const Icon(Icons.refresh, size: 16),
                   label: Text(context.l10n.observeAgain),
@@ -608,9 +613,10 @@ class _ArchiveObservationCardState
           const SizedBox(height: 10),
           Text(
             context.l10n.observationConsentNote,
-            style: TextStyle(
-              color: zeroonIvory.withValues(alpha: 0.45),
-              fontSize: 9,
+            style: const TextStyle(
+              color: zeroonInsightMuted,
+              fontSize: 10,
+              height: 1.45,
             ),
           ),
         ],
