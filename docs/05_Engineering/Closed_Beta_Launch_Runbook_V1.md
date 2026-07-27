@@ -41,6 +41,9 @@ must not be copied into this runbook or acceptance evidence.
 | Account deletion | `204`, account-owned private/evidence rows zero, refresh unusable | Local PostgreSQL pass; production-like sample pending |
 | Primary support | Bruce Ann can receive and respond through mailbox and ADMIN queue | Access test pending |
 | Backup support | Chao Fan can receive/respond through mailbox and authenticate to ADMIN queue with least privilege | Access test pending |
+| Mobile artifacts | Signed Android AAB and iOS IPA use the same reviewed commit, HTTPS API, support email, version/build pair, and pass real-device smoke | Native scaffolds and repeatable scripts ready; store signing and real-device smoke pending |
+| Public TLS | Android and iOS accept the API certificate without a custom trust profile or validation bypass | Publicly trusted Let's Encrypt IP certificate installed; renewal dry-run passed |
+| Email login | A new external mailbox receives a non-fixed code and can complete registration/login | Production SMTP request returned `202` and Outlook receipt confirmed; complete registration/login smoke pending |
 
 ## Incident stop rule
 

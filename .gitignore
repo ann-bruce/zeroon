@@ -21,3 +21,6 @@ mobile/.flutter-plugins
 mobile/.flutter-plugins-dependencies
 mobile/build/
 mobile/coverage/
+deployment/nginx/tls/
+deployment/nginx/acme/
+deployment/letsencrypt/

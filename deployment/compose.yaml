@@ -79,11 +79,12 @@ services:
     depends_on:
       - backend
     ports:
-      # Loopback only. Terminate public TLS in an Alibaba Cloud load balancer or
-      # a host reverse proxy and forward to 127.0.0.1:2888.
-      - "127.0.0.1:2888:2888"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./letsencrypt/config:/etc/letsencrypt:ro
+      - ./nginx/acme:/var/www/certbot:ro
       - ../admin/dist:/usr/share/nginx/html:ro
     restart: unless-stopped
 
