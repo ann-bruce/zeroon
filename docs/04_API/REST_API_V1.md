@@ -29,7 +29,8 @@ Related authentication endpoints:
 - `POST /auth/refresh`
 - `POST /auth/logout`
 
-Access tokens expire after 15 minutes. Refresh tokens rotate and expire after
+App access tokens carry USER authority only and expire after the configured
+short lifetime (30 minutes by default). Refresh tokens rotate and expire after
 30 days.
 
 Response
@@ -176,6 +177,20 @@ GET /growth/state-pattern
 ---
 
 ## Admin
+
+### Authentication
+
+`POST /admin/auth/email/codes`
+
+`POST /admin/auth/email/login`
+
+The management portal has its own email-code flow. Only normalized emails in
+`ZEROON_ADMIN_EMAILS` receive a code, but the request endpoint returns the same
+accepted response for every valid email shape. Admin codes use a separate
+one-time-code namespace and cannot create an App session. Successful login
+returns a short-lived ADMIN token without a refresh token; ordinary App login
+always returns USER authority even when the backing identity also has an
+operational role.
 
 ### Users
 

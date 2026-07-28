@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import ai.zeroon.user.UserEntity;
 import ai.zeroon.user.UserRepository;
 import ai.zeroon.user.UserRole;
+import ai.zeroon.security.TokenService;
 import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class AdminPromptTemplateControllerTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TokenService tokenService;
 
     @BeforeEach
     void cleanPrompts() {
@@ -306,7 +310,7 @@ class AdminPromptTemplateControllerTest {
         UserEntity admin = new UserEntity(uid, mobile);
         admin.grantRole(UserRole.ADMIN);
         userRepository.save(admin);
-        return login(uid, mobile);
+        return tokenService.createAdminAccessToken(admin).token();
     }
 
     private String login(String uid, String mobile) throws Exception {

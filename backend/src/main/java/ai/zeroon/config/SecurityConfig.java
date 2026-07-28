@@ -30,11 +30,13 @@ public class SecurityConfig {
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/email/codes",
                                 "/api/v1/auth/email/login",
-                                "/api/v1/auth/refresh")
+                                "/api/v1/auth/refresh",
+                                "/api/v1/admin/auth/email/codes",
+                                "/api/v1/admin/auth/email/login")
                         .permitAll()
                         .requestMatchers("/api/v1/admin/**")
                         .hasRole("ADMIN")
-                        .anyRequest().authenticated())
+                        .anyRequest().hasRole("USER"))
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, authException) ->

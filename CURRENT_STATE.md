@@ -1,6 +1,6 @@
 # ZEROON Current State
 
-Last updated: 2026-07-24
+Last updated: 2026-07-28
 
 This file is the short handoff for new Codex threads. Read it before scanning long docs or old sessions.
 
@@ -58,6 +58,13 @@ Immediate execution order:
   truthful fresh-login and existing-user re-introduction ordering, recoverable
   Settings control, export V5, PostgreSQL V16, recruitment/interview kit, and
   launch runbook. Engineering and local runtime acceptance are complete;
+- post-S12 administrator access hardening is implemented locally: a
+  pre-authorized email allowlist, administrator-only verification-code
+  namespace, ADMIN-only short session without refresh, USER/ADMIN token
+  separation, authentication audit, and a responsive management login replace
+  App registration and manual token pasting. Full backend/admin/OpenAPI,
+  PostgreSQL 16, and 390x844 runtime checks pass; production deployment and
+  real mailbox login remain;
 - do not send the first invitation until SMTP email delivery, one-time code
   consumption, spam placement, and outage behavior are tested in the intended
   environment; approved real-provider checks, Bruce Ann/Chao Fan mailbox and
@@ -94,8 +101,10 @@ Key product guardrails:
 - Sprint 08 S8-01 administrator authorization is implemented: roles are backed
   by `user_roles`, included in signed access tokens, and `/api/v1/admin/**`
   requires ADMIN. Automated USER/ADMIN tests pass and local USER access returns
-  403. Production admin provisioning and future mutation audit remain
-  operational follow-ups.
+  403. The later independent administrator email login now provisions only
+  pre-authorized operational identities, prevents App tokens from carrying
+  ADMIN authority, and audits authentication attempts. Production deployment
+  and real-mailbox access remain operational follow-ups.
 - Sprint 08 S8-02 production fail-fast is complete: the `prod` profile rejects
   missing, short, development, or example JWT and PostgreSQL password values
   before the Spring application context is created. Focused tests, an expected

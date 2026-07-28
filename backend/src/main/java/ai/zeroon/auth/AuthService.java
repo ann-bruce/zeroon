@@ -6,6 +6,7 @@ import ai.zeroon.security.TokenService;
 import ai.zeroon.security.UserPrincipal;
 import ai.zeroon.user.UserEntity;
 import ai.zeroon.user.UserRepository;
+import ai.zeroon.user.UserRole;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -70,6 +71,11 @@ public class AuthService {
             throw new BadCredentialsException("Invalid verification code");
         }
         UserEntity existing = userRepository.findByEmail(normalizedEmail).orElse(null);
+        if (existing != null
+                && existing.getRoles().contains(UserRole.ADMIN)
+                && !existing.getRoles().contains(UserRole.USER)) {
+            throw new BadCredentialsException("Invalid user credentials");
+        }
         boolean newAccount = existing == null;
         UserEntity user = newAccount
                 ? userRepository.save(new UserEntity(createUid(), null, normalizedEmail))
@@ -110,7 +116,7 @@ public class AuthService {
     }
 
     private AuthResponse createSession(UserEntity user, String deviceId, boolean newAccount) {
-        TokenService.AccessToken accessToken = tokenService.createAccessToken(user);
+        TokenService.AccessToken accessToken = tokenService.createUserAccessToken(user);
         TokenService.RefreshToken refreshToken = tokenService.createRefreshToken();
         refreshSessionRepository.save(new RefreshSessionEntity(
                 user,

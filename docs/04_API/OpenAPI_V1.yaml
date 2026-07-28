@@ -128,6 +128,55 @@ paths:
         "401": {$ref: "#/components/responses/Unauthorized"}
         "429": {$ref: "#/components/responses/AuthRateLimited"}
         "503": {$ref: "#/components/responses/AuthUnavailable"}
+  /admin/auth/email/codes:
+    post:
+      tags: [Admin]
+      summary: Request an administrator email verification code
+      description: >-
+        Always returns the same accepted response for a valid email shape.
+        Delivery occurs only when the normalized email is present in the
+        server-side administrator allowlist. The one-time code is stored in an
+        administrator-only namespace and cannot authenticate an App session.
+      operationId: requestAdminEmailLoginCode
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailCodeRequest"
+      responses:
+        "202": {description: Request accepted without disclosing authorization status}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "429": {$ref: "#/components/responses/AuthRateLimited"}
+        "503": {$ref: "#/components/responses/AuthUnavailable"}
+  /admin/auth/email/login:
+    post:
+      tags: [Admin]
+      summary: Start a short-lived administrator session
+      description: >-
+        Consumes an administrator-only verification code for a pre-authorized
+        email and returns a short-lived ADMIN access token without a refresh
+        token. A successful first login provisions the administrator identity
+        server-side. Ordinary App login never issues ADMIN authority.
+      operationId: loginAdminWithEmail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailLoginRequest"
+      responses:
+        "200":
+          description: Administrator authenticated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AdminAuthResponse"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "429": {$ref: "#/components/responses/AuthRateLimited"}
+        "503": {$ref: "#/components/responses/AuthUnavailable"}
   /auth/refresh:
     post:
       tags: [Auth]
@@ -1518,6 +1567,28 @@ components:
           description: True only for the login response that created the account; refresh is false.
         user:
           $ref: "#/components/schemas/AuthUser"
+    AdminAuthResponse:
+      type: object
+      required: [accessToken, expiresIn, admin]
+      properties:
+        accessToken:
+          type: string
+          description: Short-lived ADMIN token scoped to the management API.
+        expiresIn:
+          type: integer
+          format: int64
+          description: Administrator access-token lifetime in seconds.
+        admin:
+          $ref: "#/components/schemas/AdminAuthUser"
+    AdminAuthUser:
+      type: object
+      required: [uid, email]
+      properties:
+        uid:
+          type: string
+        email:
+          type: string
+          format: email
     AuthUser:
       type: object
       required: [id, uid, currentState, languagePreference]

@@ -98,6 +98,22 @@ class ProductionSafetyEnvironmentPostProcessorTest {
     }
 
     @Test
+    void productionRejectsMissingAdministratorEmailAllowlist() {
+        MockEnvironment environment = safeProductionEnvironment()
+                .withProperty("zeroon.auth.admin-emails", "");
+
+        assertUnsafe(environment, "ZEROON_ADMIN_EMAILS");
+    }
+
+    @Test
+    void productionRejectsInvalidAdministratorEmailAllowlist() {
+        MockEnvironment environment = safeProductionEnvironment()
+                .withProperty("zeroon.auth.admin-emails", "admin@example.com,not-an-email");
+
+        assertUnsafe(environment, "ZEROON_ADMIN_EMAILS");
+    }
+
+    @Test
     void productionAcceptsExplicitNonDefaultSecrets() {
         MockEnvironment environment = safeProductionEnvironment();
 
@@ -138,7 +154,8 @@ class ProductionSafetyEnvironmentPostProcessorTest {
                 .withProperty("spring.mail.host", "smtp.example.test")
                 .withProperty("spring.mail.username", "zeroon-smtp")
                 .withProperty("spring.mail.password", "test-only-smtp-password")
-                .withProperty("zeroon.auth.email-from", "hello@zeroon.example");
+                .withProperty("zeroon.auth.email-from", "hello@zeroon.example")
+                .withProperty("zeroon.auth.admin-emails", "admin@zeroon.example");
         environment.setActiveProfiles("prod");
         return environment;
     }

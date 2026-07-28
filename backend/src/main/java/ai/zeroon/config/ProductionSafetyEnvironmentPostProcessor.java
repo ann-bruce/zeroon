@@ -60,6 +60,7 @@ public class ProductionSafetyEnvironmentPostProcessor implements EnvironmentPost
                 16,
                 Set.of());
         validateEmailFrom(environment.getProperty("zeroon.auth.email-from"));
+        validateAdminEmails(environment.getProperty("zeroon.auth.admin-emails"));
     }
 
     private void validateSharedRedisHost(String value) {
@@ -103,6 +104,18 @@ public class ProductionSafetyEnvironmentPostProcessor implements EnvironmentPost
                 || value.isBlank()
                 || !value.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
             throw unsafe("ZEROON_EMAIL_FROM", "is required and must be an email address");
+        }
+    }
+
+    private void validateAdminEmails(String value) {
+        if (value == null || value.isBlank()) {
+            throw unsafe("ZEROON_ADMIN_EMAILS", "is required");
+        }
+        boolean valid = Arrays.stream(value.split(","))
+                .map(String::trim)
+                .allMatch(email -> email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"));
+        if (!valid) {
+            throw unsafe("ZEROON_ADMIN_EMAILS", "must contain only comma-separated email addresses");
         }
     }
 

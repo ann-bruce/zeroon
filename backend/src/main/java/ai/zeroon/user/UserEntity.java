@@ -71,6 +71,14 @@ public class UserEntity {
         this.email = email;
     }
 
+    public static UserEntity createAdmin(String uid, String email) {
+        UserEntity user = new UserEntity();
+        user.uid = uid;
+        user.email = email;
+        user.roles = new HashSet<>(Set.of(UserRole.ADMIN));
+        return user;
+    }
+
     public UserEntity(String uid, String mobile, Instant createdAt) {
         this(uid, mobile);
         this.createdAt = createdAt;

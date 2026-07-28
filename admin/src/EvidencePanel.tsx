@@ -50,8 +50,6 @@ type EvidenceResponse = {
   interpretationNotice: string
 }
 
-const tokenStorageKey = 'zeroon.admin.accessToken'
-
 function isoDate(date: Date) {
   return date.toISOString().slice(0, 10)
 }
@@ -91,12 +89,17 @@ function CountCard({ label, cell }: { label: string; cell: CountCell }) {
   )
 }
 
-export default function EvidencePanel() {
+export default function EvidencePanel({
+  token,
+  onSessionExpired,
+}: {
+  token: string
+  onSessionExpired: () => void
+}) {
   const today = new Date()
   const thirtyDaysAgo = new Date(today)
   thirtyDaysAgo.setDate(today.getDate() - 29)
 
-  const [token, setToken] = useState(() => localStorage.getItem(tokenStorageKey) ?? '')
   const [cohortStart, setCohortStart] = useState(isoDate(thirtyDaysAgo))
   const [cohortEnd, setCohortEnd] = useState(isoDate(today))
   const [asOfDate, setAsOfDate] = useState(isoDate(today))
@@ -105,18 +108,14 @@ export default function EvidencePanel() {
   const [error, setError] = useState<string | null>(null)
 
   async function loadReport() {
-    if (!token.trim()) {
-      setError('请先填写后台访问令牌。')
-      return
-    }
-    localStorage.setItem(tokenStorageKey, token.trim())
     setLoading(true)
     setError(null)
     try {
       const params = new URLSearchParams({ cohortStart, cohortEnd, asOfDate })
       const response = await fetch(`/api/v1/admin/evidence/cohorts?${params}`, {
-        headers: { Authorization: `Bearer ${token.trim()}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
+      if (response.status === 401) onSessionExpired()
       if (!response.ok) {
         throw new Error(response.status === 403 ? '当前账号没有 ADMIN 权限。' : `读取失败：${response.status}`)
       }
@@ -163,11 +162,6 @@ export default function EvidencePanel() {
 
         <Card>
           <Space direction="vertical" size="middle" className="full-width">
-            <Input.Password
-              placeholder="粘贴后台访问令牌"
-              value={token}
-              onChange={(event) => setToken(event.target.value)}
-            />
             <div className="evidence-filters">
               <label>
                 <span>首次认证起始日</span>

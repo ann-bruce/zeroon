@@ -197,6 +197,7 @@ ZEROON_EMAIL_FROM=zeroon_ai@163.com
 ZEROON_SMTP_SSL_ENABLED=true
 ZEROON_SMTP_STARTTLS_ENABLED=false
 ZEROON_SMS_ENABLED=false
+ZEROON_ADMIN_EMAILS=zeroon_ai@outlook.com
 ```
 
 The authorization code is a production secret. POP and IMAP are not required
@@ -227,12 +228,29 @@ development/example value:
 - `ZEROON_SMTP_HOST`, `ZEROON_SMTP_USERNAME`, and
   `ZEROON_SMTP_PASSWORD`;
 - `ZEROON_EMAIL_FROM`: the verified sender address;
+- `ZEROON_ADMIN_EMAILS`: one or more reviewed administrator mailboxes,
+  separated by commas;
 - when `ZEROON_SMS_ENABLED=true` only,
   `ZEROON_VERIFICATION_CODE_SENDER_URL` and
   `ZEROON_VERIFICATION_CODE_SENDER_TOKEN`.
 
 The validator reports only the environment variable name and never logs its
 value. Local and test profiles retain the documented development defaults.
+
+### Administrator session boundary
+
+The management portal authenticates only through
+`/api/v1/admin/auth/email/*`. It does not ask an operator to register in the
+mobile App or paste a token manually. The server sends a code only to an email
+listed in `ZEROON_ADMIN_EMAILS`, stores that code under an administrator-only
+Redis subject, and provisions the operational identity on the first successful
+login. Admin sessions have no refresh token and are kept in browser
+`sessionStorage`; closing the tab or reaching the access-token expiry requires
+another email verification.
+
+The ordinary `/api/v1/auth/*` flow always signs USER-only access tokens. It
+cannot mint ADMIN authority even when the backing database identity has an
+operational role.
 
 ### Verification-code environment boundary
 

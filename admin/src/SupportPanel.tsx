@@ -103,7 +103,6 @@ type MutationBody = {
   reasonCode: string
 }
 
-const tokenStorageKey = 'zeroon.admin.accessToken'
 const categoryOptions: SupportCategory[] = [
   'PRODUCT_PROBLEM',
   'SUGGESTION',
@@ -184,8 +183,13 @@ async function responseJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T
 }
 
-export default function SupportPanel() {
-  const [token, setToken] = useState(() => localStorage.getItem(tokenStorageKey) ?? '')
+export default function SupportPanel({
+  token,
+  onSessionExpired,
+}: {
+  token: string
+  onSessionExpired: () => void
+}) {
   const [items, setItems] = useState<SupportSummary[]>([])
   const [detail, setDetail] = useState<SupportDetail | null>(null)
   const [statusFilter, setStatusFilter] = useState<SupportStatus | undefined>()
@@ -203,18 +207,13 @@ export default function SupportPanel() {
 
   const authHeaders = useCallback(
     () => ({
-      Authorization: `Bearer ${token.trim()}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     }),
     [token],
   )
 
   const loadQueue = useCallback(async () => {
-    if (!token.trim()) {
-      setError('请先填写后台访问令牌。')
-      return
-    }
-    localStorage.setItem(tokenStorageKey, token.trim())
     setLoading(true)
     setError(null)
     const params = new URLSearchParams({ page: '0', size: '50' })
@@ -225,6 +224,7 @@ export default function SupportPanel() {
       const response = await fetch(`/api/v1/admin/support-requests?${params}`, {
         headers: authHeaders(),
       })
+      if (response.status === 401) onSessionExpired()
       const data = await responseJson<SupportPage>(response)
       setItems(data.items)
     } catch (caught) {
@@ -232,11 +232,11 @@ export default function SupportPanel() {
     } finally {
       setLoading(false)
     }
-  }, [authHeaders, categoryFilter, escalatedFilter, statusFilter, token])
+  }, [authHeaders, categoryFilter, escalatedFilter, onSessionExpired, statusFilter])
 
   useEffect(() => {
-    if (token) void loadQueue()
-    // The initial stored token should trigger one load; later filter changes are explicit.
+    void loadQueue()
+    // The active session should trigger one load; later filter changes are explicit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -247,6 +247,7 @@ export default function SupportPanel() {
       const response = await fetch(`/api/v1/admin/support-requests/${reference}`, {
         headers: authHeaders(),
       })
+      if (response.status === 401) onSessionExpired()
       const data = await responseJson<SupportDetail>(response)
       setDetail(data)
       setEscalationCode(data.escalationCode ?? 'ENGINEERING')
@@ -268,6 +269,7 @@ export default function SupportPanel() {
         headers: authHeaders(),
         body: JSON.stringify(body),
       })
+      if (response.status === 401) onSessionExpired()
       const data = await responseJson<SupportDetail>(response)
       setDetail(data)
       setEscalationCode(data.escalationCode ?? 'ENGINEERING')
@@ -315,6 +317,7 @@ export default function SupportPanel() {
           }),
         },
       )
+      if (response.status === 401) onSessionExpired()
       const data = await responseJson<SupportDetail>(response)
       setDetail(data)
       if (visibility === 'INTERNAL') setNote('')
@@ -388,7 +391,7 @@ export default function SupportPanel() {
 
   const closed = detail?.status === 'CLOSED'
   const transitions = detail ? replyTransitions(detail.status) : []
-  const currentAdminUid = tokenUid(token.trim())
+  const currentAdminUid = tokenUid(token)
   const assignedToAnother =
     detail?.assignedAdminUid != null && detail.assignedAdminUid !== currentAdminUid
 
@@ -405,17 +408,6 @@ export default function SupportPanel() {
 
         <Card>
           <Space direction="vertical" className="full-width">
-            <Space.Compact className="token-input">
-              <Input.Password
-                aria-label="后台访问令牌"
-                placeholder="粘贴后台访问令牌"
-                value={token}
-                onChange={(event) => setToken(event.target.value)}
-              />
-              <Button icon={<ReloadOutlined />} type="primary" onClick={() => void loadQueue()}>
-                读取
-              </Button>
-            </Space.Compact>
             <Space wrap>
               <Select
                 allowClear
@@ -444,7 +436,13 @@ export default function SupportPanel() {
                 ]}
                 onChange={setEscalatedFilter}
               />
-              <Button onClick={() => void loadQueue()}>应用筛选</Button>
+              <Button
+                type="primary"
+                icon={<ReloadOutlined />}
+                onClick={() => void loadQueue()}
+              >
+                应用筛选
+              </Button>
             </Space>
           </Space>
         </Card>

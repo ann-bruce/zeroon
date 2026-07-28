@@ -42,7 +42,18 @@ public class TokenService {
         this.refreshTokenTtl = Duration.ofDays(refreshTokenTtlDays);
     }
 
-    public AccessToken createAccessToken(UserEntity user) {
+    public AccessToken createUserAccessToken(UserEntity user) {
+        return createAccessToken(user, Set.of(UserRole.USER), "USER");
+    }
+
+    public AccessToken createAdminAccessToken(UserEntity user) {
+        if (!user.getRoles().contains(UserRole.ADMIN)) {
+            throw new IllegalArgumentException("Admin access token requires an ADMIN user");
+        }
+        return createAccessToken(user, Set.of(UserRole.ADMIN), "ADMIN");
+    }
+
+    private AccessToken createAccessToken(UserEntity user, Set<UserRole> roles, String tokenType) {
         Instant issuedAt = Instant.now();
         Instant expiresAt = issuedAt.plus(accessTokenTtl);
         try {
@@ -50,7 +61,8 @@ public class TokenService {
             String payload = encodeJson(Map.of(
                     "sub", user.getId().toString(),
                     "uid", user.getUid(),
-                    "roles", user.getRoles().stream().map(UserRole::name).sorted().toList(),
+                    "roles", roles.stream().map(UserRole::name).sorted().toList(),
+                    "tokenType", tokenType,
                     "iat", issuedAt.getEpochSecond(),
                     "exp", expiresAt.getEpochSecond()));
             String signature = sign(header + "." + payload);
@@ -88,6 +100,19 @@ public class TokenService {
                 }
             }
             if (roles.isEmpty()) {
+                return null;
+            }
+            String tokenType = payload.path("tokenType").asText("");
+            if ("USER".equals(tokenType) && !roles.equals(Set.of(UserRole.USER))) {
+                return null;
+            }
+            if ("ADMIN".equals(tokenType) && !roles.equals(Set.of(UserRole.ADMIN))) {
+                return null;
+            }
+            if (tokenType.isEmpty() && !roles.equals(Set.of(UserRole.USER))) {
+                return null;
+            }
+            if (!tokenType.isEmpty() && !"USER".equals(tokenType) && !"ADMIN".equals(tokenType)) {
                 return null;
             }
             return new UserPrincipal(

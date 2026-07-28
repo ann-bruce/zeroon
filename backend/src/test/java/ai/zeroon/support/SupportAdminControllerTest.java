@@ -12,6 +12,7 @@ import ai.zeroon.user.UserEntity;
 import ai.zeroon.user.UserRepository;
 import ai.zeroon.user.UserRole;
 import ai.zeroon.ai.LlmProvider;
+import ai.zeroon.security.TokenService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
@@ -45,6 +46,9 @@ class SupportAdminControllerTest {
 
     @Autowired
     private SupportRetentionService supportRetentionService;
+
+    @Autowired
+    private TokenService tokenService;
 
     @MockitoBean
     private LlmProvider llmProvider;
@@ -424,7 +428,10 @@ class SupportAdminControllerTest {
                 mobile);
         admin.grantRole(UserRole.ADMIN);
         userRepository.save(admin);
-        return login(mobile, deviceId);
+        var session = objectMapper.createObjectNode();
+        session.put("accessToken", tokenService.createAdminAccessToken(admin).token());
+        session.putObject("user").put("uid", admin.getUid());
+        return session;
     }
 
     private JsonNode login(String mobile, String deviceId) throws Exception {

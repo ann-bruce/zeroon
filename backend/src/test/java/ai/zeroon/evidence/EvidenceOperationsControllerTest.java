@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import ai.zeroon.user.UserEntity;
 import ai.zeroon.user.UserRepository;
 import ai.zeroon.user.UserRole;
+import ai.zeroon.security.TokenService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,6 +27,9 @@ class EvidenceOperationsControllerTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TokenService tokenService;
 
     @Test
     void adminReceivesOnlyASuppressedAggregateForASmallCohort() throws Exception {
@@ -80,7 +84,7 @@ class EvidenceOperationsControllerTest {
         UserEntity admin = new UserEntity("evidence-op-" + mobile.substring(7), mobile);
         admin.grantRole(UserRole.ADMIN);
         userRepository.save(admin);
-        return login(mobile);
+        return tokenService.createAdminAccessToken(admin).token();
     }
 
     private String login(String mobile) throws Exception {

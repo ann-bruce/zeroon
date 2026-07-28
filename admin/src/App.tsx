@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Alert,
   Button,
@@ -21,8 +21,11 @@ import {
   DashboardOutlined,
   BarChartOutlined,
   CustomerServiceOutlined,
+  LogoutOutlined,
+  MailOutlined,
   MessageOutlined,
   ReloadOutlined,
+  SafetyCertificateOutlined,
   SettingOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
@@ -92,10 +95,59 @@ type PromptTemplateListResponse = {
   items: PromptTemplateSummary[]
 }
 
-const tokenStorageKey = 'zeroon.admin.accessToken'
+type AdminSession = {
+  accessToken: string
+  expiresAt: number
+  admin: {
+    uid: string
+    email: string
+  }
+}
+
+type AdminAuthResponse = {
+  accessToken: string
+  expiresIn: number
+  admin: {
+    uid: string
+    email: string
+  }
+}
+
+const sessionStorageKey = 'zeroon.admin.session'
+const deviceStorageKey = 'zeroon.admin.deviceId'
 
 export default function App() {
   const [selectedKey, setSelectedKey] = useState<MenuKey>('overview')
+  const [session, setSession] = useState<AdminSession | null>(() => restoreSession())
+
+  useEffect(() => {
+    if (!session) return
+    const remaining = session.expiresAt - Date.now()
+    if (remaining <= 0) {
+      clearSession()
+      setSession(null)
+      return
+    }
+    const timer = window.setTimeout(() => {
+      clearSession()
+      setSession(null)
+    }, remaining)
+    return () => window.clearTimeout(timer)
+  }, [session])
+
+  function acceptSession(next: AdminSession) {
+    sessionStorage.setItem(sessionStorageKey, JSON.stringify(next))
+    setSession(next)
+  }
+
+  function endSession() {
+    clearSession()
+    setSession(null)
+  }
+
+  if (!session) {
+    return <AdminLogin onAuthenticated={acceptSession} />
+  }
 
   return (
     <Layout className="shell">
@@ -115,21 +167,35 @@ export default function App() {
             { key: 'settings', icon: <SettingOutlined />, label: '系统配置' },
           ]}
         />
-      </Sider>
+        </Sider>
       <Layout>
         <Header className="header">
-          <Space>
-            <Typography.Text strong>ZEROON 管理后台</Typography.Text>
-            <Tag color="cyan">Sprint 12</Tag>
+          <Space className="header-title">
+            <Typography.Text strong className="header-name">
+              <span className="header-name-full">ZEROON 管理后台</span>
+              <span className="header-name-compact">ZEROON</span>
+            </Typography.Text>
+            <Tag color="cyan">受控会话</Tag>
+          </Space>
+          <Space className="header-session">
+            <Typography.Text type="secondary" className="header-email">
+              {session.admin.email}
+            </Typography.Text>
+            <Button type="text" icon={<LogoutOutlined />} onClick={endSession}>
+              退出
+            </Button>
           </Space>
         </Header>
         <Content className="content">
           {selectedKey === 'support' ? (
-            <SupportPanel />
+            <SupportPanel token={session.accessToken} onSessionExpired={endSession} />
           ) : selectedKey === 'evidence' ? (
-            <EvidencePanel />
+            <EvidencePanel token={session.accessToken} onSessionExpired={endSession} />
           ) : selectedKey === 'prompts' ? (
-            <PromptTemplatesPanel />
+            <PromptTemplatesPanel
+              token={session.accessToken}
+              onSessionExpired={endSession}
+            />
           ) : (
             <OverviewPanel />
           )}
@@ -137,6 +203,181 @@ export default function App() {
       </Layout>
     </Layout>
   )
+}
+
+function AdminLogin({ onAuthenticated }: { onAuthenticated: (session: AdminSession) => void }) {
+  const [email, setEmail] = useState('')
+  const [code, setCode] = useState('')
+  const [codeSent, setCodeSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [loggingIn, setLoggingIn] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function requestCode() {
+    if (!email.trim()) {
+      setError('请输入管理员邮箱。')
+      return
+    }
+    setSending(true)
+    setError(null)
+    try {
+      const response = await fetch('/api/v1/admin/auth/email/codes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+      if (!response.ok) {
+        throw new Error(await authError(response, '验证码暂时无法发送，请稍后再试。'))
+      }
+      setCodeSent(true)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : '验证码暂时无法发送，请稍后再试。')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  async function login() {
+    if (!email.trim() || !/^\d{6}$/.test(code)) {
+      setError('请输入管理员邮箱和六位验证码。')
+      return
+    }
+    setLoggingIn(true)
+    setError(null)
+    try {
+      const response = await fetch('/api/v1/admin/auth/email/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          code,
+          deviceId: adminDeviceId(),
+        }),
+      })
+      if (!response.ok) {
+        throw new Error(await authError(response, '邮箱或验证码不正确，或该邮箱未获授权。'))
+      }
+      const result = (await response.json()) as AdminAuthResponse
+      onAuthenticated({
+        accessToken: result.accessToken,
+        expiresAt: Date.now() + result.expiresIn * 1000,
+        admin: result.admin,
+      })
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : '登录失败，请稍后再试。')
+    } finally {
+      setLoggingIn(false)
+    }
+  }
+
+  return (
+    <main className="admin-login-shell">
+      <Card className="admin-login-card" variant="borderless">
+        <Space direction="vertical" size="large" className="full-width">
+          <div className="admin-login-brand">ZEROON</div>
+          <div>
+            <Typography.Title level={2}>管理后台</Typography.Title>
+            <Typography.Paragraph type="secondary">
+              仅限预先授权的运营与支持人员。登录不会创建或进入普通 App 账号。
+            </Typography.Paragraph>
+          </div>
+          <Alert
+            type="info"
+            showIcon
+            icon={<SafetyCertificateOutlined />}
+            message="短时受控会话"
+            description="验证码仅用于本次后台登录；会话保存在当前标签页，30 分钟后自动结束。"
+          />
+          <Input
+            size="large"
+            prefix={<MailOutlined />}
+            type="email"
+            autoComplete="email"
+            placeholder="管理员邮箱"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            onPressEnter={() => void requestCode()}
+          />
+          {codeSent ? (
+            <>
+              <Input
+                size="large"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="六位验证码"
+                value={code}
+                onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
+                onPressEnter={() => void login()}
+              />
+              <Typography.Text type="secondary">
+                如果该邮箱已获授权，验证码已发送。未收到时可稍后重新获取。
+              </Typography.Text>
+            </>
+          ) : null}
+          {error ? <Alert type="warning" showIcon message={error} /> : null}
+          <Space className="admin-login-actions">
+            <Button size="large" loading={sending} onClick={() => void requestCode()}>
+              {codeSent ? '重新获取' : '获取验证码'}
+            </Button>
+            <Button
+              size="large"
+              type="primary"
+              disabled={!codeSent}
+              loading={loggingIn}
+              onClick={() => void login()}
+            >
+              进入后台
+            </Button>
+          </Space>
+        </Space>
+      </Card>
+    </main>
+  )
+}
+
+function restoreSession(): AdminSession | null {
+  try {
+    const stored = sessionStorage.getItem(sessionStorageKey)
+    if (!stored) return null
+    const session = JSON.parse(stored) as AdminSession
+    if (
+      !session.accessToken ||
+      !session.admin?.email ||
+      !Number.isFinite(session.expiresAt) ||
+      session.expiresAt <= Date.now()
+    ) {
+      clearSession()
+      return null
+    }
+    return session
+  } catch {
+    clearSession()
+    return null
+  }
+}
+
+function clearSession() {
+  sessionStorage.removeItem(sessionStorageKey)
+}
+
+function adminDeviceId() {
+  const stored = sessionStorage.getItem(deviceStorageKey)
+  if (stored) return stored
+  const next = `admin-web-${crypto.randomUUID()}`
+  sessionStorage.setItem(deviceStorageKey, next)
+  return next
+}
+
+async function authError(response: Response, fallback: string) {
+  if (response.status === 429) return '操作过于频繁，请稍后再试。'
+  if (response.status === 401 || response.status === 403) return fallback
+  try {
+    const body = (await response.json()) as { message?: string }
+    return body.message || fallback
+  } catch {
+    return fallback
+  }
 }
 
 function OverviewPanel() {
@@ -151,8 +392,13 @@ function OverviewPanel() {
   )
 }
 
-function PromptTemplatesPanel() {
-  const [token, setToken] = useState(() => localStorage.getItem(tokenStorageKey) ?? '')
+function PromptTemplatesPanel({
+  token,
+  onSessionExpired,
+}: {
+  token: string
+  onSessionExpired: () => void
+}) {
   const [items, setItems] = useState<PromptTemplateSummary[]>([])
   const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplateDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -236,17 +482,13 @@ function PromptTemplatesPanel() {
     ]
 
   async function loadPrompts() {
-    if (!token.trim()) {
-      setError('请先填写访问令牌。')
-      return
-    }
-    localStorage.setItem(tokenStorageKey, token.trim())
     setLoading(true)
     setError(null)
     try {
       const response = await fetch('/api/v1/admin/prompts', {
-        headers: { Authorization: `Bearer ${token.trim()}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
+      if (response.status === 401) onSessionExpired()
       if (!response.ok) {
         throw new Error(`读取失败：${response.status}`)
       }
@@ -264,8 +506,9 @@ function PromptTemplatesPanel() {
     setError(null)
     try {
       const response = await fetch(`/api/v1/admin/prompts/${promptId}`, {
-        headers: { Authorization: `Bearer ${token.trim()}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
+      if (response.status === 401) onSessionExpired()
       if (!response.ok) {
         throw new Error(`详情读取失败：${response.status}`)
       }
@@ -289,7 +532,7 @@ function PromptTemplatesPanel() {
       const response = await fetch('/api/v1/admin/prompts', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token.trim()}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -299,6 +542,7 @@ function PromptTemplatesPanel() {
           reasonCode: createReason.trim(),
         }),
       })
+      if (response.status === 401) onSessionExpired()
       if (!response.ok) {
         throw new Error(await mutationError(response, '创建失败'))
       }
@@ -393,11 +637,12 @@ function PromptTemplatesPanel() {
       const response = await fetch(path, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token.trim()}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
       })
+      if (response.status === 401) onSessionExpired()
       if (!response.ok) {
         throw new Error(await mutationError(response, fallback))
       }
@@ -424,19 +669,14 @@ function PromptTemplatesPanel() {
         </div>
 
         <Card>
-          <Space.Compact className="token-input">
-            <Input.Password
-              placeholder="粘贴后台访问令牌"
-              value={token}
-              onChange={(event) => setToken(event.target.value)}
-            />
+          <Space className="full-width" wrap>
             <Button icon={<ReloadOutlined />} onClick={loadPrompts}>
-              读取
+              刷新
             </Button>
             <Button type="primary" onClick={() => setCreateOpen(true)}>
               新建版本
             </Button>
-          </Space.Compact>
+          </Space>
         </Card>
 
         {error ? <Alert type="warning" showIcon message={error} /> : null}
