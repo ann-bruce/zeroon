@@ -27,12 +27,20 @@ class OpenAiCompatibleLlmProviderTest {
     @Test
     void rejectsMissingProviderConfiguration() {
         var provider = new OpenAiCompatibleLlmProvider(
-                new LlmProperties("openai-compatible", "", "", "test-model", 10),
+                new LlmProperties("openai-compatible", "", "", "test-model", 10, 0.2),
                 new ObjectMapper());
 
         assertThatThrownBy(() -> provider.generate(new LlmRequest("system", "user", Duration.ofSeconds(1))))
                 .isInstanceOf(LlmProviderUnavailableException.class)
                 .hasMessageContaining("not configured");
+    }
+
+    @Test
+    void rejectsTemperatureOutsideProviderRange() {
+        assertThatThrownBy(() ->
+                        new LlmProperties("openai-compatible", "https://example.test", "key", "model", 10, 2.1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("temperature");
     }
 
     @Test
@@ -43,7 +51,7 @@ class OpenAiCompatibleLlmProviderTest {
 
         String baseUrl = "http://localhost:" + server.getAddress().getPort() + "/v1";
         var provider = new OpenAiCompatibleLlmProvider(
-                new LlmProperties("openai-compatible", baseUrl, "test-key", "test-model", 10),
+                new LlmProperties("openai-compatible", baseUrl, "test-key", "test-model", 10, 0.2),
                 new ObjectMapper());
 
         LlmResponse response = provider.generate(new LlmRequest(
@@ -64,6 +72,7 @@ class OpenAiCompatibleLlmProviderTest {
         assertThat(exchange.getRequestHeaders().getFirst("Authorization")).isEqualTo("Bearer test-key");
         String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         assertThat(requestBody).contains("test-model");
+        assertThat(requestBody).contains("\"temperature\":0.2");
         assertThat(requestBody).contains("You are ZEROON.");
         assertThat(requestBody).contains("Reflect on this record.");
 

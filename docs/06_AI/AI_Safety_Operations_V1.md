@@ -3,6 +3,9 @@
 ## Runtime Rules
 
 - Companion provider timeout: 8 seconds.
+- Generation temperature is explicitly configured through
+  `ZEROON_LLM_TEMPERATURE` and must use the same recorded value in release
+  evaluation and production.
 - Automatic provider retry is disabled in the current adapter; an unavailable
   provider returns the calm fallback without exposing technical errors.
 - Maximum user message: 4,000 characters.
