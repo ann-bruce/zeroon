@@ -2,10 +2,13 @@
 
 ## Runtime Rules
 
-- Companion provider timeout: 8 seconds.
+- Companion provider timeout is explicitly configured through
+  `ZEROON_LLM_TIMEOUT_SECONDS`; the current release budget is 18 seconds.
 - Generation temperature is explicitly configured through
   `ZEROON_LLM_TEMPERATURE` and must use the same recorded value in release
   evaluation and production.
+- Maximum completion size is explicitly configured through
+  `ZEROON_LLM_MAX_OUTPUT_TOKENS`; the current release budget is 1,200 tokens.
 - Automatic provider retry is disabled in the current adapter; an unavailable
   provider returns the calm fallback without exposing technical errors.
 - Maximum user message: 4,000 characters.

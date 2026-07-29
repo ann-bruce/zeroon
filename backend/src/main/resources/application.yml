@@ -77,8 +77,9 @@ zeroon:
     base-url: ${LLM_BASE_URL:}
     api-key: ${LLM_API_KEY:}
     model: ${ZEROON_LLM_MODEL:gpt-4o-mini}
-    timeout-seconds: ${ZEROON_LLM_TIMEOUT_SECONDS:10}
+    timeout-seconds: ${ZEROON_LLM_TIMEOUT_SECONDS:18}
     temperature: ${ZEROON_LLM_TEMPERATURE:0.2}
+    max-output-tokens: ${ZEROON_LLM_MAX_OUTPUT_TOKENS:1200}
   support:
     request-hourly-limit: ${ZEROON_SUPPORT_REQUEST_HOURLY_LIMIT:5}
     message-hourly-limit: ${ZEROON_SUPPORT_MESSAGE_HOURLY_LIMIT:20}

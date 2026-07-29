@@ -48,6 +48,7 @@ public class OpenAiCompatibleLlmProvider implements LlmProvider {
             String body = objectMapper.writeValueAsString(Map.of(
                     "model", properties.model(),
                     "temperature", properties.temperature(),
+                    "max_tokens", properties.maxOutputTokens(),
                     "messages", List.of(
                             Map.of("role", "system", "content", request.systemPrompt()),
                             Map.of("role", "user", "content", request.userPrompt()))));

@@ -27,7 +27,7 @@ class OpenAiCompatibleLlmProviderTest {
     @Test
     void rejectsMissingProviderConfiguration() {
         var provider = new OpenAiCompatibleLlmProvider(
-                new LlmProperties("openai-compatible", "", "", "test-model", 10, 0.2),
+                new LlmProperties("openai-compatible", "", "", "test-model", 18, 0.2, 1200),
                 new ObjectMapper());
 
         assertThatThrownBy(() -> provider.generate(new LlmRequest("system", "user", Duration.ofSeconds(1))))
@@ -38,9 +38,19 @@ class OpenAiCompatibleLlmProviderTest {
     @Test
     void rejectsTemperatureOutsideProviderRange() {
         assertThatThrownBy(() ->
-                        new LlmProperties("openai-compatible", "https://example.test", "key", "model", 10, 2.1))
+                        new LlmProperties(
+                                "openai-compatible", "https://example.test", "key", "model", 18, 2.1, 1200))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("temperature");
+    }
+
+    @Test
+    void rejectsOutputTokenLimitOutsideProviderRange() {
+        assertThatThrownBy(() ->
+                        new LlmProperties(
+                                "openai-compatible", "https://example.test", "key", "model", 18, 0.2, 63))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("output tokens");
     }
 
     @Test
@@ -51,7 +61,8 @@ class OpenAiCompatibleLlmProviderTest {
 
         String baseUrl = "http://localhost:" + server.getAddress().getPort() + "/v1";
         var provider = new OpenAiCompatibleLlmProvider(
-                new LlmProperties("openai-compatible", baseUrl, "test-key", "test-model", 10, 0.2),
+                new LlmProperties(
+                        "openai-compatible", baseUrl, "test-key", "test-model", 18, 0.2, 1200),
                 new ObjectMapper());
 
         LlmResponse response = provider.generate(new LlmRequest(
@@ -73,6 +84,7 @@ class OpenAiCompatibleLlmProviderTest {
         String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         assertThat(requestBody).contains("test-model");
         assertThat(requestBody).contains("\"temperature\":0.2");
+        assertThat(requestBody).contains("\"max_tokens\":1200");
         assertThat(requestBody).contains("You are ZEROON.");
         assertThat(requestBody).contains("Reflect on this record.");
 

@@ -1,6 +1,7 @@
 package ai.zeroon.companion;
 
 import ai.zeroon.ai.LlmProvider;
+import ai.zeroon.ai.LlmProperties;
 import ai.zeroon.ai.LlmProviderUnavailableException;
 import ai.zeroon.ai.LlmRequest;
 import ai.zeroon.ai.LlmResponse;
@@ -11,13 +12,13 @@ import ai.zeroon.companion.CompanionTurnPersistenceService.AssembledUserPrompt;
 import ai.zeroon.companion.CompanionTurnPersistenceService.StartedTurn;
 import ai.zeroon.prompt.PromptTemplateSelection;
 import ai.zeroon.prompt.PromptTemplateService;
-import java.time.Duration;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CompanionService {
 
     private final LlmProvider llmProvider;
+    private final LlmProperties llmProperties;
     private final PromptTemplateService promptTemplateService;
     private final SafetyBoundaryService safetyBoundaryService;
     private final CompanionTurnPersistenceService turnPersistenceService;
@@ -26,12 +27,14 @@ public class CompanionService {
 
     public CompanionService(
             LlmProvider llmProvider,
+            LlmProperties llmProperties,
             PromptTemplateService promptTemplateService,
             SafetyBoundaryService safetyBoundaryService,
             CompanionTurnPersistenceService turnPersistenceService,
             CompanionLanguageResolver languageResolver,
             CompanionPromptAssembler promptAssembler) {
         this.llmProvider = llmProvider;
+        this.llmProperties = llmProperties;
         this.promptTemplateService = promptTemplateService;
         this.safetyBoundaryService = safetyBoundaryService;
         this.turnPersistenceService = turnPersistenceService;
@@ -81,7 +84,7 @@ public class CompanionService {
             LlmResponse response = llmProvider.generate(new LlmRequest(
                     systemPrompt,
                     userPrompt,
-                    Duration.ofSeconds(8)));
+                    llmProperties.timeout()));
             return turnPersistenceService.complete(
                     turn,
                     response.content(),
