@@ -29,6 +29,8 @@ final class EvidenceCohortCalculator {
             EventName.RECORD_SAVE_FAILED,
             EventName.ARCHIVE_VIEWED,
             EventName.RECORD_DETAIL_VIEWED,
+            EventName.RETURN_CUE_OPENED,
+            EventName.RETURN_CUE_CONTINUED,
             EventName.REFLECTION_REQUESTED,
             EventName.REFLECTION_COMPLETED,
             EventName.MEMORY_CONTROL_CHANGED,
@@ -194,6 +196,8 @@ final class EvidenceCohortCalculator {
     private static boolean isContinuityReview(Observation event) {
         return event.eventName() == EventName.ARCHIVE_VIEWED
                 || event.eventName() == EventName.RECORD_DETAIL_VIEWED
+                || event.eventName() == EventName.RETURN_CUE_OPENED
+                || event.eventName() == EventName.RETURN_CUE_CONTINUED
                 || (event.eventName() == EventName.REFLECTION_REQUESTED
                         && Set.of("ARCHIVE", "RECORD_DETAIL").contains(event.surface()));
     }

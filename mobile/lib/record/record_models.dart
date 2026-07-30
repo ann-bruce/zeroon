@@ -89,6 +89,44 @@ class RecordPage {
   }
 }
 
+class ContinuityCue {
+  const ContinuityCue({
+    required this.recordId,
+    required this.state,
+    required this.preview,
+    required this.createdAt,
+  });
+
+  final int recordId;
+  final String state;
+  final String preview;
+  final DateTime createdAt;
+
+  factory ContinuityCue.fromJson(Map<String, dynamic> json) {
+    return ContinuityCue(
+      recordId: json['recordId'] as int,
+      state: json['state'] as String,
+      preview: json['preview'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+  }
+}
+
+class ContinuityCueResponse {
+  const ContinuityCueResponse({required this.cue});
+
+  final ContinuityCue? cue;
+
+  factory ContinuityCueResponse.fromJson(Map<String, dynamic> json) {
+    final rawCue = json['cue'];
+    return ContinuityCueResponse(
+      cue: rawCue is Map<String, dynamic>
+          ? ContinuityCue.fromJson(rawCue)
+          : null,
+    );
+  }
+}
+
 String recordPreview(ZeroRecord record) {
   if (_hasText(record.content)) {
     return record.content!.trim();

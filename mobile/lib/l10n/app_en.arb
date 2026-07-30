@@ -91,6 +91,15 @@
   "continuousReset": "RESET RHYTHM",
   "tapDateToReview": "Choose a lit date to revisit",
   "noArchiveToday": "Nothing new has been placed in the Archive today.",
+  "continuityCueTitle": "REVISIT A MOMENT WITH ZEROON",
+  "continuityCueAge": "{days} days ago",
+  "@continuityCueAge": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "continuityCueReview": "Review this moment",
+  "continuityCueLater": "Not now",
   "stateHintFocus": "A quiet moment for one thing that matters.",
   "stateHintCreate": "Place the idea here before it drifts away.",
   "stateHintTired": "You can move slowly and keep only the smallest next step.",
@@ -166,6 +175,7 @@
   "recordWordsTitle": "Words left here",
   "zeroonEchoTitle": "ZEROON echo",
   "recordLoadFailed": "This record couldn't be read just now. It remains safely stored.",
+  "writeNow": "Write what is here now",
   "memoryTitle": "What ZEROON remembers",
   "memoryIntro": "These came from your records and belong only to you.",
   "memoryIntroControl": "You can pause a memory or remove it from ZEROON.",

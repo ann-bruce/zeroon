@@ -1,7 +1,7 @@
 # Companion Prompt Evaluation V1
 
-Status: Implemented; Persona V2 production-parameter run complete, human and
-professional safety review pending
+Status: Implemented; Persona V2 production-parameter run and named human
+review passed; professional safety review pending
 Prepared: 2026-07-27
 Depends on: `ZEROON_Persona_V2_Draft.md`
 
@@ -269,5 +269,12 @@ approved version remains available.
 - The API now accepts a reviewed `purpose`; it does not grant context access.
 - Prompt review and evaluation require distinct named responsibilities, while
   rollback remains available to an authorized administrator.
+- Bruce Ann and Chao Fan approved the content-free Persona V2 aggregate
+  (`0/2/2/2/1/1.80`, bilingual passed), and production evaluation ID `1`
+  records `passed=true`.
 - The high-risk policy is engineering-complete but still requires professional
-  review before wider Beta recruitment; Persona evaluation cannot approve it.
+  review using `High_Risk_Safety_Professional_Review_Packet_V1.md`; Persona
+  evaluation cannot approve it. Persona V2 was globally activated on
+  2026-07-30 through the audited owner-risk exception
+  `OWNER_RISK_ACCEPTED_PROFESSIONAL_REVIEW_PENDING`. The exception does not
+  close the professional-review requirement.

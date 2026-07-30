@@ -42,6 +42,20 @@ public final class RecordDtos {
             long totalElements) {
     }
 
+    /**
+     * A minimal, user-owned record representation for the optional Now continuity cue.
+     * This is selected only by ownership and time; no record text is interpreted or ranked.
+     */
+    public record ContinuityCue(
+            Long recordId,
+            UserState state,
+            String preview,
+            Instant createdAt) {
+    }
+
+    public record ContinuityCueResponse(ContinuityCue cue) {
+    }
+
     private static boolean hasText(String value) {
         return value != null && !value.isBlank();
     }

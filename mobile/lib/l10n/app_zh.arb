@@ -109,6 +109,15 @@
   "continuousReset": "连续归零",
   "tapDateToReview": "点亮日期可回看",
   "noArchiveToday": "今天还没有新的山海缓存。",
+  "continuityCueTitle": "和 ZEROON 回看一个此刻",
+  "continuityCueAge": "{days} 天前",
+  "@continuityCueAge": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "continuityCueReview": "回看这个此刻",
+  "continuityCueLater": "先放着",
   "stateHintFocus": "今天适合安静地完成一件重要的事。",
   "stateHintCreate": "把浮现出来的想法先放在这里。",
   "stateHintTired": "可以慢一点，只保留最小的一步。",
@@ -184,6 +193,7 @@
   "recordWordsTitle": "想记录的话",
   "zeroonEchoTitle": "ZEROON 回声",
   "recordLoadFailed": "暂时没能读到这条记录。它仍然好好保存在这里。",
+  "writeNow": "写下现在",
   "memoryTitle": "ZEROON 记住的",
   "memoryIntro": "这些内容来自你的记录，只属于你。",
   "memoryIntroControl": "你可以暂停一条记忆，也可以把它从 ZEROON 中删除。",

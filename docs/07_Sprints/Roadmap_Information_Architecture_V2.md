@@ -122,6 +122,14 @@ capability is validated.
 - First cohort limited to at most 20 invited adults
 - Previously undocumented Sprint 10 scope is not reconstructed or approved
 
+### Sprint 13
+
+- Return Loop Validation
+- Quietly resurface one eligible user-owned moment after time passes
+- Validate in-app return value before adding notification delivery
+- No AI importance inference, private lock-screen text, generic chat, streak
+  pressure, scores, or social mechanics
+
 ### V1.2
 
 - Record templates

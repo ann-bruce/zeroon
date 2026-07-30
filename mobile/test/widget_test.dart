@@ -30,6 +30,7 @@ import 'package:zeroon_mobile/my_zeroon/my_zeroon_repository.dart';
 import 'package:zeroon_mobile/profile/profile_models.dart';
 import 'package:zeroon_mobile/profile/profile_repository.dart';
 import 'package:zeroon_mobile/profile/profile_screen.dart';
+import 'package:zeroon_mobile/record/continuity_cue_controller.dart';
 import 'package:zeroon_mobile/record/record_models.dart';
 import 'package:zeroon_mobile/record/record_repository.dart';
 import 'package:zeroon_mobile/record/reset_screen.dart';
@@ -190,6 +191,126 @@ void main() {
 
     expect(find.text('见到你了，Bruce'), findsOneWidget);
     expect(find.textContaining('8000'), findsNothing);
+  });
+
+  testWidgets('Now uses the reset rhythm slot for an optional continuity cue',
+      (tester) async {
+    final dismissalStore = _FakeContinuityCueDismissalStore();
+    final recordRepository = _FakeRecordRepository(
+      continuityCue: ContinuityCue(
+        recordId: 1,
+        state: 'CALM',
+        preview: '今天我停下来了一会儿。',
+        createdAt: DateTime.now().subtract(const Duration(days: 4)),
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider
+              .overrideWith(() => _FakeCurrentStateController()),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          recordRepositoryProvider.overrideWithValue(recordRepository),
+          continuityCueDismissalStoreProvider.overrideWithValue(dismissalStore),
+          profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
+        ],
+        child: _localizedApp(
+          const NowScreen(session: _session, onStartReset: _noop),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('和 ZEROON 回看一个此刻'), findsOneWidget);
+    expect(find.text('今天我停下来了一会儿。'), findsOneWidget);
+    expect(find.text('连续归零'), findsNothing);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('先放着'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('和 ZEROON 回看一个此刻'), findsNothing);
+    expect(find.text('连续归零'), findsOneWidget);
+  });
+
+  testWidgets('Now restores its rhythm slot while a refreshed cue loads or fails',
+      (tester) async {
+    final dismissalStore = _FakeContinuityCueDismissalStore();
+    final recordRepository = _FakeRecordRepository(
+      continuityCue: ContinuityCue(
+        recordId: 1,
+        state: 'CALM',
+        preview: '今天我停下来了一会儿。',
+        createdAt: DateTime.now().subtract(const Duration(days: 4)),
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider
+              .overrideWith(() => _FakeCurrentStateController()),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          recordRepositoryProvider.overrideWithValue(recordRepository),
+          continuityCueDismissalStoreProvider.overrideWithValue(dismissalStore),
+          profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
+        ],
+        child: _localizedApp(
+          const NowScreen(session: _session, onStartReset: _noop),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('和 ZEROON 回看一个此刻'), findsOneWidget);
+
+    final refresh = Completer<ContinuityCue?>();
+    recordRepository.continuityCueRequest = () => refresh.future;
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(NowScreen)),
+    );
+    container.refresh(continuityCueProvider(_session.user.uid));
+    await tester.pump();
+
+    expect(find.text('和 ZEROON 回看一个此刻'), findsNothing);
+    expect(find.text('连续归零'), findsOneWidget);
+
+    refresh.completeError(StateError('cue refresh unavailable'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('和 ZEROON 回看一个此刻'), findsNothing);
+    expect(find.text('连续归零'), findsOneWidget);
+  });
+
+  testWidgets('Now keeps its rhythm slot when the initial cue load fails',
+      (tester) async {
+    final pending = Completer<ContinuityCue?>();
+    final recordRepository = _FakeRecordRepository(
+      continuityCueRequest: () => pending.future,
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider
+              .overrideWith(() => _FakeCurrentStateController()),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          recordRepositoryProvider.overrideWithValue(recordRepository),
+          continuityCueDismissalStoreProvider
+              .overrideWithValue(_FakeContinuityCueDismissalStore()),
+          profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
+        ],
+        child: _localizedApp(
+          const NowScreen(session: _session, onStartReset: _noop),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('和 ZEROON 回看一个此刻'), findsNothing);
+    expect(find.text('连续归零'), findsOneWidget);
+
+    pending.completeError(StateError('cue unavailable'));
+    await tester.pumpAndSettle();
+    expect(find.text('和 ZEROON 回看一个此刻'), findsNothing);
+    expect(find.text('连续归零'), findsOneWidget);
   });
 
   testWidgets('state switch after five minutes protects a pending Reset', (
@@ -524,6 +645,14 @@ void main() {
     expect(find.text('想记录的话'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
+    expect(find.text('写下现在'), findsOneWidget);
+    await tester.tap(find.text('写下现在'));
+    await tester.pumpAndSettle();
+    expect(find.text('归零'), findsOneWidget);
+    final resetFields = tester.widgetList<TextField>(find.byType(TextField));
+    expect(resetFields, hasLength(2));
+    expect(resetFields.map((field) => field.controller?.text),
+        everyElement(isEmpty));
     expect(find.textContaining('数据来源'), findsNothing);
   });
 
@@ -774,6 +903,60 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('山海缓存'), findsOneWidget);
     expect(find.byIcon(Icons.chevron_left), findsNothing);
+  });
+
+  testWidgets('return cue continuation is recorded only after Record save', (
+    tester,
+  ) async {
+    final evidenceRepository = _CapturingEvidenceRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          companionRepositoryProvider.overrideWithValue(
+            _FakeCompanionRepository(),
+          ),
+          evidenceRepositoryProvider.overrideWithValue(evidenceRepository),
+        ],
+        child: _localizedApp(
+          const ResetScreen(
+            entrySource: 'RETURN_CUE',
+            returnCueRecordAgeBucket: 'ONE_TO_SIX_DAYS',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      evidenceRepository.events
+          .where((event) => event.eventName == 'RETURN_CUE_CONTINUED'),
+      isEmpty,
+    );
+    final resetStarted = evidenceRepository.events
+        .where((event) => event.eventName == 'RESET_STARTED')
+        .single;
+    expect(resetStarted.properties['entrySource'], 'RETURN_CUE');
+
+    await tester.enterText(find.byType(TextField).first, 'today I continued');
+    await tester.scrollUntilVisible(
+      find.text('保存这次归零'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('保存这次归零'));
+    await tester.pumpAndSettle();
+
+    final continued = evidenceRepository.events
+        .where((event) => event.eventName == 'RETURN_CUE_CONTINUED')
+        .single;
+    expect(continued.properties, {
+      'recordAgeBucket': 'ONE_TO_SIX_DAYS',
+      'surface': 'NOW',
+    });
   });
 
   testWidgets('language switch keeps the Reset screen and unsaved draft', (
@@ -1213,7 +1396,15 @@ class _FakeTokenStore implements TokenStore {
 }
 
 class _FakeRecordRepository extends RecordRepository {
-  _FakeRecordRepository() : super(Dio());
+  _FakeRecordRepository({
+    ContinuityCue? continuityCue,
+    this.continuityCueRequest,
+  })
+      : _continuityCue = continuityCue,
+        super(Dio());
+
+  final ContinuityCue? _continuityCue;
+  Future<ContinuityCue?> Function()? continuityCueRequest;
 
   final _record = ZeroRecord(
     id: 1,
@@ -1235,6 +1426,12 @@ class _FakeRecordRepository extends RecordRepository {
   }
 
   @override
+  Future<ContinuityCue?> continuityCue({required String timezone}) async {
+    final request = continuityCueRequest;
+    return request == null ? _continuityCue : request();
+  }
+
+  @override
   Future<RecordPage> list({int page = 0, int size = 20}) async {
     return RecordPage(
       items: [_record],
@@ -1242,6 +1439,29 @@ class _FakeRecordRepository extends RecordRepository {
       size: size,
       totalElements: 1,
     );
+  }
+}
+
+class _FakeContinuityCueDismissalStore implements ContinuityCueDismissalStore {
+  final values = <String, String>{};
+  final availabilityRecordedDays = <String, String>{};
+
+  @override
+  Future<String?> availabilityRecordedDayFor(String userId) async =>
+      availabilityRecordedDays[userId];
+
+  @override
+  Future<String?> dismissedDayFor(String userId) async => values[userId];
+
+  @override
+  Future<void> dismissForDay(String userId, String localDay) async {
+    values[userId] = localDay;
+  }
+
+  @override
+  Future<void> markAvailabilityRecordedForDay(
+      String userId, String localDay) async {
+    availabilityRecordedDays[userId] = localDay;
   }
 }
 

@@ -281,6 +281,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noArchiveToday => '今天还没有新的山海缓存。';
 
   @override
+  String get continuityCueTitle => '和 ZEROON 回看一个此刻';
+
+  @override
+  String continuityCueAge(int days) {
+    return '$days 天前';
+  }
+
+  @override
+  String get continuityCueReview => '回看这个此刻';
+
+  @override
+  String get continuityCueLater => '先放着';
+
+  @override
   String get stateHintFocus => '今天适合安静地完成一件重要的事。';
 
   @override
@@ -499,6 +513,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get recordLoadFailed => '暂时没能读到这条记录。它仍然好好保存在这里。';
+
+  @override
+  String get writeNow => '写下现在';
 
   @override
   String get memoryTitle => 'ZEROON 记住的';

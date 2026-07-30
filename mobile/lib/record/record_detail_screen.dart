@@ -8,11 +8,17 @@ import '../evidence/evidence_repository.dart';
 import '../l10n/l10n_extensions.dart';
 import 'record_controller.dart';
 import 'record_models.dart';
+import 'reset_screen.dart';
 
 class RecordDetailScreen extends ConsumerStatefulWidget {
-  const RecordDetailScreen({super.key, required this.recordId});
+  const RecordDetailScreen({
+    super.key,
+    required this.recordId,
+    this.openedFromContinuityCue = false,
+  });
 
   final int recordId;
+  final bool openedFromContinuityCue;
 
   @override
   ConsumerState<RecordDetailScreen> createState() => _RecordDetailScreenState();
@@ -93,6 +99,25 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
                   _DetailBlock(
                       title: context.l10n.zeroonEchoTitle,
                       content: item.aiSummary!),
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ResetScreen(
+                          entrySource: widget.openedFromContinuityCue
+                              ? 'RETURN_CUE'
+                              : 'RECORD_DETAIL',
+                          returnCueRecordAgeBucket:
+                              widget.openedFromContinuityCue
+                                  ? recordAgeBucket(item.createdAt)
+                                  : null,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text(context.l10n.writeNow),
+                ),
               ],
             );
           },

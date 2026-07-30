@@ -306,6 +306,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Nothing new has been placed in the Archive today.';
 
   @override
+  String get continuityCueTitle => 'REVISIT A MOMENT WITH ZEROON';
+
+  @override
+  String continuityCueAge(int days) {
+    return '$days days ago';
+  }
+
+  @override
+  String get continuityCueReview => 'Review this moment';
+
+  @override
+  String get continuityCueLater => 'Not now';
+
+  @override
   String get stateHintFocus => 'A quiet moment for one thing that matters.';
 
   @override
@@ -549,6 +563,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recordLoadFailed =>
       'This record couldn\'t be read just now. It remains safely stored.';
+
+  @override
+  String get writeNow => 'Write what is here now';
 
   @override
   String get memoryTitle => 'What ZEROON remembers';

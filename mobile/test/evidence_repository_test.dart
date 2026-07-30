@@ -37,6 +37,7 @@ void main() {
       ..httpClientAdapter = adapter;
     final repository = EvidenceRepository(dio);
 
+    final occurredAt = DateTime.now();
     await repository.record(EvidenceEvent(
       'RECORD_SAVED',
       const {
@@ -46,7 +47,7 @@ void main() {
         'latencyBucket': 'UNDER_500_MS',
         'retryCountBucket': 'ZERO',
       },
-      occurredAt: DateTime.utc(2026, 7, 22, 18),
+      occurredAt: occurredAt,
       clientEventId: '32a052c7-e395-4a58-9fb7-122da15fe7f2',
     ));
 
@@ -54,7 +55,7 @@ void main() {
       'clientEventId': '32a052c7-e395-4a58-9fb7-122da15fe7f2',
       'eventName': 'RECORD_SAVED',
       'schemaVersion': 1,
-      'occurredDate': '2026-07-23',
+      'occurredDate': shanghaiDate(occurredAt),
       'state': 'CALM',
       'hasGoal': true,
       'hasContent': false,

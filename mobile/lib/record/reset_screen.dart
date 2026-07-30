@@ -14,9 +14,16 @@ import '../state/state_controller.dart';
 import '../state/state_models.dart';
 
 class ResetScreen extends ConsumerStatefulWidget {
-  const ResetScreen({super.key, this.onReturnHome});
+  const ResetScreen({
+    super.key,
+    this.onReturnHome,
+    this.entrySource = 'NOW',
+    this.returnCueRecordAgeBucket,
+  });
 
   final VoidCallback? onReturnHome;
+  final String entrySource;
+  final String? returnCueRecordAgeBucket;
 
   @override
   ConsumerState<ResetScreen> createState() => _ResetScreenState();
@@ -45,7 +52,7 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
       _resetRecorded = true;
       unawaited(ref.read(evidenceRepositoryProvider).record(
             EvidenceEvent('RESET_STARTED', {
-              'entrySource': 'NOW',
+              'entrySource': widget.entrySource,
               'activeStatePresent': snapshot.hasActiveSession,
             }),
           ));
@@ -134,6 +141,15 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
               'retryCountBucket': retryCountBucket(_saveAttempts - 1),
             }),
           ));
+      final returnCueRecordAgeBucket = widget.returnCueRecordAgeBucket;
+      if (returnCueRecordAgeBucket != null) {
+        unawaited(ref.read(evidenceRepositoryProvider).record(
+              EvidenceEvent('RETURN_CUE_CONTINUED', {
+                'recordAgeBucket': returnCueRecordAgeBucket,
+                'surface': 'NOW',
+              }),
+            ));
+      }
       ref.invalidate(currentStateProvider);
       _goalController.clear();
       _contentController.clear();

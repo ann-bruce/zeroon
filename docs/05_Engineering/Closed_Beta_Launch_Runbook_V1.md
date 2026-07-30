@@ -1,14 +1,17 @@
 # ZEROON Closed-Beta Launch Runbook V1
 
-Status: Engineering-ready; external access gates pending
+Status: iOS closed-Beta path accepted; residual operational gates tracked
 Date: 2026-07-23
+Last reviewed: 2026-07-30
 
 ## Release boundary
 
-The first wave is at most 20 invited adults. Invitations remain paused until
-every required row below is recorded with date, environment, operator, and
-evidence reference. Local fixed codes, fake AI replies, synthetic users, and
-written role assignments are not production-like acceptance.
+The first wave is at most 20 invited adults. Sprint 12 closure permits the
+current controlled iOS path; it does not automatically authorize cohort
+expansion or public release. Rows that still identify residual production-like
+exercises remain launch-risk checks and are governed by the stop rule below.
+Local fixed codes, fake AI replies, synthetic users, and written role
+assignments are not production-like acceptance.
 
 ## Required configuration
 
@@ -34,16 +37,16 @@ must not be copied into this runbook or acceptance evidence.
 | Adult bilingual notice | zh-CN and English render, under-18 path blocks, opt-in and opt-out both behave truthfully | Automated narrow-layout and local runtime pass |
 | Consent sequence | Login succeeds, notice completes, current `AUTH_COMPLETED` is queued only after opt-in and before encounter; no backfill | Automated and local PostgreSQL runtime pass |
 | Revocation | Profile switch stops new evidence immediately without disabling core product | Automated and local PostgreSQL runtime pass |
-| Real verification code | Intended Beta SMTP sender delivers to domestic and international inboxes, code is consumed once, spam placement is reviewed, and rate limits/outage copy remain truthful | SMTP engineering complete; intended-environment delivery and outage smoke pending |
-| Real AI provider | Approved model returns a normal response and bounded refusal/fallback without private logs | Production-like smoke pending |
+| Real verification code | Intended Beta SMTP sender delivers to domestic and international inboxes, code is consumed once, spam placement is reviewed, and rate limits/outage copy remain truthful | Outlook-family and `126.com` delivery/login passed; spam placement and real-service outage exercise remain residual risks |
+| Real AI provider | Approved model returns a normal response and bounded refusal/fallback without private logs | Persona V2 production Chinese/English success smoke passed; deterministic refusal and fallback remain covered by the release gate |
 | Cross-user isolation | User A cannot read or mutate User B Profile, Record, Memory, support, export, or evidence | Full automated gate plus runtime sample |
 | Evidence event failure isolation | Event ingestion unavailable or throttled does not roll back login, encounter, Record, Memory control, export, or deletion; the adult-notice preference gate is not bypassed | Automated and local disabled-ingestion pass; production-like outage/throttle sample pending |
 | Account deletion | `204`, account-owned private/evidence rows zero, refresh unusable | Local PostgreSQL pass; production-like sample pending |
-| Primary support | Bruce Ann can receive and respond through mailbox and ADMIN queue | Access test pending |
-| Backup support | Chao Fan can receive/respond through mailbox and authenticate to ADMIN queue with least privilege | Access test pending |
-| Mobile artifacts | Signed Android AAB and iOS IPA use the same reviewed commit, HTTPS API, support email, version/build pair, and pass real-device smoke | Native scaffolds and repeatable scripts ready; store signing and real-device smoke pending |
+| Primary support | Bruce Ann can receive and respond through mailbox and ADMIN queue | Mailbox and ADMIN access exercised |
+| Backup support | Chao Fan can receive/respond through mailbox and authenticate to ADMIN queue with least privilege | Independent ADMIN access and Prompt review exercised; ongoing mailbox operations remain subject to the stop rule |
+| Mobile artifacts | Signed Android AAB and iOS IPA use the same reviewed commit, HTTPS API, support email, version/build pair, and pass real-device smoke | Installed iOS core-business regression passed; Android real-device validation intentionally deferred |
 | Public TLS | Android and iOS accept the API certificate without a custom trust profile or validation bypass | Publicly trusted Let's Encrypt IP certificate installed; renewal dry-run passed |
-| Email login | A new external mailbox receives a non-fixed code and can complete registration/login | Production SMTP request returned `202` and Outlook receipt confirmed; complete registration/login smoke pending |
+| Email login | A new external mailbox receives a non-fixed code and can complete registration/login | External `126.com` ordinary App login, Companion smoke, logout, and refresh revocation passed |
 
 ## Incident stop rule
 

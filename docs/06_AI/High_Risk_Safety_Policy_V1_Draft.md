@@ -3,6 +3,10 @@
 Status: Engineering implemented; professional review required
 Prepared: 2026-07-27
 
+Professional review must be recorded in
+`High_Risk_Safety_Professional_Review_Packet_V1.md`. Product and engineering
+approval of Persona V2 does not satisfy this separate gate.
+
 ## 1. Product Boundary
 
 ZEROON is a long-term companion and private memory system. It is not a crisis

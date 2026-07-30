@@ -33,4 +33,12 @@ class RecordRepository {
     final response = await _dio.get<Map<String, dynamic>>('/records/$recordId');
     return ZeroRecord.fromJson(response.data!);
   }
+
+  Future<ContinuityCue?> continuityCue({required String timezone}) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/records/continuity-cue',
+      queryParameters: {'timezone': timezone},
+    );
+    return ContinuityCueResponse.fromJson(response.data!).cue;
+  }
 }

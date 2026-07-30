@@ -1,7 +1,8 @@
 # Sprint 12 Closed Beta Evidence and Recruitment Readiness V1
 
-Status: Approved for engineering
+Status: Completed — accepted operational residual risks
 Prepared: 2026-07-23
+Closed: 2026-07-30
 
 ## Intake Decision
 
@@ -92,16 +93,16 @@ participants with a privacy-reviewed evidence system, truthful bilingual
 notice, reliable operational checklist, and no expansion of the product
 promise.
 
-## Proposed Implementation Sequence
+## Implementation Sequence
 
-| Item | Decision gate | Done when |
+| Item | Status | Done when |
 |---|---|---|
 | S12-01 Evidence policy and lifecycle | Complete | ADR 007 fixes event purpose, allowed/prohibited properties, surrogate identity, consent/notice, retention, export/deletion, access, failure isolation, environment boundaries, and recruitment gates |
 | S12-02 Typed event contract and persistence | Complete | Backend accepts only reviewed event names and bounded typed columns, uses client event ids for idempotency, and stores no private text or direct identity |
-| S12-03 Core-loop instrumentation | Activation and trust behavior become measurable without content | Authentication, encounter, state, Reset, record save/failure, Archive/detail review, Memory control, Profile AI consent, export, deletion intent, and support entry emit only the reviewed contract |
-| S12-04 Cohort and retention computation | Gate A and early Gate B can be calculated reproducibly | Activation, D1/D7, week-two record, Archive/reflection review, chat-only share, reliability, consent-control, and deletion/export demand are derived by documented queries with timezone and cohort rules |
-| S12-05 Read-only evidence operations | Bruce Ann can review aggregate evidence without browsing private lives | ADMIN receives bounded aggregate cohort/reliability summaries; small-cell suppression and minimum cohort sizes prevent accidental individual disclosure |
-| S12-06 Recruitment and runtime acceptance | The first invitation can be sent truthfully | Chinese/English notice, adult-only screen, interview consent/materials, backup support access, production-like auth/provider checks, cross-user isolation, event failure isolation, deletion behavior, full gates, and real runtime acceptance pass |
+| S12-03 Core-loop instrumentation | Complete | Authentication, encounter, state, Reset, record save/failure, Archive/detail review, Memory control, Profile AI consent, export, deletion intent, and support entry emit only the reviewed contract |
+| S12-04 Cohort and retention computation | Complete | Activation, D1/D7, week-two record, Archive/reflection review, chat-only share, reliability, consent-control, and deletion/export demand are derived by documented queries with timezone and cohort rules |
+| S12-05 Read-only evidence operations | Complete | ADMIN receives bounded aggregate cohort, continuity, reliability, and trust-control summaries with small-cell suppression and no individual activity browser |
+| S12-06 Recruitment and runtime acceptance | Complete with accepted residual risks | Engineering, local runtime, real email login, real-provider, dual-admin, and iOS core-flow evidence are recorded; explicitly deferred operational rehearsals remain outside the Sprint |
 
 ## Initial Event Boundary
 
@@ -375,13 +376,45 @@ Engineering and local runtime acceptance completed on 2026-07-23:
   consumed code, and zero temporary users. Real SMTP delivery was deliberately
   not triggered during code review and remains an external launch gate.
 
-S12-06 is not operationally closed and no invitation should be sent until all
-external launch gates are recorded:
+## S12 Closure Decision
 
-- prove real SMTP email delivery, one-time consumption, spam placement, and
-  outage behavior in the intended Beta environment;
-- approved real AI-provider success-path recheck in that environment;
-- mailbox and least-privilege ADMIN access tests for Bruce Ann and backup
-  operator Chao Fan;
-- production-like cross-user isolation, evidence-outage isolation, and account
-  deletion rehearsal.
+Sprint 12 closed on 2026-07-30 with the following additional, content-free
+production evidence:
+
+- the intended SMTP path delivered non-fixed codes to Outlook-family and
+  domestic `126.com` inboxes;
+- administrator and ordinary App email-login namespaces remained isolated;
+- a `126.com` ordinary App account completed real code login, Chinese and
+  English Companion requests, logout, and refresh-token revocation;
+- production Persona V2 returned `200 / SUCCESS` in Simplified Chinese and
+  English with `COMPANION_REFLECTION_V2 / PRIMARY`;
+- Bruce Ann and Chao Fan both authenticated as administrators and completed
+  the independent Prompt review workflow;
+- Bruce Ann completed an installed iOS core-business regression;
+- Persona V2 is active through an audited owner-risk exception, while approved
+  Persona V1 remains enabled as the rollback target.
+
+These results complete the engineering and current iOS closed-Beta readiness
+scope. They do not certify public release, professional clinical safety, all
+mail providers, Android behavior, or every operational failure mode.
+
+## Accepted Operational Residual Risks
+
+The following items leave Sprint 12 and remain in the launch/safety risk
+register:
+
+- review SMTP spam-folder placement and run a truthful real-service outage
+  exercise;
+- repeat cross-user isolation, evidence-ingestion outage/throttle isolation,
+  and hard account deletion with a disposable production-like account;
+- complete professional review of the bilingual high-risk self-harm policy;
+- perform Android packaging and real-device validation when Android testing
+  enters the release scope.
+
+Bruce Ann explicitly accepted the professional-review risk before Persona V2
+activation. That exception does not constitute professional approval or
+clinical validation. A blocking privacy, account-isolation, deletion, or
+safety defect still triggers the launch runbook stop rule.
+
+Sprint 13 work must remain a separate return-loop validation effort and must
+not reopen or silently expand Sprint 12.

@@ -121,6 +121,10 @@ rejected rather than stored.
 | `record_save_failed` | bounded error class, retryable boolean, network status |
 | `archive_viewed` | entry source, item-count bucket |
 | `record_detail_viewed` | record-age bucket, source-type enum |
+| `return_cue_available` | record-age bucket, fixed `NOW` surface |
+| `return_cue_opened` | record-age bucket, fixed `NOW` surface |
+| `return_cue_dismissed` | record-age bucket, fixed `NOW` surface |
+| `return_cue_continued` | record-age bucket, fixed `NOW` surface |
 | `reflection_requested` | surface enum, enabled-context-class bit set |
 | `reflection_completed` | outcome enum, latency bucket, prompt version, model alias |
 | `memory_control_changed` | action enum, source-type enum |

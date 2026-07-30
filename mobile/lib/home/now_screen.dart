@@ -6,17 +6,21 @@ import 'package:intl/intl.dart';
 
 import '../auth/auth_models.dart';
 import '../common/zeroon_design.dart';
+import '../evidence/evidence_models.dart';
+import '../evidence/evidence_repository.dart';
 import '../growth/growth_controller.dart';
 import '../l10n/l10n_extensions.dart';
 import '../profile/profile_controller.dart';
 import '../profile/profile_screen.dart';
+import '../record/continuity_cue_controller.dart';
 import '../record/record_controller.dart';
+import '../record/record_detail_screen.dart';
 import '../record/archive_screen.dart';
 import '../record/record_models.dart';
 import '../state/state_controller.dart';
 import '../state/state_models.dart';
 
-class NowScreen extends ConsumerWidget {
+class NowScreen extends ConsumerStatefulWidget {
   const NowScreen({
     super.key,
     required this.session,
@@ -27,7 +31,32 @@ class NowScreen extends ConsumerWidget {
   final VoidCallback onStartReset;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NowScreen> createState() => _NowScreenState();
+}
+
+class _NowScreenState extends ConsumerState<NowScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(continuityCueProvider(widget.session.user.uid));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final nickname = ref.watch(profileProvider).valueOrNull?.nickname?.trim();
     return ZeroonScreen(
       child: ListView(
@@ -60,7 +89,10 @@ class NowScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 20),
-          _StateHero(onStartReset: onStartReset),
+          _StateHero(
+            userId: widget.session.user.uid,
+            onStartReset: widget.onStartReset,
+          ),
         ],
       ),
     );
@@ -68,8 +100,9 @@ class NowScreen extends ConsumerWidget {
 }
 
 class _StateHero extends ConsumerWidget {
-  const _StateHero({required this.onStartReset});
+  const _StateHero({required this.userId, required this.onStartReset});
 
+  final String userId;
   final VoidCallback onStartReset;
 
   @override
@@ -88,6 +121,7 @@ class _StateHero extends ConsumerWidget {
         continuousResetDays: growthSummary.valueOrNull?.continuousResetDays,
         recordPage: records.valueOrNull,
         latestTodayRecord: _latestTodayRecord(records.valueOrNull),
+        userId: userId,
         onStartReset: onStartReset,
       ),
     );
@@ -100,6 +134,7 @@ class _StatePanel extends ConsumerWidget {
     required this.continuousResetDays,
     required this.recordPage,
     required this.latestTodayRecord,
+    required this.userId,
     required this.onStartReset,
   });
 
@@ -107,10 +142,13 @@ class _StatePanel extends ConsumerWidget {
   final int? continuousResetDays;
   final RecordPage? recordPage;
   final ZeroRecord? latestTodayRecord;
+  final String userId;
   final VoidCallback onStartReset;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final continuityCue = ref.watch(continuityCueProvider(userId));
+    final currentCue = continuityCue.unwrapPrevious().valueOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -160,10 +198,16 @@ class _StatePanel extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 18),
-        _ResetTrackCard(
-          continuousResetDays: continuousResetDays,
-          records: recordPage?.items ?? const [],
-        ),
+        if (currentCue != null)
+          _ContinuityCueCard(
+            userId: userId,
+            cue: currentCue,
+          )
+        else
+          _ResetTrackCard(
+            continuousResetDays: continuousResetDays,
+            records: recordPage?.items ?? const [],
+          ),
         const SizedBox(height: 12),
         ZeroonPrimaryButton(
           label: snapshot.hasActiveSession
@@ -296,6 +340,84 @@ class _StatePanel extends ConsumerWidget {
       case null:
         return;
     }
+  }
+}
+
+class _ContinuityCueCard extends ConsumerWidget {
+  const _ContinuityCueCard({required this.userId, required this.cue});
+
+  final String userId;
+  final ContinuityCue cue;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ageInDays = DateTime.now()
+        .toLocal()
+        .difference(cue.createdAt.toLocal())
+        .inDays
+        .clamp(0, 9999)
+        .toInt();
+    return ZeroonCard(
+      color: zeroonGold.withValues(alpha: 0.12),
+      padding: const EdgeInsets.fromLTRB(16, 13, 13, 11),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            context.l10n.continuityCueTitle,
+            style: const TextStyle(color: zeroonMuted, fontSize: 10),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            context.l10n.continuityCueAge(ageInDays),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            cue.preview,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: zeroonInk, fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              TextButton(
+                onPressed: () {
+                  ref
+                      .read(continuityCueProvider(userId).notifier)
+                      .recordOpened(cue);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => RecordDetailScreen(
+                        recordId: cue.recordId,
+                        openedFromContinuityCue: true,
+                      ),
+                    ),
+                  );
+                },
+                child: Text(context.l10n.continuityCueReview),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () {
+                  unawaited(ref.read(evidenceRepositoryProvider).record(
+                        EvidenceEvent('RETURN_CUE_DISMISSED', {
+                          'recordAgeBucket': recordAgeBucket(cue.createdAt),
+                          'surface': 'NOW',
+                        }),
+                      ));
+                  ref
+                      .read(continuityCueProvider(userId).notifier)
+                      .dismissForToday();
+                },
+                child: Text(context.l10n.continuityCueLater),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 

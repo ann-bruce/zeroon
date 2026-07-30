@@ -1,10 +1,13 @@
 package ai.zeroon.record;
 
 import ai.zeroon.record.RecordDtos.CreateRecordRequest;
+import ai.zeroon.record.RecordDtos.ContinuityCueResponse;
 import ai.zeroon.record.RecordDtos.RecordPage;
 import ai.zeroon.record.RecordDtos.ZeroRecord;
 import ai.zeroon.security.UserPrincipal;
 import jakarta.validation.Valid;
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,9 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class RecordController {
 
     private final RecordService recordService;
+    private final ContinuityCueService continuityCueService;
 
-    public RecordController(RecordService recordService) {
+    public RecordController(RecordService recordService, ContinuityCueService continuityCueService) {
         this.recordService = recordService;
+        this.continuityCueService = continuityCueService;
     }
 
     @GetMapping
@@ -47,5 +52,19 @@ public class RecordController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long recordId) {
         return recordService.get(principal.userId(), recordId);
+    }
+
+    @GetMapping("/continuity-cue")
+    ContinuityCueResponse continuityCue(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(defaultValue = "Asia/Shanghai") String timezone) {
+        try {
+            return continuityCueService.findFor(principal.userId(), ZoneId.of(timezone));
+        } catch (DateTimeException exception) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "timezone must be a valid IANA time-zone or UTC-offset id",
+                    exception);
+        }
     }
 }

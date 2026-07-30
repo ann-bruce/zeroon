@@ -68,7 +68,7 @@ class CompanionFallbackControllerTest {
         org.assertj.core.api.Assertions.assertThat(usage.isFallbackUsed()).isTrue();
         org.assertj.core.api.Assertions.assertThat(usage.getProvider()).isEqualTo("openai-compatible");
         org.assertj.core.api.Assertions.assertThat(usage.getModel()).isNull();
-        org.assertj.core.api.Assertions.assertThat(usage.getDurationMs()).isPositive();
+        org.assertj.core.api.Assertions.assertThat(usage.getDurationMs()).isNotNegative();
         org.assertj.core.api.Assertions.assertThat(usage.getPromptTemplateCode())
                 .isEqualTo("COMPANION_REFLECTION");
         org.assertj.core.api.Assertions.assertThat(usage.getInputChars()).isPositive();

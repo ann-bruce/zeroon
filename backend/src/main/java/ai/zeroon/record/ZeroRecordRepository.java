@@ -1,6 +1,7 @@
 package ai.zeroon.record;
 
 import ai.zeroon.user.UserState;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,15 @@ public interface ZeroRecordRepository extends JpaRepository<ZeroRecordEntity, Lo
     long countByUserId(Long userId);
 
     Optional<ZeroRecordEntity> findFirstByUserIdOrderByCreatedAtAsc(Long userId);
+
+    long countByUserIdAndCreatedAtLessThanEqual(
+            Long userId,
+            Instant latestCreatedAt);
+
+    Page<ZeroRecordEntity> findByUserIdAndCreatedAtLessThanEqualOrderByCreatedAtAscIdAsc(
+            Long userId,
+            Instant latestCreatedAt,
+            Pageable pageable);
 
     Optional<ZeroRecordEntity> findByIdAndUserId(Long id, Long userId);
 

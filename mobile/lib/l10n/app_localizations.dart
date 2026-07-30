@@ -627,6 +627,30 @@ abstract class AppLocalizations {
   /// **'今天还没有新的山海缓存。'**
   String get noArchiveToday;
 
+  /// No description provided for @continuityCueTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'和 ZEROON 回看一个此刻'**
+  String get continuityCueTitle;
+
+  /// No description provided for @continuityCueAge.
+  ///
+  /// In zh, this message translates to:
+  /// **'{days} 天前'**
+  String continuityCueAge(int days);
+
+  /// No description provided for @continuityCueReview.
+  ///
+  /// In zh, this message translates to:
+  /// **'回看这个此刻'**
+  String get continuityCueReview;
+
+  /// No description provided for @continuityCueLater.
+  ///
+  /// In zh, this message translates to:
+  /// **'先放着'**
+  String get continuityCueLater;
+
   /// No description provided for @stateHintFocus.
   ///
   /// In zh, this message translates to:
@@ -1034,6 +1058,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'暂时没能读到这条记录。它仍然好好保存在这里。'**
   String get recordLoadFailed;
+
+  /// No description provided for @writeNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'写下现在'**
+  String get writeNow;
 
   /// No description provided for @memoryTitle.
   ///

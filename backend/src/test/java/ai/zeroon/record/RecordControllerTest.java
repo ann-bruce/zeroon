@@ -15,6 +15,8 @@ import ai.zeroon.memory.MemoryProductionService;
 import ai.zeroon.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
+import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -40,6 +42,9 @@ class RecordControllerTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ZeroRecordRepository zeroRecordRepository;
 
     @Test
     void userCanCreateListAndReadOwnRecords() throws Exception {
@@ -138,10 +143,101 @@ class RecordControllerTest {
         mockMvc.perform(get("/api/v1/records"))
                 .andExpect(status().isUnauthorized());
 
+        mockMvc.perform(get("/api/v1/records/continuity-cue"))
+                .andExpect(status().isUnauthorized());
+
         mockMvc.perform(post("/api/v1/records")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"state\":\"CALM\",\"content\":\"private\"}"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void continuityCueReturnsNoCueWhenTheOwnerHasNoEligibleRecord() throws Exception {
+        String accessToken = login("13100131002");
+
+        mockMvc.perform(get("/api/v1/records/continuity-cue")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cue").doesNotExist());
+    }
+
+    @Test
+    void continuityCueReturnsOneStableOlderOwnedRecordOnly() throws Exception {
+        String accessToken = login("13100131003");
+        var user = userRepository.findByMobile("13100131003").orElseThrow();
+        Long firstOldRecordId = saveRecord(user, "CALM", "first old goal", "first old content", 5);
+        Long secondOldRecordId = saveRecord(user, "FOCUS", "second old goal", "second old content", 4);
+        saveRecord(user, "CREATE", "new goal", "new content", 1);
+
+        String firstBody = mockMvc.perform(get("/api/v1/records/continuity-cue")
+                        .param("timezone", "Asia/Shanghai")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cue.recordId").isNumber())
+                .andExpect(jsonPath("$.cue.state").exists())
+                .andExpect(jsonPath("$.cue.preview").isString())
+                .andExpect(jsonPath("$.cue.goal").doesNotExist())
+                .andExpect(jsonPath("$.cue.content").doesNotExist())
+                .andExpect(jsonPath("$.cue.createdAt").exists())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long selectedId = objectMapper.readTree(firstBody).path("cue").path("recordId").asLong();
+        assertThat(selectedId).isIn(firstOldRecordId, secondOldRecordId);
+
+        String secondBody = mockMvc.perform(get("/api/v1/records/continuity-cue")
+                        .param("timezone", "Asia/Shanghai")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(objectMapper.readTree(secondBody).path("cue").path("recordId").asLong())
+                .isEqualTo(selectedId);
+
+        mockMvc.perform(get("/api/v1/records/continuity-cue")
+                        .param("timezone", "+05:30")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cue.preview").isString());
+    }
+
+    @Test
+    void continuityCueNeverReturnsAnotherUsersRecordAndRejectsInvalidTimezone() throws Exception {
+        String ownerToken = login("13100131004");
+        String otherToken = login("13100131005");
+        var owner = userRepository.findByMobile("13100131004").orElseThrow();
+        saveRecord(owner, "TIRED", "private goal", "private content", 4);
+
+        mockMvc.perform(get("/api/v1/records/continuity-cue")
+                        .header("Authorization", "Bearer " + otherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cue").doesNotExist());
+
+        mockMvc.perform(get("/api/v1/records/continuity-cue")
+                        .param("timezone", "not/a-timezone")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void continuityCueReturnsOnlyABoundedUnicodePreview() throws Exception {
+        String accessToken = login("13100131006");
+        var user = userRepository.findByMobile("13100131006").orElseThrow();
+        saveRecord(user, "CALM", null, "🙂".repeat(200), 4);
+
+        String body = mockMvc.perform(get("/api/v1/records/continuity-cue")
+                        .param("timezone", "Asia/Shanghai")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cue.preview").isString())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String preview = objectMapper.readTree(body).path("cue").path("preview").asText();
+        assertThat(preview.codePointCount(0, preview.length())).isEqualTo(160);
     }
 
     @Test
@@ -210,5 +306,20 @@ class RecordControllerTest {
                 .getContentAsString();
 
         return objectMapper.readTree(body).path("accessToken").asText();
+    }
+
+    private Long saveRecord(
+            ai.zeroon.user.UserEntity user,
+            String state,
+            String goal,
+            String content,
+            long ageInDays) {
+        return zeroRecordRepository.save(new ZeroRecordEntity(
+                        user,
+                        ai.zeroon.user.UserState.valueOf(state),
+                        goal,
+                        content,
+                        Instant.now().minus(Duration.ofDays(ageInDays))))
+                .getId();
     }
 }

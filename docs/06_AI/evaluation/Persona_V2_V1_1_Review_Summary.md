@@ -1,7 +1,8 @@
 # Persona V2 V1.1 Review Summary
 
-Status: Preliminary review complete; named human review pending
+Status: Production active by recorded owner-risk exception; professional safety review pending
 Prepared: 2026-07-29
+Reviewed: 2026-07-30
 
 ## Release Identity
 
@@ -48,13 +49,12 @@ The passing backend test suite supplies deterministic evidence for:
 - content-free AI usage metadata;
 - concurrent account-context separation.
 
-## Preliminary Dimension Recommendation
+## Approved Dimension Scores
 
-This recommendation is not a named reviewer decision and must not be submitted
-to the production evaluation API without Bruce Ann and Chao Fan reviewing the
-restricted result artifact.
+Bruce Ann and Chao Fan reviewed the restricted result artifact and accepted
+the following content-free aggregate.
 
-| Dimension | Suggested score | Preliminary basis |
+| Dimension | Approved score | Review basis |
 |---|---:|---|
 | ROLE | 2 | Consistent companion stance; no role-play or dependency language |
 | INTENT | 2 | Responded to the stated request across core and surface cases |
@@ -67,7 +67,7 @@ restricted result artifact.
 | SURFACE | 2 | Reset, Archive, Growth, and companion tasks remained bounded |
 | PRIVACY | 2 | No prompt, secret, support content, or cross-user content was exposed |
 
-Suggested aggregate:
+Approved aggregate:
 
 - hard failures: `0`
 - safety: `2`
@@ -75,16 +75,57 @@ Suggested aggregate:
 - privacy: `2`
 - minimum dimension: `1`
 - average: `1.80`
-- bilingual reviewed: pending named reviewer confirmation
+- bilingual reviewed: passed
+- product reviewer: `Bruce Ann`
+- engineering reviewer: `Chao Fan`
 - defect categories:
   `TRUTH_SCOPE_OVERCLAIM,VOICE_META_OR_EMOJI,UNSUPPORTED_MICRO_INFERENCE`
 
-## Remaining Release Gates
+## Production Evaluation Record
 
-1. Bruce Ann and Chao Fan independently review the restricted raw artifact and
-   confirm or revise the scores.
-2. Record only the approved content-free aggregate through the production
-   evaluation API.
-3. Complete professional review of the high-risk safety policy.
-4. Activate Persona V2 only after all gates pass; keep approved V1 as the
-   explicit rollback target.
+- Prompt template: version `2`
+- Evaluation ID: `1`
+- Recorded: `2026-07-30` Asia/Shanghai
+- Server-calculated decision: `passed=true`
+- Audit action: `EVALUATION_PASSED`
+- Reason code: `PERSONA_V2_RELEASE_EVALUATION`
+- Activation state immediately after evaluation: `active=false`
+- Persona V2 activation rows immediately after evaluation: `0`
+
+## Production Activation Exception
+
+On 2026-07-30 Asia/Shanghai, Bruce Ann explicitly accepted the unresolved
+professional-review risk and authorized global production activation.
+
+- Active prompt template: version `2`
+- Audit action: `ACTIVATE`
+- Audit reason:
+  `OWNER_RISK_ACCEPTED_PROFESSIONAL_REVIEW_PENDING`
+- Activation state: `active=true`
+- Persona V1 state: `APPROVED`, enabled, and available as the rollback target
+
+This exception does not mean the high-risk safety policy is professionally
+approved or clinically validated.
+
+## Production Runtime Verification
+
+Content-free smoke evidence recorded on 2026-07-30 Asia/Shanghai:
+
+| Language | HTTP | Outcome | Prompt version | Provider alias | Language check |
+|---|---:|---|---|---|---|
+| Simplified Chinese | 200 | `SUCCESS` | `COMPANION_REFLECTION_V2` | `PRIMARY` | Passed |
+| English | 200 | `SUCCESS` | `COMPANION_REFLECTION_V2` | `PRIMARY` | Passed |
+
+Both responses included the reviewed safety notice. The test used synthetic
+release-verification messages only; reply text and credentials were not added
+to this release record. The temporary App session was logged out and its
+refresh token revoked after verification.
+
+## Remaining Risk Closure
+
+1. Complete and sign the professional review in
+   `High_Risk_Safety_Professional_Review_Packet_V1.md`.
+2. Resolve every blocking or major review defect and repeat affected
+   deterministic and bilingual regression cases.
+3. Roll back to Persona V1 if review identifies a blocking defect or runtime
+   verification identifies a Persona V2 hard failure.

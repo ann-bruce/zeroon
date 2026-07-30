@@ -930,6 +930,38 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /records/continuity-cue:
+    get:
+      tags: [Record]
+      summary: Get the current user's optional continuity cue
+      description: >-
+        Returns zero or one Record owned by the authenticated user and created at least
+        72 hours ago. Selection is deterministic for the supplied IANA timezone or
+        UTC-offset identifier and calendar day, uses no AI or Record-text classification,
+        and has no mutation or evidence side effects. The cue must not change Memory or
+        AI-consent controls.
+      operationId: getContinuityCue
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: timezone
+          in: query
+          required: false
+          description: IANA timezone or UTC offset used only to determine the local calendar day. Defaults to Asia/Shanghai.
+          schema:
+            type: string
+            default: Asia/Shanghai
+      responses:
+        "200":
+          description: Optional owner-only continuity cue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContinuityCueResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /companion/messages:
     post:
       tags: [Companion]
@@ -1704,6 +1736,10 @@ components:
         - RECORD_SAVE_FAILED
         - ARCHIVE_VIEWED
         - RECORD_DETAIL_VIEWED
+        - RETURN_CUE_AVAILABLE
+        - RETURN_CUE_OPENED
+        - RETURN_CUE_DISMISSED
+        - RETURN_CUE_CONTINUED
         - REFLECTION_REQUESTED
         - REFLECTION_COMPLETED
         - MEMORY_CONTROL_CHANGED
@@ -1725,6 +1761,8 @@ components:
         RECORD_SAVE_FAILED requires errorClass, retryable, networkStatus;
         ARCHIVE_VIEWED requires entrySource, itemCountBucket;
         RECORD_DETAIL_VIEWED requires recordAgeBucket, sourceType;
+        RETURN_CUE_AVAILABLE, RETURN_CUE_OPENED, RETURN_CUE_DISMISSED, and
+        RETURN_CUE_CONTINUED each require only recordAgeBucket and surface;
         REFLECTION_REQUESTED requires surface, contextClasses;
         REFLECTION_COMPLETED requires outcome, latencyBucket, promptVersion,
         modelAlias; MEMORY_CONTROL_CHANGED requires action, sourceType;
@@ -1760,7 +1798,7 @@ components:
         entrySource:
           type: string
           enum:
-            [LOGIN, NOW, RESET, ARCHIVE, RECORD_DETAIL, SETTINGS, PROFILE, COMPANION, UNKNOWN]
+            [LOGIN, NOW, RESET, ARCHIVE, RECORD_DETAIL, RETURN_CUE, SETTINGS, PROFILE, COMPANION, UNKNOWN]
         durationBucket:
           type: string
           enum:
@@ -2928,6 +2966,29 @@ components:
         totalElements:
           type: integer
           format: int64
+    ContinuityCueResponse:
+      type: object
+      properties:
+        cue:
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/ContinuityCue"
+          nullable: true
+    ContinuityCue:
+      type: object
+      required: [recordId, state, preview, createdAt]
+      properties:
+        recordId:
+          type: integer
+          format: int64
+        state:
+          $ref: "#/components/schemas/State"
+        preview:
+          type: string
+          maxLength: 160
+        createdAt:
+          type: string
+          format: date-time
     ChatRequest:
       type: object
       required: [message]
