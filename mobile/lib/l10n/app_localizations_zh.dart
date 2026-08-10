@@ -354,16 +354,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get resetDurationHint => 'ZEROON 会从选择状态开始记录持续时间。';
 
   @override
-  String get recordSomethingLabel => '留下一句话';
+  String get recordSomethingLabel => '这一刻，想留下什么';
 
   @override
-  String get recordSomethingHint => '今天发生了什么？';
+  String get recordSomethingHint => '一句话、一个念头，或刚刚发生的事';
 
   @override
-  String get smallProgressLabel => '今天想完成什么';
+  String get addSmallDirection => '留一个接下来的小方向（可选）';
 
   @override
-  String get smallProgressHint => '完成一个很小的进展';
+  String get smallProgressLabel => '接下来，想往哪里走一点';
+
+  @override
+  String get smallProgressHint => '不一定要完成，留一个小方向就好';
 
   @override
   String get saveReset => '保存这次归零';
@@ -372,7 +375,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectStateValidation => '请先回到此刻，选择一个当前状态。';
 
   @override
-  String get recordContentValidation => '至少写下一点感受、进展或内容。';
+  String get recordContentValidation => '留下一点此刻，或一个接下来的方向。';
 
   @override
   String get recordSaveFailed => '这一次没有保存成功。你的草稿还在。';
@@ -390,7 +393,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get todayRecord => '今天的记录';
 
   @override
-  String get goalPrefix => '目标 ·';
+  String get goalPrefix => '接下来 ·';
 
   @override
   String get returnNow => '回到此刻';
@@ -450,7 +453,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get recordGoalPrefix => '目标 ·';
+  String get recordGoalPrefix => '接下来 ·';
 
   @override
   String get zeroonObservation => 'ZEROON 观察';
@@ -503,10 +506,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get smallProgressTitle => '今天的小进展';
+  String get smallProgressTitle => '接下来的小方向';
 
   @override
-  String get recordWordsTitle => '想记录的话';
+  String get recordWordsTitle => '这一刻留下的';
 
   @override
   String get zeroonEchoTitle => 'ZEROON 回声';

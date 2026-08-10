@@ -234,7 +234,8 @@ void main() {
     expect(find.text('连续归零'), findsOneWidget);
   });
 
-  testWidgets('Now restores its rhythm slot while a refreshed cue loads or fails',
+  testWidgets(
+      'Now restores its rhythm slot while a refreshed cue loads or fails',
       (tester) async {
     final dismissalStore = _FakeContinuityCueDismissalStore();
     final recordRepository = _FakeRecordRepository(
@@ -642,7 +643,7 @@ void main() {
     expect(find.text('私密记录'), findsOneWidget);
     expect(find.text('记录编号 #1'), findsOneWidget);
     expect(find.text('归零状态：平静'), findsOneWidget);
-    expect(find.text('想记录的话'), findsOneWidget);
+    expect(find.text('这一刻留下的'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('写下现在'), findsOneWidget);
@@ -650,9 +651,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('归零'), findsOneWidget);
     final resetFields = tester.widgetList<TextField>(find.byType(TextField));
-    expect(resetFields, hasLength(2));
+    expect(resetFields, hasLength(1));
     expect(resetFields.map((field) => field.controller?.text),
         everyElement(isEmpty));
+    expect(find.text('留一个接下来的小方向（可选）'), findsOneWidget);
     expect(find.textContaining('数据来源'), findsNothing);
   });
 
@@ -905,6 +907,105 @@ void main() {
     expect(find.byIcon(Icons.chevron_left), findsNothing);
   });
 
+  testWidgets(
+      'reset keeps the moment primary and reveals an optional direction', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+        ],
+        child: _localizedApp(const ResetScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('这一刻，想留下什么'), findsOneWidget);
+    expect(find.text('留一个接下来的小方向（可选）'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byKey(const Key('small-direction-field')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('add-small-direction')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsNWidgets(2));
+    expect(find.text('接下来，想往哪里走一点'), findsOneWidget);
+    expect(find.text('留一个接下来的小方向（可选）'), findsNothing);
+  });
+
+  testWidgets('English reset direction fits a narrow viewport', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+        ],
+        child: _localizedApp(
+          const ResetScreen(),
+          locale: const Locale('en'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Keep something from this moment'), findsOneWidget);
+    expect(find.text('Leave a small direction (optional)'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('add-small-direction')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('A small direction for what comes next'),
+      findsOneWidget,
+    );
+    expect(find.byType(TextField), findsNWidgets(2));
+  });
+
+  testWidgets('reset can save only an optional direction', (tester) async {
+    final recordRepository = _FakeRecordRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(recordRepository),
+          companionRepositoryProvider.overrideWithValue(
+            _FakeCompanionRepository(),
+          ),
+        ],
+        child: _localizedApp(const ResetScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('add-small-direction')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('small-direction-field')),
+      '先往前走一点',
+    );
+    tester.testTextInput.hide();
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('保存这次归零'));
+    await tester.pumpAndSettle();
+
+    expect(recordRepository.lastCreateRequest?.content, isEmpty);
+    expect(recordRepository.lastCreateRequest?.goal, '先往前走一点');
+    expect(find.text('归零完成'), findsOneWidget);
+    expect(find.text('接下来 · first step'), findsOneWidget);
+  });
+
   testWidgets('return cue continuation is recorded only after Record save', (
     tester,
   ) async {
@@ -942,11 +1043,10 @@ void main() {
     expect(resetStarted.properties['entrySource'], 'RETURN_CUE');
 
     await tester.enterText(find.byType(TextField).first, 'today I continued');
-    await tester.scrollUntilVisible(
-      find.text('保存这次归零'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    tester.testTextInput.hide();
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('保存这次归零'));
     await tester.pumpAndSettle();
 
@@ -980,6 +1080,12 @@ void main() {
 
     expect(find.text('归零'), findsOneWidget);
     await tester.enterText(find.byType(TextField).first, '还没有保存的一句话');
+    await tester.tap(find.byKey(const Key('add-small-direction')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('small-direction-field')),
+      '还没有保存的小方向',
+    );
     final container = ProviderScope.containerOf(
       tester.element(find.byType(ResetScreen)),
     );
@@ -1000,8 +1106,17 @@ void main() {
           .widget<TextField>(find.byType(TextField).first)
           .decoration
           ?.labelText,
-      'Leave a few words',
+      'Keep something from this moment',
     );
+    expect(find.byType(TextField), findsNWidgets(2));
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('small-direction-field')))
+          .controller
+          ?.text,
+      '还没有保存的小方向',
+    );
+    expect(find.text('A small direction for what comes next'), findsOneWidget);
   });
 
   testWidgets('archive screen shows observation card for cached records', (
@@ -1399,12 +1514,12 @@ class _FakeRecordRepository extends RecordRepository {
   _FakeRecordRepository({
     ContinuityCue? continuityCue,
     this.continuityCueRequest,
-  })
-      : _continuityCue = continuityCue,
+  })  : _continuityCue = continuityCue,
         super(Dio());
 
   final ContinuityCue? _continuityCue;
   Future<ContinuityCue?> Function()? continuityCueRequest;
+  CreateRecordRequest? lastCreateRequest;
 
   final _record = ZeroRecord(
     id: 1,
@@ -1417,6 +1532,7 @@ class _FakeRecordRepository extends RecordRepository {
 
   @override
   Future<ZeroRecord> create(CreateRecordRequest request) async {
+    lastCreateRequest = request;
     return _record;
   }
 

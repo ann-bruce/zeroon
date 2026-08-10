@@ -756,25 +756,31 @@ abstract class AppLocalizations {
   /// No description provided for @recordSomethingLabel.
   ///
   /// In zh, this message translates to:
-  /// **'留下一句话'**
+  /// **'这一刻，想留下什么'**
   String get recordSomethingLabel;
 
   /// No description provided for @recordSomethingHint.
   ///
   /// In zh, this message translates to:
-  /// **'今天发生了什么？'**
+  /// **'一句话、一个念头，或刚刚发生的事'**
   String get recordSomethingHint;
+
+  /// No description provided for @addSmallDirection.
+  ///
+  /// In zh, this message translates to:
+  /// **'留一个接下来的小方向（可选）'**
+  String get addSmallDirection;
 
   /// No description provided for @smallProgressLabel.
   ///
   /// In zh, this message translates to:
-  /// **'今天想完成什么'**
+  /// **'接下来，想往哪里走一点'**
   String get smallProgressLabel;
 
   /// No description provided for @smallProgressHint.
   ///
   /// In zh, this message translates to:
-  /// **'完成一个很小的进展'**
+  /// **'不一定要完成，留一个小方向就好'**
   String get smallProgressHint;
 
   /// No description provided for @saveReset.
@@ -792,7 +798,7 @@ abstract class AppLocalizations {
   /// No description provided for @recordContentValidation.
   ///
   /// In zh, this message translates to:
-  /// **'至少写下一点感受、进展或内容。'**
+  /// **'留下一点此刻，或一个接下来的方向。'**
   String get recordContentValidation;
 
   /// No description provided for @recordSaveFailed.
@@ -828,7 +834,7 @@ abstract class AppLocalizations {
   /// No description provided for @goalPrefix.
   ///
   /// In zh, this message translates to:
-  /// **'目标 ·'**
+  /// **'接下来 ·'**
   String get goalPrefix;
 
   /// No description provided for @returnNow.
@@ -942,7 +948,7 @@ abstract class AppLocalizations {
   /// No description provided for @recordGoalPrefix.
   ///
   /// In zh, this message translates to:
-  /// **'目标 ·'**
+  /// **'接下来 ·'**
   String get recordGoalPrefix;
 
   /// No description provided for @zeroonObservation.
@@ -1038,13 +1044,13 @@ abstract class AppLocalizations {
   /// No description provided for @smallProgressTitle.
   ///
   /// In zh, this message translates to:
-  /// **'今天的小进展'**
+  /// **'接下来的小方向'**
   String get smallProgressTitle;
 
   /// No description provided for @recordWordsTitle.
   ///
   /// In zh, this message translates to:
-  /// **'想记录的话'**
+  /// **'这一刻留下的'**
   String get recordWordsTitle;
 
   /// No description provided for @zeroonEchoTitle.

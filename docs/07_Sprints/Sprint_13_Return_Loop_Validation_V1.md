@@ -1,7 +1,8 @@
 # Sprint 13 Return Loop Validation V1
 
-Status: Implementation ready for owner validation
+Status: Production owner validation passed; Reset refinement ready for owner validation
 Prepared: 2026-07-30
+Last updated: 2026-08-10
 
 ## Intake Decision
 
@@ -206,6 +207,44 @@ export and deletion behavior.
 | S13-05 Content-free evidence | Measurement boundary accepted | Only cue availability/view/open/dismiss and optional continuation outcome are recorded under explicit Beta consent |
 | S13-06 Owner and closed-Beta validation | Notification decision | Owner plus invited adults complete a seven-day test and explain whether the cue created a genuine reason to return |
 | S13-07 Optional return invitation | Value proved first | Only after S13-06, user-controlled local reminder options may be proposed with no private lock-screen text |
+| S13-08 Reset capture hierarchy refinement | Owner UX correction | Reset prioritizes one open moment field and reveals the non-required next direction only on request, without changing stored Record meaning |
+
+### S13-08 Reset capture hierarchy refinement
+
+Owner production use found that `留下一句话` was narrower than the actual
+free-form Record capability, while `今天想完成什么` made an optional continuity
+field feel like a daily task. Equal visual weight also made Reset feel more
+like a form than a quiet place to preserve one moment.
+
+The accepted hierarchy is:
+
+```text
+这一刻，想留下什么
+一句话、一个念头，或刚刚发生的事
+
+＋ 留一个接下来的小方向（可选）
+```
+
+After the user asks for it, the second field becomes:
+
+```text
+接下来，想往哪里走一点
+不一定要完成，留一个小方向就好
+```
+
+The stored API fields remain `content` and `goal`. Completion, Archive, and
+Record Detail present `goal` as `接下来` / `Next`, not as a required target.
+Either field may satisfy the existing Record-content requirement.
+
+Acceptance requires:
+
+- the moment field is the only text field visible initially;
+- the optional direction expands locally without clearing the moment draft;
+- content-only, direction-only, and combined Records continue to save;
+- locale changes preserve drafts and the expanded state;
+- Chinese and English remain readable on a 390-pixel-wide device;
+- older Records render under the new labels without migration;
+- no task completion, streak, score, reminder, or negative state is added.
 
 ## Affected Surfaces for Engineering
 
@@ -213,7 +252,8 @@ Expected only after S13-01 approval:
 
 - backend: owner-only cue query, DTO, service, controller, tests;
 - OpenAPI: optional continuity-cue response;
-- mobile: Now card, Record-detail navigation, local-day dismissal;
+- mobile: Now card, Record-detail navigation, local-day dismissal, and Reset
+  capture hierarchy;
 - localization: Simplified Chinese and English;
 - evidence: narrowly reviewed typed events and cohort calculation;
 - database: no new table for the first slice unless selection or evidence

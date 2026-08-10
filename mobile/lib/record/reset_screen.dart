@@ -32,15 +32,18 @@ class ResetScreen extends ConsumerStatefulWidget {
 class _ResetScreenState extends ConsumerState<ResetScreen> {
   final _goalController = TextEditingController();
   final _contentController = TextEditingController();
+  final _goalFocusNode = FocusNode();
   String? _message;
   bool _saving = false;
   bool _resetRecorded = false;
+  bool _showSmallDirection = false;
   int _saveAttempts = 0;
 
   @override
   void dispose() {
     _goalController.dispose();
     _contentController.dispose();
+    _goalFocusNode.dispose();
     super.dispose();
   }
 
@@ -84,14 +87,34 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _goalController,
-            maxLength: 1000,
-            decoration: InputDecoration(
-              labelText: context.l10n.smallProgressLabel,
-              hintText: context.l10n.smallProgressHint,
+          if (_showSmallDirection)
+            TextField(
+              key: const Key('small-direction-field'),
+              controller: _goalController,
+              focusNode: _goalFocusNode,
+              maxLength: 1000,
+              decoration: InputDecoration(
+                labelText: context.l10n.smallProgressLabel,
+                hintText: context.l10n.smallProgressHint,
+              ),
+            )
+          else
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('add-small-direction'),
+                onPressed: _revealSmallDirection,
+                style: TextButton.styleFrom(
+                  foregroundColor: zeroonMuted,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 10,
+                  ),
+                ),
+                icon: const Icon(Icons.add, size: 17),
+                label: Text(context.l10n.addSmallDirection),
+              ),
             ),
-          ),
           const SizedBox(height: 8),
           ZeroonPrimaryButton(
             label: context.l10n.saveReset,
@@ -105,6 +128,15 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
         ],
       ),
     );
+  }
+
+  void _revealSmallDirection() {
+    setState(() => _showSmallDirection = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _goalFocusNode.requestFocus();
+      }
+    });
   }
 
   Future<void> _save() async {

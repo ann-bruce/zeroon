@@ -392,16 +392,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'ZEROON starts holding time when you choose a state.';
 
   @override
-  String get recordSomethingLabel => 'Leave a few words';
+  String get recordSomethingLabel => 'Keep something from this moment';
 
   @override
-  String get recordSomethingHint => 'What happened today?';
+  String get recordSomethingHint =>
+      'A sentence, a thought, or something that just happened';
 
   @override
-  String get smallProgressLabel => 'A small thing for today';
+  String get addSmallDirection => 'Leave a small direction (optional)';
 
   @override
-  String get smallProgressHint => 'One quiet step is enough';
+  String get smallProgressLabel => 'A small direction for what comes next';
+
+  @override
+  String get smallProgressHint => 'No need to finish it; a direction is enough';
 
   @override
   String get saveReset => 'Save this Reset';
@@ -412,7 +416,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recordContentValidation =>
-      'Leave a feeling, a small step, or a few words first.';
+      'Keep something from this moment or leave a direction for what comes next.';
 
   @override
   String get recordSaveFailed =>
@@ -431,7 +435,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todayRecord => 'TODAY\'S RECORD';
 
   @override
-  String get goalPrefix => 'Small step ·';
+  String get goalPrefix => 'Next ·';
 
   @override
   String get returnNow => 'Return to Now';
@@ -496,7 +500,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get recordGoalPrefix => 'Small step ·';
+  String get recordGoalPrefix => 'Next ·';
 
   @override
   String get zeroonObservation => 'ZEROON REFLECTION';
@@ -552,10 +556,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get smallProgressTitle => 'Today\'s small step';
+  String get smallProgressTitle => 'A direction for what comes next';
 
   @override
-  String get recordWordsTitle => 'Words left here';
+  String get recordWordsTitle => 'Kept from this moment';
 
   @override
   String get zeroonEchoTitle => 'ZEROON echo';
