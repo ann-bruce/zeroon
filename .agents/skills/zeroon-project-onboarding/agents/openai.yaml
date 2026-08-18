@@ -1,0 +1,4 @@
+interface:
+  display_name: "接手 ZEROON"
+  short_description: "从仓库事实核对状态、保护并行改动并安全接续ZEROON项目工作"
+  default_prompt: "Use $zeroon-project-onboarding to take over ZEROON, verify repository state, and identify the next safe action."

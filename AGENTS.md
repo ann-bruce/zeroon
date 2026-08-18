@@ -23,17 +23,42 @@ Primary development path:
 
 Before editing:
 - Run `git status --short` from this directory and preserve user changes.
+- Run `scripts/zeroon-context.sh` for a bounded repository snapshot.
+- Read `CURRENT_STATE.md`, then follow only its active-Sprint and decision links
+  relevant to the request.
 - Read the relevant source and matching docs before changing behavior.
 - Prefer `rg` and `rg --files` for search.
 
 Canonical docs:
 - Current state handoff: `CURRENT_STATE.md`
+- Durable decision index: `DECISION_LOG.md`
 - API contract: `docs/04_API/OpenAPI_V1.yaml`
 - REST notes: `docs/04_API/REST_API_V1.md`
 - Database model: `docs/03_Database/ER_Model_V1.md`
 - Engineering guide: `docs/05_Engineering/Development_Guide_V1.md`
 - Done criteria: `docs/05_Engineering/Definition_of_Ready_Done.md`
 - Sprint scope and acceptance notes: `docs/07_Sprints/`
+
+## New Chat Takeover
+
+Use the repository skill
+`.agents/skills/zeroon-project-onboarding/SKILL.md` when the user asks to take
+over ZEROON, check the repository, continue, or start the next item.
+
+Treat repository evidence as authoritative over old chat summaries. A new chat
+must:
+
+- compare `CURRENT_STATE.md` with HEAD, recent commits, and the working tree;
+- report stale or conflicting state instead of guessing;
+- preserve all dirty files until their ownership and intent are understood;
+- identify the next accepted gate from the active Sprint rather than inventing
+  a later Sprint;
+- avoid reading or printing `.env`, secrets, verification codes, or private
+  user content.
+
+When a verified change advances the active Sprint, release state, or production
+state, update `CURRENT_STATE.md` in the same scoped change. Add to
+`DECISION_LOG.md` only for a durable accepted decision.
 
 ## Commands
 
@@ -123,4 +148,3 @@ Definition of done for non-trivial changes:
 - Keep changes scoped to the requested task.
 - Use conventional commit prefixes when committing: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`.
 - Main workflow branches are `feature/*`, `develop`, `release/*`, `main`, and `hotfix/*`.
-
