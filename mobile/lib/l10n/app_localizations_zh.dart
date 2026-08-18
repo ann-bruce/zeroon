@@ -250,6 +250,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chooseStateFirst => '先选择一个最接近的状态，ZEROON 会从这一刻开始记录。';
 
   @override
+  String get firstLoopChooseStateHint => '先选一个最接近此刻的状态。没有标准答案。';
+
+  @override
+  String get firstLoopStartResetHint => '准备好时，开始一次归零，把这一刻留下来。';
+
+  @override
   String stateSwitchTitle(String state) {
     return '要切换到“$state”吗？';
   }
@@ -400,6 +406,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get viewArchive => '查看山海缓存';
+
+  @override
+  String get firstRecordArchiveHint => '以后想回看，它会在山海缓存里。';
 
   @override
   String get reflectionLoading => '这一刻已经收好。ZEROON 正在轻轻回应。';

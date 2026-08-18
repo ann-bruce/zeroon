@@ -573,6 +573,18 @@ abstract class AppLocalizations {
   /// **'先选择一个最接近的状态，ZEROON 会从这一刻开始记录。'**
   String get chooseStateFirst;
 
+  /// No description provided for @firstLoopChooseStateHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'先选一个最接近此刻的状态。没有标准答案。'**
+  String get firstLoopChooseStateHint;
+
+  /// No description provided for @firstLoopStartResetHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'准备好时，开始一次归零，把这一刻留下来。'**
+  String get firstLoopStartResetHint;
+
   /// No description provided for @stateSwitchTitle.
   ///
   /// In zh, this message translates to:
@@ -848,6 +860,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'查看山海缓存'**
   String get viewArchive;
+
+  /// No description provided for @firstRecordArchiveHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'以后想回看，它会在山海缓存里。'**
+  String get firstRecordArchiveHint;
 
   /// No description provided for @reflectionLoading.
   ///

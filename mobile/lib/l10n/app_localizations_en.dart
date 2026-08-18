@@ -274,6 +274,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose the state that feels closest. ZEROON will begin holding time from here.';
 
   @override
+  String get firstLoopChooseStateHint =>
+      'Choose the state closest to this moment. There is no right answer.';
+
+  @override
+  String get firstLoopStartResetHint =>
+      'When you\'re ready, begin a Reset and keep this moment.';
+
+  @override
   String stateSwitchTitle(String state) {
     return 'Switch to “$state”?';
   }
@@ -442,6 +450,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewArchive => 'View Archive';
+
+  @override
+  String get firstRecordArchiveHint =>
+      'When you want to revisit it, it will be here in your Archive.';
 
   @override
   String get reflectionLoading =>

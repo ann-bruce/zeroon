@@ -193,6 +193,92 @@ void main() {
     expect(find.textContaining('8000'), findsNothing);
   });
 
+  testWidgets('Now quietly guides only the first core loop', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          recordRepositoryProvider.overrideWithValue(
+            _FakeRecordRepository(existingRecordCount: 0),
+          ),
+          profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
+        ],
+        child: _localizedApp(
+          const NowScreen(session: _session, onStartReset: _noop),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+        find.byKey(const Key('first-loop-start-reset-hint')), findsOneWidget);
+    expect(find.text('准备好时，开始一次归零，把这一刻留下来。'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('English first loop state choice fits without answer pressure', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(hasActiveSession: false),
+          ),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          recordRepositoryProvider.overrideWithValue(
+            _FakeRecordRepository(existingRecordCount: 0),
+          ),
+          profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
+        ],
+        child: _localizedApp(
+          const NowScreen(session: _session, onStartReset: _noop),
+          locale: const Locale('en'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Choose the state closest to this moment. There is no right answer.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('first-loop-start-reset-hint')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Now does not guide a returning user through the first loop', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          growthRepositoryProvider.overrideWithValue(_FakeGrowthRepository()),
+          recordRepositoryProvider.overrideWithValue(_FakeRecordRepository()),
+          profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
+        ],
+        child: _localizedApp(
+          const NowScreen(session: _session, onStartReset: _noop),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('first-loop-start-reset-hint')), findsNothing);
+  });
+
   testWidgets('Now uses the reset rhythm slot for an optional continuity cue',
       (tester) async {
     final dismissalStore = _FakeContinuityCueDismissalStore();
@@ -890,6 +976,7 @@ void main() {
     expect(find.text('已经替你保存好了。'), findsOneWidget);
     expect(find.text('回到此刻'), findsOneWidget);
     expect(find.text('查看山海缓存'), findsOneWidget);
+    expect(find.byKey(const Key('first-record-archive-hint')), findsNothing);
     expect(find.text('ZEROON 回声'), findsNothing);
     expect(find.text('“你已经把这一刻安放下来了。”'), findsOneWidget);
     expect(find.text('today I paused'), findsOneWidget);
@@ -905,6 +992,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('山海缓存'), findsOneWidget);
     expect(find.byIcon(Icons.chevron_left), findsNothing);
+  });
+
+  testWidgets('first Reset explains where the saved moment can be revisited', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStateProvider.overrideWith(
+            () => _FakeCurrentStateController(),
+          ),
+          recordRepositoryProvider.overrideWithValue(
+            _FakeRecordRepository(existingRecordCount: 0),
+          ),
+          companionRepositoryProvider.overrideWithValue(
+            _FakeCompanionRepository(),
+          ),
+        ],
+        child: _localizedApp(const ResetScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, '第一次留下此刻');
+    tester.testTextInput.hide();
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('保存这次归零'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('first-record-archive-hint')), findsOneWidget);
+    expect(find.text('以后想回看，它会在山海缓存里。'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(
@@ -1467,9 +1590,13 @@ class _ReactiveLocalizedApp extends ConsumerWidget {
 }
 
 class _FakeCurrentStateController extends CurrentStateController {
-  _FakeCurrentStateController({this.elapsedSeconds = 600});
+  _FakeCurrentStateController({
+    this.elapsedSeconds = 600,
+    this.hasActiveSession = true,
+  });
 
   final int elapsedSeconds;
+  final bool hasActiveSession;
   String? changedTo;
 
   @override
@@ -1478,7 +1605,7 @@ class _FakeCurrentStateController extends CurrentStateController {
       state: 'CALM',
       source: 'SYSTEM',
       changedAt: DateTime.now(),
-      sessionId: 1,
+      sessionId: hasActiveSession ? 1 : null,
       elapsedSeconds: elapsedSeconds,
     );
   }
@@ -1514,11 +1641,13 @@ class _FakeRecordRepository extends RecordRepository {
   _FakeRecordRepository({
     ContinuityCue? continuityCue,
     this.continuityCueRequest,
+    this.existingRecordCount = 1,
   })  : _continuityCue = continuityCue,
         super(Dio());
 
   final ContinuityCue? _continuityCue;
   Future<ContinuityCue?> Function()? continuityCueRequest;
+  int existingRecordCount;
   CreateRecordRequest? lastCreateRequest;
 
   final _record = ZeroRecord(
@@ -1533,6 +1662,7 @@ class _FakeRecordRepository extends RecordRepository {
   @override
   Future<ZeroRecord> create(CreateRecordRequest request) async {
     lastCreateRequest = request;
+    existingRecordCount = 1;
     return _record;
   }
 
@@ -1550,10 +1680,10 @@ class _FakeRecordRepository extends RecordRepository {
   @override
   Future<RecordPage> list({int page = 0, int size = 20}) async {
     return RecordPage(
-      items: [_record],
+      items: existingRecordCount == 0 ? const [] : [_record],
       page: page,
       size: size,
-      totalElements: 1,
+      totalElements: existingRecordCount,
     );
   }
 }

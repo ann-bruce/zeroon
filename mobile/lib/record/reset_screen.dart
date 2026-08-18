@@ -50,6 +50,7 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
   @override
   Widget build(BuildContext context) {
     final currentState = ref.watch(currentStateProvider);
+    final recordPage = ref.watch(recordListProvider).valueOrNull;
     final snapshot = currentState.valueOrNull;
     if (snapshot != null && !_resetRecorded) {
       _resetRecorded = true;
@@ -119,7 +120,9 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
           ZeroonPrimaryButton(
             label: context.l10n.saveReset,
             loading: _saving,
-            onPressed: _save,
+            onPressed: () => _save(
+              isFirstRecord: recordPage?.totalElements == 0,
+            ),
           ),
           if (_message != null) ...[
             const SizedBox(height: 16),
@@ -139,7 +142,7 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
     });
   }
 
-  Future<void> _save() async {
+  Future<void> _save({required bool isFirstRecord}) async {
     final snapshot = ref.read(currentStateProvider).valueOrNull;
     if (snapshot == null || !snapshot.hasActiveSession) {
       setState(() => _message = context.l10n.chooseStateFromNow);
@@ -195,6 +198,7 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
         MaterialPageRoute(
           builder: (_) => RecordCompleteScreen(
             record: record,
+            isFirstRecord: isFirstRecord,
             onReturnHome: widget.onReturnHome,
           ),
         ),

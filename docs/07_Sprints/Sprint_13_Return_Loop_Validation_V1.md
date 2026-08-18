@@ -1,8 +1,8 @@
 # Sprint 13 Return Loop Validation V1
 
-Status: Production owner validation passed; Reset refinement ready for owner validation
+Status: Production owner validation passed; S13-09 owner validation passed
 Prepared: 2026-07-30
-Last updated: 2026-08-10
+Last updated: 2026-08-18
 
 ## Intake Decision
 
@@ -208,6 +208,7 @@ export and deletion behavior.
 | S13-06 Owner and closed-Beta validation | Notification decision | Owner plus invited adults complete a seven-day test and explain whether the cue created a genuine reason to return |
 | S13-07 Optional return invitation | Value proved first | Only after S13-06, user-controlled local reminder options may be proposed with no private lock-screen text |
 | S13-08 Reset capture hierarchy refinement | Owner UX correction | Reset prioritizes one open moment field and reveals the non-required next direction only on request, without changing stored Record meaning |
+| S13-09 First-loop orientation | Pre-cohort first-use correction | A user with no Records receives two contextual, non-blocking cues that connect Now, the first Reset, and Archive without a tutorial flow |
 
 ### S13-08 Reset capture hierarchy refinement
 
@@ -245,6 +246,28 @@ Acceptance requires:
 - Chinese and English remain readable on a 390-pixel-wide device;
 - older Records render under the new labels without migration;
 - no task completion, streak, score, reminder, or negative state is added.
+
+### S13-09 First-loop orientation
+
+ZEROON should explain its first core loop without becoming instructional. A
+user with no Records sees one quiet cue on Now: first choose the state closest
+to this moment, then begin a Reset when ready. After the first Record is saved,
+the completion screen explains that the moment can later be revisited in
+Archive. The cues disappear naturally once a Record exists.
+
+This orientation is derived from the existing Record count. It adds no
+tutorial-completion field, backend API, database migration, analytics event,
+modal, spotlight, carousel, step counter, reward, or mandatory action.
+
+Acceptance requires:
+
+- the Now cue appears only when the authenticated user has zero Records;
+- both the no-state and active-state variants remain quiet and contextual;
+- the completion cue appears only after the user's first saved Record;
+- returning users retain the existing Now and completion experience;
+- Record-list loading or failure never blocks state selection or Reset;
+- Chinese and English remain readable on a 390-pixel-wide device;
+- no private content or new behavioral evidence is collected.
 
 ## Affected Surfaces for Engineering
 

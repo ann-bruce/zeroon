@@ -64,20 +64,24 @@ class _NowScreenState extends ConsumerState<NowScreen>
         children: [
           Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SectionMark(context.l10n.todayZeroon),
-                  const SizedBox(height: 4),
-                  Text(
-                    nickname == null || nickname.isEmpty
-                        ? context.l10n.greeting
-                        : context.l10n.greetingWithName(nickname),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SectionMark(context.l10n.todayZeroon),
+                    const SizedBox(height: 4),
+                    Text(
+                      nickname == null || nickname.isEmpty
+                          ? context.l10n.greeting
+                          : context.l10n.greetingWithName(nickname),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 12),
               ZeroonIconButton(
                 dark: true,
                 semanticLabel: context.l10n.openProfile,
@@ -149,6 +153,7 @@ class _StatePanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final continuityCue = ref.watch(continuityCueProvider(userId));
     final currentCue = continuityCue.unwrapPrevious().valueOrNull;
+    final isFirstLoop = recordPage?.totalElements == 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -175,7 +180,9 @@ class _StatePanel extends ConsumerWidget {
               )
             else
               Text(
-                context.l10n.chooseStateFirst,
+                isFirstLoop
+                    ? context.l10n.firstLoopChooseStateHint
+                    : context.l10n.chooseStateFirst,
                 textAlign: TextAlign.center,
               ),
           ],
@@ -209,6 +216,19 @@ class _StatePanel extends ConsumerWidget {
             records: recordPage?.items ?? const [],
           ),
         const SizedBox(height: 12),
+        if (isFirstLoop && snapshot.hasActiveSession) ...[
+          Text(
+            context.l10n.firstLoopStartResetHint,
+            key: const Key('first-loop-start-reset-hint'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: zeroonMuted,
+              fontSize: 12,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 9),
+        ],
         ZeroonPrimaryButton(
           label: snapshot.hasActiveSession
               ? context.l10n.startReset

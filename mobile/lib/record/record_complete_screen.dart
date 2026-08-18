@@ -16,10 +16,12 @@ class RecordCompleteScreen extends ConsumerStatefulWidget {
   const RecordCompleteScreen({
     super.key,
     required this.record,
+    this.isFirstRecord = false,
     this.onReturnHome,
   });
 
   final ZeroRecord record;
+  final bool isFirstRecord;
   final VoidCallback? onReturnHome;
 
   @override
@@ -151,6 +153,19 @@ class _RecordCompleteScreenState extends ConsumerState<RecordCompleteScreen> {
             label: context.l10n.returnNow,
             onPressed: () => _returnHome(context),
           ),
+          if (widget.isFirstRecord) ...[
+            const SizedBox(height: 13),
+            Text(
+              context.l10n.firstRecordArchiveHint,
+              key: const Key('first-record-archive-hint'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: zeroonMuted,
+                fontSize: 12,
+                height: 1.45,
+              ),
+            ),
+          ],
           TextButton(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
