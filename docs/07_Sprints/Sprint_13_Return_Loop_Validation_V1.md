@@ -1,6 +1,6 @@
 # Sprint 13 Return Loop Validation V1
 
-Status: Production owner validation passed; S13-09 owner validation passed
+Status: Closed — engineering and owner validation complete; S13-06/S13-07 in Backlog
 Prepared: 2026-07-30
 Last updated: 2026-08-18
 
@@ -81,6 +81,19 @@ record-memory-reflection loop.
 
 The sprint is successful only if users describe the return as useful or
 personally meaningful. More opens alone are not success.
+
+## Closure Decision — 2026-08-18
+
+Sprint 13 is closed for engineering delivery and owner validation. The
+owner-only continuity cue, optional continuation path, content-free evidence
+boundary, Reset hierarchy refinement, and first-loop orientation were
+implemented and passed their recorded owner checks.
+
+This closure does **not** claim closed-Beta return value, retention lift, or
+notification readiness. S13-06 was moved to Backlog without a target date, and
+S13-07 remains blocked by that evidence gate. No participant invitation,
+seven-day evidence collection, notification delivery, or public-release
+expansion is authorized by closing this Sprint.
 
 ## Current Baseline
 
@@ -205,8 +218,8 @@ export and deletion behavior.
 | S13-03 Now continuity card | First owner test | Card is quiet, optional, localized, recoverable, and opens the existing Record detail |
 | S13-04 Optional `写下现在` continuation | Continuity test | User can start a blank Reset from the reviewed Record without copying old text or pre-deciding the new state |
 | S13-05 Content-free evidence | Measurement boundary accepted | Only cue availability/view/open/dismiss and optional continuation outcome are recorded under explicit Beta consent |
-| S13-06 Owner and closed-Beta validation | Notification decision | Owner plus invited adults complete a seven-day test and explain whether the cue created a genuine reason to return |
-| S13-07 Optional return invitation | Value proved first | Only after S13-06, user-controlled local reminder options may be proposed with no private lock-screen text |
+| S13-06 Owner and closed-Beta validation | Backlog — deferred by owner | No seven-day cohort or evidence collection is currently scheduled; resume only with a new explicit owner decision |
+| S13-07 Optional return invitation | Backlog — blocked by S13-06 | Only after S13-06 is explicitly resumed and proves value may user-controlled local reminders be proposed, with no private lock-screen text |
 | S13-08 Reset capture hierarchy refinement | Owner UX correction | Reset prioritizes one open moment field and reveals the non-required next direction only on request, without changing stored Record meaning |
 | S13-09 First-loop orientation | Pre-cohort first-use correction | A user with no Records receives two contextual, non-blocking cues that connect Now, the first Reset, and Archive without a tutorial flow |
 
@@ -305,7 +318,11 @@ preview, Memory status, user identity, AI reply, and exact event time.
 Availability should not be counted repeatedly on every rebuild. Evidence
 failure must never affect cue display or navigation.
 
-## Seven-Day Validation
+## Backlog: Seven-Day Validation
+
+Deferred by owner on 2026-08-18. This is not a current Sprint gate, has no
+target date, and must not trigger participant invitations, evidence collection,
+or notification work. Resume only after a new explicit owner decision.
 
 Run first with Bruce Ann, then no more than the existing closed-Beta limit.
 

@@ -335,6 +335,15 @@ environment SMTP delivery/one-time/outage acceptance, real-provider checks,
 both operators' mailbox/ADMIN access evidence, and the production-like
 isolation/outage/deletion rehearsal.
 
+### Sprint 13 Return Loop Validation
+
+Sprint 13 closed on 2026-08-18 after engineering delivery and owner
+validation of the user-owned continuity cue, optional continuation path, Reset
+hierarchy refinement, and first-loop orientation. The five-participant,
+seven-day validation was not run and remains in Backlog without a target date.
+This closure does not prove broader retention value and does not authorize
+notifications, participant invitations, or public-release expansion.
+
 ## 7. Operating Rhythm
 
 ### Weekly

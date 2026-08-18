@@ -125,8 +125,10 @@ capability is validated.
 ### Sprint 13
 
 - Return Loop Validation
+- Closed on 2026-08-18 after engineering and owner validation
 - Quietly resurface one eligible user-owned moment after time passes
 - Validate in-app return value before adding notification delivery
+- Closed-Beta seven-day validation and notifications remain in Backlog
 - No AI importance inference, private lock-screen text, generic chat, streak
   pressure, scores, or social mechanics
 
