@@ -178,6 +178,10 @@ This plan is an engineering and product checklist, not legal advice.
 - Obtain 3-5 plush sample quotations and one physical sample only as a separate
   demand experiment.
 - Do not promise smart-device integration or mass delivery during this period.
+- Keep the Sprint 16 Physical ZEROON Entitlement Pilot as a gated future
+  candidate. It cannot enter implementation until Sprint 13 has a recorded
+  decision and its sample, supply, fulfillment, privacy, and owner-approval
+  gates pass.
 - Keep advertising, social feed, paid affection, and large licensing deals out
   of scope.
 

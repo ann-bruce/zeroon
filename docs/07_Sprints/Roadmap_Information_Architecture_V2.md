@@ -143,7 +143,22 @@ capability is validated.
 - Model settings
 - Device link
 - Emotion Light
-- NFC or physical ZEROON experiments
+- NFC experiments
+
+### Sprint 16 Candidate
+
+- Physical ZEROON Entitlement Pilot
+- One manually approved entitlement per participant and campaign
+- Idempotent claim, bounded fulfillment, and minimal encrypted delivery data
+- No rewards, payment, store, gifting, BLE, NFC, or mass-delivery promise
+- Entry requires the Sprint 13 decision gate, one reviewed sample, supplier
+  quotations, fulfillment rules, and explicit owner approval
+- Plan:
+  `docs/07_Sprints/Sprint_16_Physical_ZEROON_Entitlement_Pilot_V1.md`
+
+The Sprint 16 number reserves a future candidate only. It does not approve or
+define Sprint 14 or Sprint 15, and it does not move V2 hardware work ahead of
+the current product-validation gates.
 
 ## Guardrails
 
