@@ -1,5 +1,5 @@
 # ZEROON Current State
-Last verified: 2026-08-18
+Last verified: 2026-08-19
 
 This is the short, canonical entry point for a new Codex chat. Keep it factual,
 current, and at most 100 lines. Historical detail belongs in Sprint documents,
@@ -22,10 +22,10 @@ Never infer deployment state from a local commit alone.
 - Branch baseline: `main`
 - Verified product baseline commit: `c52a0be`
 - Active Sprint: none; Sprint 13 closed on 2026-08-18
-- Sprint status: engineering and owner validation are complete on `main`;
-  S13-06/S13-07 remain in Backlog without a target date
-- Next gate: owner selects the next Backlog item; no cohort invitation,
-  seven-day evidence collection, or notification work is currently scheduled
+- Sprint status: engineering and owner acceptance are complete on `main`; the
+  closed Sprint has no remaining validation or notification task
+- Next gate: scope and approve Sprint 14 from
+  `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md`
 
 Run `scripts/zeroon-context.sh` at the start of every takeover. A different
 HEAD or a dirty working tree is new evidence that must be inspected, not
@@ -58,9 +58,9 @@ Sprint 13 delivered one quiet, private, user-owned continuity cue. The cue:
 - never changes Memory or AI consent;
 - keeps evidence content-free.
 
-Owner validation passed. No closed-Beta cohort evidence was collected, so
-broader return or retention value is not proven. Notifications remain in
-Backlog and require a new explicit owner decision.
+Owner acceptance passed. Broader acquisition, activation, return, retention,
+and trust value remains unproven and is scheduled only after bounded
+optimization and an explicitly authorized production/App Store release.
 
 ## Durable Guardrails
 
@@ -75,10 +75,11 @@ Backlog and require a new explicit owner decision.
 
 ## Canonical Sources
 
-- Latest closed Sprint:
-  `docs/07_Sprints/Sprint_13_Return_Loop_Validation_V1.md`
+- Latest closed Sprint: `docs/07_Sprints/Sprint_13_Return_Loop_Foundation_And_Owner_Acceptance_V1.md`
 - Durable decision index: `DECISION_LOG.md`
 - Product validation roadmap: `docs/08_Roadmap/ZEROON_90_Day_Product_Validation_Plan_V1.md`
+- Product optimization and feature Backlog: `docs/08_Roadmap/ZEROON_Product_Backlog_V1.md`
+- Sprint 14-19 execution roadmap: `docs/08_Roadmap/Sprint_14_19_Execution_Roadmap_V1.md`
 - Release gate: `docs/05_Engineering/Closed_Beta_Launch_Runbook_V1.md`
 - Persona V2 evidence:
   `docs/06_AI/evaluation/Persona_V2_V1_1_Review_Summary.md`
@@ -96,5 +97,4 @@ Update this file only when a fact is verified. At minimum update:
 - next decision or release gate;
 - runtime facts only when runtime evidence exists.
 
-Do not append completed-task narratives here. Update the relevant Sprint,
-decision, or release document instead.
+Do not append completed-task narratives here; update the relevant Sprint, decision, or release document instead.

@@ -49,6 +49,15 @@ Now awareness
 | Export | Generate cards, images, or reports from existing records | Record detail / Growth |
 | Device Link | Connect Emotion Light, plush ZEROON, NFC, or future devices | Settings / Device |
 
+## Product Optimization And Feature Backlog
+
+- Independent optimization and new-feature candidates are ordered in
+  `../08_Roadmap/ZEROON_Product_Backlog_V1.md`.
+- Backlog placement does not attach an item to any completed Sprint or approve
+  a new Sprint, production change, cohort, notification, or payment action.
+- Trust and ownership gaps are considered before broader capture, reflection,
+  or engagement expansion.
+
 ## Naming Rules
 
 Do not use these as official feature or navigation names:
@@ -124,13 +133,48 @@ capability is validated.
 
 ### Sprint 13
 
-- Return Loop Validation
-- Closed on 2026-08-18 after engineering and owner validation
+- Return Loop Foundation and Owner Acceptance
+- Closed on 2026-08-18 with no remaining Sprint task
 - Quietly resurface one eligible user-owned moment after time passes
-- Validate in-app return value before adding notification delivery
-- Closed-Beta seven-day validation and notifications remain in Backlog
+- Reset capture hierarchy and first-loop orientation are owner-accepted
 - No AI importance inference, private lock-screen text, generic chat, streak
   pressure, scores, or social mechanics
+
+### Sprint 14
+
+- Record Reliability and Ownership
+- Durable Reset drafts and one-owned-Record deletion
+- Linked Memory, cue, Archive, Growth, export, and AI lifecycle closure
+- Plan: `Sprint_14_Record_Reliability_And_Ownership_V1.md`
+
+### Sprint 15
+
+- Growth and Memory Clarity
+- Remove performance pressure and fixed-state implications
+- Make preservation, source, pause, delete, and AI-use controls understandable
+- Plan: `Sprint_15_Growth_And_Memory_Clarity_V1.md`
+
+### Sprint 16
+
+- Privacy and Release Readiness
+- App access/background protection and bounded readable export
+- Production, support, AI-safety, privacy, and App Store package acceptance
+- No production release or App Store submission without explicit owner approval
+- Plan: `Sprint_16_Privacy_And_Release_Readiness_V1.md`
+
+### Sprint 17
+
+- Production Launch and User Validation
+- Separate acquisition, activation, return, retention, and trust evidence
+- First approximately 20 adults establish stability before bounded expansion
+- Plan: `Sprint_17_Production_Launch_And_User_Validation_V1.md`
+
+### Sprint 18
+
+- Evidence-Led Iteration
+- Exact feature scope remains unset until Sprint 17 evidence exists
+- Select one bounded problem rather than changing multiple core variables
+- Plan: `Sprint_18_Evidence_Led_Iteration_V1.md`
 
 ### V1.2
 
@@ -145,20 +189,20 @@ capability is validated.
 - Emotion Light
 - NFC experiments
 
-### Sprint 16 Candidate
+### Sprint 19 Candidate
 
 - Physical ZEROON Entitlement Pilot
 - One manually approved entitlement per participant and campaign
 - Idempotent claim, bounded fulfillment, and minimal encrypted delivery data
 - No rewards, payment, store, gifting, BLE, NFC, or mass-delivery promise
-- Entry requires the Sprint 13 decision gate, one reviewed sample, supplier
-  quotations, fulfillment rules, and explicit owner approval
-- Plan:
-  `docs/07_Sprints/Sprint_16_Physical_ZEROON_Entitlement_Pilot_V1.md`
+- Entry requires Sprint 17 digital-value evidence, one reviewed sample,
+  supplier quotations, fulfillment rules, and explicit owner approval
+- Plan: `Sprint_19_Physical_ZEROON_Entitlement_Pilot_V1.md`
 
-The Sprint 16 number reserves a future candidate only. It does not approve or
-define Sprint 14 or Sprint 15, and it does not move V2 hardware work ahead of
-the current product-validation gates.
+The Sprint 19 number reserves a future candidate only. It does not move V2
+hardware work ahead of digital value, supply, privacy, or owner gates. The
+accepted sequence is detailed in
+`../08_Roadmap/Sprint_14_19_Execution_Roadmap_V1.md`.
 
 ## Guardrails
 

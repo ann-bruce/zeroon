@@ -1,11 +1,12 @@
-# Sprint 16 Physical ZEROON Entitlement Pilot V1
+# Sprint 19 Physical ZEROON Entitlement Pilot V1
 
 Status: Candidate; deferred until entry gates pass
 Prepared: 2026-07-31
+Last updated: 2026-08-19
 
-Sprint 16 is a reserved future candidate. This document does not approve,
-define, or reorder Sprint 14 or Sprint 15, and it does not move broader V2
-hardware work into the current validation period.
+Sprint 19 is a reserved future candidate positioned by the accepted Sprint
+14-19 execution roadmap. This document does not authorize implementation,
+production data collection, fulfillment, or broader V2 hardware work.
 
 ## Intake Decision
 
@@ -42,7 +43,7 @@ affecting the digital product.
 
 ### 4. Roadmap decision
 
-Reserve Sprint 16 as **Physical ZEROON Entitlement Pilot**.
+Reserve Sprint 19 as **Physical ZEROON Entitlement Pilot**.
 
 The sprint remains a candidate until all entry gates below pass. Initial scope
 is a limited physical-companion and fulfillment experiment, not smart hardware.
@@ -51,7 +52,8 @@ is a limited physical-companion and fulfillment experiment, not smart hardware.
 
 The sprint may enter implementation only if:
 
-- Sprint 13 has a recorded `Continue` or bounded `Reshape` decision;
+- Sprint 17 has a recorded launch and user-validation decision with credible
+  digital companion, activation, and return-value evidence;
 - no open trust, privacy, support, deletion, or cross-user isolation blocker
   exists;
 - at least one physical sample and 3-5 supplier quotations have been reviewed;
@@ -153,13 +155,13 @@ requests.
 
 | ID | Task | Surfaces | Done when |
 |---|---|---|---|
-| S16-01 | Freeze pilot and fulfillment rules | product, operations, privacy | Quantity, eligibility, cancellation, replacement, retention, and stop rules are approved |
-| S16-02 | Add campaign and entitlement domain | backend, database, OpenAPI, tests | One user can hold at most one entitlement per campaign |
-| S16-03 | Add idempotent claim flow | backend, OpenAPI, tests | Retries and concurrent requests return one claim and cannot create duplicate fulfillment |
-| S16-04 | Add restrained user application surface | mobile, localization, tests | Eligible users can apply, decline, and view status without reward pressure |
-| S16-05 | Add bounded fulfillment operations | admin, backend, audit, tests | Approved operators can fulfill and review exceptions without private product access |
-| S16-06 | Add delivery-data controls | encryption, retention, export/delete decision, tests | Delivery data is minimal, access-controlled, expiring, and independently deletable |
-| S16-07 | Run controlled pilot | operations, research, evidence | 5-20 approved adults complete fulfillment and provide content-free feedback |
+| S19-01 | Freeze pilot and fulfillment rules | product, operations, privacy | Quantity, eligibility, cancellation, replacement, retention, and stop rules are approved |
+| S19-02 | Add campaign and entitlement domain | backend, database, OpenAPI, tests | One user can hold at most one entitlement per campaign |
+| S19-03 | Add idempotent claim flow | backend, OpenAPI, tests | Retries and concurrent requests return one claim and cannot create duplicate fulfillment |
+| S19-04 | Add restrained user application surface | mobile, localization, tests | Eligible users can apply, decline, and view status without reward pressure |
+| S19-05 | Add bounded fulfillment operations | admin, backend, audit, tests | Approved operators can fulfill and review exceptions without private product access |
+| S19-06 | Add delivery-data controls | encryption, retention, export/delete decision, tests | Delivery data is minimal, access-controlled, expiring, and independently deletable |
+| S19-07 | Run controlled pilot | operations, research, evidence | 5-20 approved adults complete fulfillment and provide content-free feedback |
 
 ## Non-Goals
 

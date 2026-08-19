@@ -1,6 +1,6 @@
 # ZEROON Durable Decision Index
 
-Last reviewed: 2026-08-18
+Last reviewed: 2026-08-19
 
 This file indexes accepted decisions that a new project chat must not
 re-litigate without new evidence. Detailed rationale and acceptance criteria
@@ -17,7 +17,9 @@ do not paste chat transcripts here.
 | D-006 | Help and feedback use a private, trackable, human-operated support lifecycle with an honest email fallback and no continuous-coverage claim. | `docs/02_Architecture/ADR_006_Support_Request_Lifecycle_V1.md` | Active |
 | D-007 | Closed-Beta evidence is explicit-consent, content-free, aggregate-only for administrators, and must never block core product actions. | `docs/02_Architecture/ADR_007_Beta_Evidence_Event_Lifecycle_V1.md` | Active |
 | D-008 | Persona V2 is production-active through a recorded owner-risk exception; professional safety review is still required and rollback remains available. | `docs/06_AI/evaluation/Persona_V2_V1_1_Review_Summary.md` | Active with open gate |
-| D-009 | Sprint 13 established an owner-validated, in-app, user-owned continuity cue; broader return value and any notification mechanism still require separate evidence and explicit approval. | `docs/07_Sprints/Sprint_13_Return_Loop_Validation_V1.md` | Implemented; cohort gate deferred |
+| D-009 | Sprint 13 originally coupled the in-app continuity cue to later cohort and notification gates. | Superseded by `D-010` | Superseded by D-010 |
+| D-010 | Sprint 13 established and owner-accepted an in-app, user-owned continuity cue together with Reset hierarchy and first-loop refinements; the Sprint is fully closed with no remaining validation or notification task. | `docs/07_Sprints/Sprint_13_Return_Loop_Foundation_And_Owner_Acceptance_V1.md` | Closed |
+| D-011 | ZEROON will complete bounded reliability, ownership, clarity, privacy, and release-readiness work in Sprints 14-16, validate acquisition/activation/return/trust after production and App Store release in Sprint 17, select Sprint 18 from evidence, and keep the physical entitlement pilot gated as Sprint 19. | `docs/08_Roadmap/Sprint_14_19_Execution_Roadmap_V1.md` | Active roadmap |
 
 ## Change Rules
 

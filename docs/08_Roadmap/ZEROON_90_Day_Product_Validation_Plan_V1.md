@@ -178,10 +178,10 @@ This plan is an engineering and product checklist, not legal advice.
 - Obtain 3-5 plush sample quotations and one physical sample only as a separate
   demand experiment.
 - Do not promise smart-device integration or mass delivery during this period.
-- Keep the Sprint 16 Physical ZEROON Entitlement Pilot as a gated future
-  candidate. It cannot enter implementation until Sprint 13 has a recorded
-  decision and its sample, supply, fulfillment, privacy, and owner-approval
-  gates pass.
+- Keep the Sprint 19 Physical ZEROON Entitlement Pilot as a gated future
+  candidate. It cannot enter implementation until Sprint 17 records credible
+  digital-value evidence and its sample, supply, fulfillment, privacy, and
+  owner-approval gates pass.
 - Keep advertising, social feed, paid affection, and large licensing deals out
   of scope.
 
@@ -269,6 +269,11 @@ Exit criteria:
 
 ## 6. Immediate Execution Backlog
 
+The tables below preserve the original validation-plan execution baseline.
+Independent product optimization and new-feature candidates are maintained in
+`ZEROON_Product_Backlog_V1.md`; placement there does not approve a new Sprint,
+production change, cohort, notification, or payment action.
+
 ### Validation Sprint 00
 
 | ID | Task | Surfaces | Done when |
@@ -339,14 +344,36 @@ environment SMTP delivery/one-time/outage acceptance, real-provider checks,
 both operators' mailbox/ADMIN access evidence, and the production-like
 isolation/outage/deletion rehearsal.
 
-### Sprint 13 Return Loop Validation
+### Sprint 13 Return Loop Foundation And Owner Acceptance
 
-Sprint 13 closed on 2026-08-18 after engineering delivery and owner
-validation of the user-owned continuity cue, optional continuation path, Reset
-hierarchy refinement, and first-loop orientation. The five-participant,
-seven-day validation was not run and remains in Backlog without a target date.
-This closure does not prove broader retention value and does not authorize
-notifications, participant invitations, or public-release expansion.
+Sprint 13 closed on 2026-08-18 after engineering delivery and owner acceptance
+of the user-owned continuity cue, optional continuation path, Reset hierarchy
+refinement, and first-loop orientation. It has no remaining task. Its canonical
+record is
+`docs/07_Sprints/Sprint_13_Return_Loop_Foundation_And_Owner_Acceptance_V1.md`.
+
+### Sprint 14-19 Execution Sequence
+
+The accepted sequence is
+`docs/08_Roadmap/Sprint_14_19_Execution_Roadmap_V1.md`:
+
+- Sprint 14: Record Reliability and Ownership —
+  `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md`;
+- Sprint 15: Growth and Memory Clarity —
+  `docs/07_Sprints/Sprint_15_Growth_And_Memory_Clarity_V1.md`;
+- Sprint 16: Privacy and Release Readiness —
+  `docs/07_Sprints/Sprint_16_Privacy_And_Release_Readiness_V1.md`;
+- Sprint 17: authorized production/App Store launch and user validation —
+  `docs/07_Sprints/Sprint_17_Production_Launch_And_User_Validation_V1.md`;
+- Sprint 18: evidence-led iteration —
+  `docs/07_Sprints/Sprint_18_Evidence_Led_Iteration_V1.md`;
+- Sprint 19: gated Physical ZEROON Entitlement Pilot —
+  `docs/07_Sprints/Sprint_19_Physical_ZEROON_Entitlement_Pilot_V1.md`.
+
+This sequencing responds to insufficient current acquisition. It permits a
+bounded improvement and release-readiness phase, then freezes expansion and
+separates acquisition, activation, return, retention, and trust evidence after
+release. App Store availability alone is not product-value evidence.
 
 ## 7. Operating Rhythm
 
