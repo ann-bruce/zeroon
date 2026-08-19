@@ -1,7 +1,8 @@
 # Sprint 14 Record Reliability And Ownership V1
 
-Status: Proposed — next planning candidate; implementation not started
+Status: Active — `S14-01` complete; `S14-02` next
 Prepared: 2026-08-19
+Started: 2026-08-19
 Backlog sources: `ZPB-P0-01`, `ZPB-P0-02`
 
 ## Intake Decision
@@ -28,8 +29,9 @@ owned Record together with every explicitly accepted dependent lifecycle.
 
 ### 4. Roadmap decision
 
-Accept Sprint 14 as the next bounded planning candidate. It is not active until
-the owner approves its deletion and draft-storage contracts.
+Sprint 14 entered active execution on 2026-08-19. `S14-01` reconciled the
+current Record, Memory, AI-context, export, evidence, and mobile behavior and
+accepted the lifecycle contract below.
 
 ### 5. Planning acceptance criteria
 
@@ -48,6 +50,82 @@ the owner approves its deletion and draft-storage contracts.
 Make the core Record lifecycle trustworthy before public release: unfinished
 input is recoverable, saved input is idempotent, and one owned Record can be
 removed completely and predictably.
+
+## S14-01 Accepted Lifecycle Contract
+
+Accepted on 2026-08-19 after repository baseline reconciliation.
+
+### Verified baseline
+
+- Reset text currently exists only in widget memory. It survives the current
+  locale rebuild but not route disposal or process restart.
+- Record creation currently suppresses matching content within ten seconds.
+  It has no client intent key or database uniqueness boundary, so it can merge
+  two intentional matching Records and cannot safely resolve a late retry.
+- Record detail, backend, mobile repository, and OpenAPI currently have no
+  single-Record deletion operation.
+- Each produced `ZERO_RECORD` Memory has exactly one Record source under a
+  unique `(user_id, source_type, source_id, type)` boundary. The current model
+  has no multi-source Memory.
+- continuity cue, Growth, Archive, export, and Memory AI context read live
+  Record or Memory state; they do not require preserved Record text after
+  deletion.
+- state-session references already use `ON DELETE SET NULL`. Content-free
+  evidence has no approved Record content field.
+
+### Draft contract
+
+- Keep at most one device-local Reset draft per authenticated user UID.
+- Persist moment text, optional direction, whether the direction field is
+  expanded, and the minimum state-session reference needed to explain restore.
+- Restore across route exit, locale change, recoverable save failure, and app
+  process restart. Never submit, start/end state, or emit product evidence on
+  restore.
+- Exclude the draft from device/cloud backup and cross-device sync. App removal
+  may remove the draft and the UI must not promise recovery after uninstall.
+- Explicit discard, logout, account deletion, or terminal session expiry clears
+  the affected account draft. Account A can never read account B's draft.
+- A confirmed save clears only the matching draft. Failed or ambiguous save
+  keeps it until the idempotent retry resolves.
+- Draft text never enters analytics, logs, diagnostics, admin, support, or an
+  API request other than the user's explicit Record save.
+
+### Save-idempotency contract
+
+- Create one stable opaque intent key when a new draft begins and retain it
+  through retries and process restart.
+- Send that key as `Idempotency-Key`; persist a user-scoped unique key with the
+  Record. The same key and same normalized payload returns the original Record
+  regardless of elapsed time and does not republish commit side effects.
+- Reusing a key with a different normalized payload returns conflict. Two
+  deliberate saves with identical text but different keys create two Records.
+- Resolve an existing key before reading or ending an active state session so
+  a late retry cannot close a newer session.
+
+### Record-deletion contract
+
+- Add owner-authenticated `DELETE /api/v1/records/{recordId}`. The first
+  successful deletion returns `204`; absent, already deleted, and cross-user
+  targets expose no private data and use the common not-found boundary.
+- Hard-delete the owned Record and its current single-source `ZERO_RECORD`
+  Memory in one transaction. Do not retain a soft-deleted content copy.
+- Database `ON DELETE SET NULL` detaches the historical state session without
+  deleting the state interval itself.
+- Archive, Record Detail, continuity cue, Growth, export, Memory, and future AI
+  context reflect deletion on their next read. Cached mobile providers are
+  invalidated after success.
+- Existing content-free aggregate evidence may remain, but Record id, text,
+  state, goal, preview, Memory text, and deletion target never enter a deletion
+  event, log, audit payload, or admin surface.
+- Existing encrypted database backups age out under the separately approved
+  retention policy; deletion does not make an untruthful instantaneous-backup
+  erasure promise, and deleted live data must not be restored as active data.
+
+### Implementation boundary
+
+`S14-02` through `S14-06` may now implement this contract. Any need for
+cross-device sync, recycle bin, Record editing, multi-source Memory, or content
+retention requires a new owner decision rather than an implementation shortcut.
 
 ## Scope
 

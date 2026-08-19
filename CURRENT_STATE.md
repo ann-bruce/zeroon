@@ -20,11 +20,11 @@ Never infer deployment state from a local commit alone.
 ## Execution Snapshot
 
 - Branch baseline: `main`
-- Verified product baseline commit: `c52a0be`
-- Active Sprint: none; Sprint 13 closed on 2026-08-18
-- Sprint status: engineering and owner acceptance are complete on `main`; the
-  closed Sprint has no remaining validation or notification task
-- Next gate: scope and approve Sprint 14 from
+- Verified planning baseline commit: `ebfa839`
+- Active Sprint: Sprint 14 — Record Reliability And Ownership
+- Sprint status: started on 2026-08-19; `S14-01` draft, idempotency, and Record
+  deletion contracts are accepted; implementation has not started
+- Next gate: implement `S14-02` durable local Reset draft from
   `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md`
 
 Run `scripts/zeroon-context.sh` at the start of every takeover. A different
