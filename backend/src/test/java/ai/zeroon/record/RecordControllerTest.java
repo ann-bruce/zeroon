@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -12,11 +13,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import ai.zeroon.memory.MemoryEntryRepository;
 import ai.zeroon.memory.MemoryEntryType;
 import ai.zeroon.memory.MemoryProductionService;
+import ai.zeroon.state.StateSessionRepository;
 import ai.zeroon.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -45,6 +49,9 @@ class RecordControllerTest {
 
     @Autowired
     private ZeroRecordRepository zeroRecordRepository;
+
+    @Autowired
+    private StateSessionRepository stateSessionRepository;
 
     @Test
     void userCanCreateListAndReadOwnRecords() throws Exception {
@@ -83,15 +90,62 @@ class RecordControllerTest {
     }
 
     @Test
+    void ownerCanHardDeleteRecordMemoryAndStateSessionLink() throws Exception {
+        String accessToken = login("13400134010");
+        mockMvc.perform(post("/api/v1/state/sessions")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"state\":\"CALM\"}"))
+                .andExpect(status().isCreated());
+        Long recordId = createRecord(accessToken, "CALM", "private goal", "private content");
+        Long userId = userRepository.findByMobile("13400134010").orElseThrow().getId();
+        var endedSession = stateSessionRepository.findAll().stream()
+                .filter(session -> recordId.equals(session.getEndedByRecordId()))
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(delete("/api/v1/records/{recordId}", recordId)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNoContent());
+
+        assertThat(zeroRecordRepository.findById(recordId)).isEmpty();
+        assertThat(memoryEntryRepository.countByUserIdAndTypeAndSourceTypeAndSourceId(
+                userId, MemoryEntryType.ZERO_RECORD, "ZERO_RECORD", recordId)).isZero();
+        var detachedSession = stateSessionRepository.findById(endedSession.getId()).orElseThrow();
+        assertThat(detachedSession.getEndedAt()).isNotNull();
+        assertThat(detachedSession.getEndedByRecordId()).isNull();
+        mockMvc.perform(get("/api/v1/records/{recordId}", recordId)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(delete("/api/v1/records/{recordId}", recordId)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void userCannotDeleteAnotherUsersRecord() throws Exception {
+        String ownerToken = login("13400134011");
+        String otherToken = login("13400134012");
+        Long recordId = createRecord(ownerToken, "CREATE", "owned", "private");
+
+        mockMvc.perform(delete("/api/v1/records/{recordId}", recordId)
+                        .header("Authorization", "Bearer " + otherToken))
+                .andExpect(status().isNotFound());
+
+        assertThat(zeroRecordRepository.findById(recordId)).isPresent();
+    }
+
+    @Test
     void repeatedSaveTapsDoNotCreateDuplicateRecords() throws Exception {
         String accessToken = login("13200132000");
+        String idempotencyKey = "retry-same-intent";
 
-        Long firstId = createRecord(accessToken, "TIRED", "rest", "same content");
+        Long firstId = createRecord(accessToken, "TIRED", "rest", "same content", idempotencyKey);
         Long userId = userRepository.findByMobile("13200132000").orElseThrow().getId();
         var firstMemory = memoryEntryRepository.findByUserIdAndTypeAndSourceTypeAndSourceId(
                 userId, MemoryEntryType.ZERO_RECORD, "ZERO_RECORD", firstId).orElseThrow();
         memoryEntryRepository.delete(firstMemory);
-        Long repeatedId = createRecord(accessToken, "TIRED", "rest", "same content");
+        Long repeatedId = createRecord(accessToken, "TIRED", "rest", "same content", idempotencyKey);
 
         mockMvc.perform(get("/api/v1/records")
                         .header("Authorization", "Bearer " + accessToken))
@@ -101,7 +155,72 @@ class RecordControllerTest {
                 .andExpect(jsonPath("$.items[0].id").value(repeatedId));
 
         assertThat(memoryEntryRepository.countByUserIdAndTypeAndSourceTypeAndSourceId(
-                userId, MemoryEntryType.ZERO_RECORD, "ZERO_RECORD", firstId)).isOne();
+                userId, MemoryEntryType.ZERO_RECORD, "ZERO_RECORD", firstId)).isZero();
+    }
+
+    @Test
+    void matchingContentWithDifferentIntentKeysCreatesDistinctRecords() throws Exception {
+        String accessToken = login("13200132004");
+
+        Long firstId = createRecord(accessToken, "CALM", "same", "same", "intent-one");
+        Long secondId = createRecord(accessToken, "CALM", "same", "same", "intent-two");
+
+        assertThat(secondId).isNotEqualTo(firstId);
+        mockMvc.perform(get("/api/v1/records")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", hasSize(2)));
+    }
+
+    @Test
+    void idempotencyKeyCannotBeReusedForDifferentPayload() throws Exception {
+        String accessToken = login("13200132005");
+        createRecord(accessToken, "CALM", "first", "payload", "conflicting-intent");
+
+        mockMvc.perform(post("/api/v1/records")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("Idempotency-Key", "conflicting-intent")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "state": "CALM",
+                                  "goal": "changed",
+                                  "content": "payload"
+                }
+                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("conflict"))
+                .andExpect(jsonPath("$.message").value(
+                        "Idempotency-Key was already used for a different record payload"));
+    }
+
+    @Test
+    void concurrentRetriesWithOneIntentCreateOneRecord() throws Exception {
+        String accessToken = login("13200132006");
+        var ready = new CountDownLatch(2);
+        var start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var first = executor.submit(() -> {
+                ready.countDown();
+                start.await();
+                return createRecord(accessToken, "CALM", "one", "intent", "concurrent-intent");
+            });
+            var second = executor.submit(() -> {
+                ready.countDown();
+                start.await();
+                return createRecord(accessToken, "CALM", "one", "intent", "concurrent-intent");
+            });
+            ready.await();
+            start.countDown();
+
+            assertThat(first.get()).isEqualTo(second.get());
+        } finally {
+            executor.shutdownNow();
+        }
+
+        Long userId = userRepository.findByMobile("13200132006").orElseThrow().getId();
+        assertThat(zeroRecordRepository.countByUserId(userId)).isOne();
     }
 
     @Test
@@ -141,6 +260,9 @@ class RecordControllerTest {
     @Test
     void recordEndpointsRequireAuthentication() throws Exception {
         mockMvc.perform(get("/api/v1/records"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(delete("/api/v1/records/1"))
                 .andExpect(status().isUnauthorized());
 
         mockMvc.perform(get("/api/v1/records/continuity-cue"))
@@ -267,8 +389,23 @@ class RecordControllerTest {
             String state,
             String goal,
             String content) throws Exception {
+        return createRecord(
+                accessToken,
+                state,
+                goal,
+                content,
+                "test-" + java.util.UUID.randomUUID());
+    }
+
+    private Long createRecord(
+            String accessToken,
+            String state,
+            String goal,
+            String content,
+            String idempotencyKey) throws Exception {
         String body = mockMvc.perform(post("/api/v1/records")
                         .header("Authorization", "Bearer " + accessToken)
+                        .header("Idempotency-Key", idempotencyKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

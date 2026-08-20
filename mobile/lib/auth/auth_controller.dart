@@ -8,6 +8,7 @@ import '../evidence/evidence_repository.dart';
 import '../locale/locale_controller.dart';
 import '../locale/locale_preference.dart';
 import '../locale/locale_preference_repository.dart';
+import '../record/reset_draft_store.dart';
 import 'auth_models.dart';
 import 'auth_repository.dart';
 import 'device_id_store.dart';
@@ -61,6 +62,7 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     } catch (_) {
       // Local exit must remain available when remote session revocation fails.
     } finally {
+      await _clearResetDraft(session?.user.uid);
       await tokenStore.clear();
       _advanceAccountDataEpoch();
       state = const AsyncData(null);
@@ -68,6 +70,8 @@ class AuthController extends AsyncNotifier<AuthSession?> {
   }
 
   Future<void> deleteAccount() async {
+    final session =
+        state.valueOrNull ?? await ref.read(tokenStoreProvider).read();
     final evidence = ref.read(evidenceRepositoryProvider);
     unawaited(evidence.record(EvidenceEvent('ACCOUNT_DELETE_REQUESTED', {
       'surface': 'DATA_CONTROL',
@@ -75,6 +79,7 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     })));
     try {
       await ref.read(dataControlRepositoryProvider).deleteAccount();
+      await _clearResetDraft(session?.user.uid);
       await ref.read(tokenStoreProvider).clear();
       _advanceAccountDataEpoch();
       state = const AsyncData(null);
@@ -94,6 +99,17 @@ class AuthController extends AsyncNotifier<AuthSession?> {
   void _advanceAccountDataEpoch() {
     final epoch = ref.read(accountDataEpochProvider.notifier);
     epoch.state += 1;
+  }
+
+  Future<void> _clearResetDraft(String? ownerUid) async {
+    if (ownerUid == null) {
+      return;
+    }
+    try {
+      await ref.read(resetDraftStoreProvider).clear(ownerUid);
+    } catch (_) {
+      // Session exit must remain available if device-local draft cleanup fails.
+    }
   }
 
   Future<void> selectLanguagePreference(LocalePreference preference) async {

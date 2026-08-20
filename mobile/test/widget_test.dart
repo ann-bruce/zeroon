@@ -31,6 +31,7 @@ import 'package:zeroon_mobile/profile/profile_models.dart';
 import 'package:zeroon_mobile/profile/profile_repository.dart';
 import 'package:zeroon_mobile/profile/profile_screen.dart';
 import 'package:zeroon_mobile/record/continuity_cue_controller.dart';
+import 'package:zeroon_mobile/record/record_detail_screen.dart';
 import 'package:zeroon_mobile/record/record_models.dart';
 import 'package:zeroon_mobile/record/record_repository.dart';
 import 'package:zeroon_mobile/record/reset_screen.dart';
@@ -882,6 +883,90 @@ void main() {
     expect(dataControlRepository.deleted, isTrue);
   });
 
+  testWidgets('record deletion explains scope and returns after success', (
+    tester,
+  ) async {
+    final recordRepository = _FakeRecordRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          recordRepositoryProvider.overrideWithValue(recordRepository),
+        ],
+        child: _localizedApp(
+          Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const RecordDetailScreen(recordId: 1),
+                    ),
+                  ),
+                  child: const Text('open-record'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open-record'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('delete-record')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('delete-record')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('删除这条记录？'), findsOneWidget);
+    expect(find.textContaining('ZEROON 从它保存的记忆'), findsOneWidget);
+    expect(find.textContaining('无法恢复'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('confirm-delete-record')));
+    await tester.pumpAndSettle();
+
+    expect(recordRepository.deletedRecordId, 1);
+    expect(find.text('open-record'), findsOneWidget);
+    expect(find.text('记录详情'), findsNothing);
+  });
+
+  testWidgets('failed record deletion stays recoverable on detail', (
+    tester,
+  ) async {
+    final recordRepository = _FakeRecordRepository(deleteShouldFail: true);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          recordRepositoryProvider.overrideWithValue(recordRepository),
+        ],
+        child: _localizedApp(const RecordDetailScreen(recordId: 1)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('delete-record')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('delete-record')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-delete-record')));
+    await tester.pumpAndSettle();
+
+    expect(recordRepository.deletedRecordId, 1);
+    expect(find.text('记录详情'), findsOneWidget);
+    expect(find.text('today I paused'), findsWidgets);
+    expect(
+      find.text('刚才没能删除。这条记录仍然在这里，可以稍后再试。'),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('delete-record')), findsOneWidget);
+  });
+
   testWidgets('failed profile save keeps the draft and can be retried', (
     tester,
   ) async {
@@ -1125,6 +1210,7 @@ void main() {
 
     expect(recordRepository.lastCreateRequest?.content, isEmpty);
     expect(recordRepository.lastCreateRequest?.goal, '先往前走一点');
+    expect(recordRepository.lastIdempotencyKey, isNotEmpty);
     expect(find.text('归零完成'), findsOneWidget);
     expect(find.text('接下来 · first step'), findsOneWidget);
   });
@@ -1642,13 +1728,17 @@ class _FakeRecordRepository extends RecordRepository {
     ContinuityCue? continuityCue,
     this.continuityCueRequest,
     this.existingRecordCount = 1,
+    this.deleteShouldFail = false,
   })  : _continuityCue = continuityCue,
         super(Dio());
 
   final ContinuityCue? _continuityCue;
   Future<ContinuityCue?> Function()? continuityCueRequest;
   int existingRecordCount;
+  final bool deleteShouldFail;
   CreateRecordRequest? lastCreateRequest;
+  String? lastIdempotencyKey;
+  int? deletedRecordId;
 
   final _record = ZeroRecord(
     id: 1,
@@ -1660,8 +1750,12 @@ class _FakeRecordRepository extends RecordRepository {
   );
 
   @override
-  Future<ZeroRecord> create(CreateRecordRequest request) async {
+  Future<ZeroRecord> create(
+    CreateRecordRequest request, {
+    String? idempotencyKey,
+  }) async {
     lastCreateRequest = request;
+    lastIdempotencyKey = idempotencyKey;
     existingRecordCount = 1;
     return _record;
   }
@@ -1669,6 +1763,15 @@ class _FakeRecordRepository extends RecordRepository {
   @override
   Future<ZeroRecord> get(int recordId) async {
     return _record;
+  }
+
+  @override
+  Future<void> delete(int recordId) async {
+    deletedRecordId = recordId;
+    if (deleteShouldFail) {
+      throw DioException(requestOptions: RequestOptions(path: '/records/1'));
+    }
+    existingRecordCount = 0;
   }
 
   @override

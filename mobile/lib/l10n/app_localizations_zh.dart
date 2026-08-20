@@ -387,6 +387,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recordSaveFailed => '这一次没有保存成功。你的草稿还在。';
 
   @override
+  String get recordDraftRestored => '刚才没有保存的内容，还在这里。';
+
+  @override
+  String get recordDraftStorageFailed => '暂时无法在这台设备上保留草稿。离开前请先保存。';
+
+  @override
+  String get discardRecordDraft => '清除草稿';
+
+  @override
+  String get discardRecordDraftTitle => '清除这份草稿？';
+
+  @override
+  String get discardRecordDraftBody => '还没有保存的内容会从这台设备上移除。';
+
+  @override
+  String get recordDraftDiscarded => '草稿已经清除。';
+
+  @override
   String get resetCompleteTitle => '归零完成';
 
   @override
@@ -528,6 +546,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get writeNow => '写下现在';
+
+  @override
+  String get deleteRecord => '删除这条记录';
+
+  @override
+  String get deleteRecordTitle => '删除这条记录？';
+
+  @override
+  String get deleteRecordBody => '这条记录，以及 ZEROON 从它保存的记忆，都会被永久移除，无法恢复。';
+
+  @override
+  String get keepRecord => '先保留';
+
+  @override
+  String get deleteRecordConfirm => '永久删除';
+
+  @override
+  String get deletingRecord => '正在删除…';
+
+  @override
+  String get recordDeleteFailed => '刚才没能删除。这条记录仍然在这里，可以稍后再试。';
 
   @override
   String get memoryTitle => 'ZEROON 记住的';

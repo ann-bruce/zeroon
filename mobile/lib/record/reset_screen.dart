@@ -1,17 +1,24 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../common/zeroon_design.dart';
+import '../auth/auth_controller.dart';
 import '../evidence/evidence_models.dart';
 import '../evidence/evidence_repository.dart';
 import '../l10n/l10n_extensions.dart';
 import 'record_controller.dart';
 import 'record_complete_screen.dart';
 import 'record_models.dart';
+import 'reset_draft_store.dart';
 import '../state/state_controller.dart';
 import '../state/state_models.dart';
+
+final resetDraftOwnerUidProvider = Provider<String?>((ref) {
+  return ref.watch(authControllerProvider).valueOrNull?.user.uid;
+});
 
 class ResetScreen extends ConsumerStatefulWidget {
   const ResetScreen({
@@ -38,9 +45,30 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
   bool _resetRecorded = false;
   bool _showSmallDirection = false;
   int _saveAttempts = 0;
+  Timer? _draftSaveDebounce;
+  ProviderSubscription<String?>? _draftOwnerSubscription;
+  String? _draftOwnerUid;
+  String? _draftIntentKey;
+  bool _draftReady = false;
+  bool _suppressDraftWrites = false;
+  bool _hasDraft = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _goalController.addListener(_scheduleDraftSave);
+    _contentController.addListener(_scheduleDraftSave);
+    _draftOwnerSubscription = ref.listenManual<String?>(
+      resetDraftOwnerUidProvider,
+      (previous, next) => unawaited(_loadDraft(next)),
+      fireImmediately: true,
+    );
+  }
 
   @override
   void dispose() {
+    _draftSaveDebounce?.cancel();
+    _draftOwnerSubscription?.close();
     _goalController.dispose();
     _contentController.dispose();
     _goalFocusNode.dispose();
@@ -124,6 +152,18 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
               isFirstRecord: recordPage?.totalElements == 0,
             ),
           ),
+          if (_hasDraft) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.center,
+              child: TextButton(
+                key: const Key('discard-record-draft'),
+                onPressed: _saving ? null : _confirmDiscardDraft,
+                style: TextButton.styleFrom(foregroundColor: zeroonMuted),
+                child: Text(context.l10n.discardRecordDraft),
+              ),
+            ),
+          ],
           if (_message != null) ...[
             const SizedBox(height: 16),
             Text(_message!, style: const TextStyle(color: Color(0xFF2F6F78))),
@@ -135,6 +175,7 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
 
   void _revealSmallDirection() {
     setState(() => _showSmallDirection = true);
+    _scheduleDraftSave();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _goalFocusNode.requestFocus();
@@ -162,10 +203,13 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
       _message = null;
     });
     _saveAttempts += 1;
+    final idempotencyKey = _draftIntentKey ??= _newIntentKey();
     final startedAt = DateTime.now();
     try {
-      final record =
-          await ref.read(recordListProvider.notifier).create(request);
+      final record = await ref.read(recordListProvider.notifier).create(
+            request,
+            idempotencyKey: idempotencyKey,
+          );
       unawaited(ref.read(evidenceRepositoryProvider).record(
             EvidenceEvent('RECORD_SAVED', {
               'state': record.state,
@@ -186,13 +230,26 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
             ));
       }
       ref.invalidate(currentStateProvider);
+      _draftSaveDebounce?.cancel();
+      final ownerUid = _draftOwnerUid;
+      if (ownerUid != null) {
+        try {
+          await ref.read(resetDraftStoreProvider).clear(ownerUid);
+        } catch (_) {
+          // A confirmed Record remains saved even if local cleanup fails.
+        }
+      }
+      _suppressDraftWrites = true;
       _goalController.clear();
       _contentController.clear();
+      _suppressDraftWrites = false;
       if (!mounted) {
         return;
       }
       setState(() {
         _saving = false;
+        _hasDraft = false;
+        _draftIntentKey = null;
       });
       await Navigator.of(context).push(
         MaterialPageRoute(
@@ -217,6 +274,156 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
           _saving = false;
           _message = context.l10n.recordSaveFailed;
         });
+      }
+    }
+  }
+
+  Future<void> _loadDraft(String? ownerUid) async {
+    if (_draftOwnerUid == ownerUid && _draftReady) {
+      return;
+    }
+    _draftSaveDebounce?.cancel();
+    _draftOwnerUid = ownerUid;
+    _draftReady = false;
+    if (ownerUid == null) {
+      return;
+    }
+
+    try {
+      final draft = await ref.read(resetDraftStoreProvider).read(ownerUid);
+      if (!mounted || _draftOwnerUid != ownerUid) {
+        return;
+      }
+      _draftReady = true;
+      if (draft == null) {
+        if (_hasCurrentInput) {
+          _scheduleDraftSave();
+        }
+        return;
+      }
+      if (_hasCurrentInput) {
+        _scheduleDraftSave();
+        return;
+      }
+      _suppressDraftWrites = true;
+      _draftIntentKey = draft.intentKey;
+      _contentController.text = draft.content;
+      _goalController.text = draft.goal;
+      _suppressDraftWrites = false;
+      setState(() {
+        _showSmallDirection = draft.showSmallDirection;
+        _hasDraft = draft.hasInput;
+        if (draft.hasInput) {
+          _message = context.l10n.recordDraftRestored;
+        }
+      });
+    } catch (_) {
+      if (!mounted || _draftOwnerUid != ownerUid) {
+        return;
+      }
+      _draftReady = true;
+      setState(() => _message = context.l10n.recordDraftStorageFailed);
+    }
+  }
+
+  bool get _hasCurrentInput =>
+      _contentController.text.isNotEmpty ||
+      _goalController.text.isNotEmpty ||
+      _showSmallDirection;
+
+  void _scheduleDraftSave() {
+    if (_suppressDraftWrites || !_draftReady || _draftOwnerUid == null) {
+      return;
+    }
+    final hasDraft = _hasCurrentInput;
+    if (mounted && _hasDraft != hasDraft) {
+      setState(() => _hasDraft = hasDraft);
+    }
+    _draftSaveDebounce?.cancel();
+    _draftSaveDebounce = Timer(
+      const Duration(milliseconds: 350),
+      () => unawaited(_persistDraft()),
+    );
+  }
+
+  Future<void> _persistDraft() async {
+    final ownerUid = _draftOwnerUid;
+    if (ownerUid == null || !_draftReady) {
+      return;
+    }
+    try {
+      if (!_hasCurrentInput) {
+        await ref.read(resetDraftStoreProvider).clear(ownerUid);
+        return;
+      }
+      final intentKey = _draftIntentKey ??= _newIntentKey();
+      final snapshot = ref.read(currentStateProvider).valueOrNull;
+      await ref.read(resetDraftStoreProvider).write(
+            ownerUid,
+            ResetDraft(
+              intentKey: intentKey,
+              content: _contentController.text,
+              goal: _goalController.text,
+              showSmallDirection: _showSmallDirection,
+              stateSessionId: snapshot?.sessionId,
+            ),
+          );
+    } catch (_) {
+      if (mounted && _draftOwnerUid == ownerUid) {
+        setState(() => _message = context.l10n.recordDraftStorageFailed);
+      }
+    }
+  }
+
+  String _newIntentKey() {
+    final random = Random.secure();
+    return List.generate(
+      16,
+      (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
+  }
+
+  Future<void> _confirmDiscardDraft() async {
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.discardRecordDraftTitle),
+        content: Text(context.l10n.discardRecordDraftBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(context.l10n.back),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(context.l10n.discardRecordDraft),
+          ),
+        ],
+      ),
+    );
+    if (discard != true || !mounted) {
+      return;
+    }
+
+    _draftSaveDebounce?.cancel();
+    final ownerUid = _draftOwnerUid;
+    try {
+      if (ownerUid != null) {
+        await ref.read(resetDraftStoreProvider).clear(ownerUid);
+      }
+      _suppressDraftWrites = true;
+      _contentController.clear();
+      _goalController.clear();
+      _suppressDraftWrites = false;
+      setState(() {
+        _showSmallDirection = false;
+        _hasDraft = false;
+        _draftIntentKey = null;
+        _message = context.l10n.recordDraftDiscarded;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _message = context.l10n.recordDraftStorageFailed);
       }
     }
   }

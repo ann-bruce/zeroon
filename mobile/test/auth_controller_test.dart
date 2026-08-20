@@ -13,17 +13,20 @@ import 'package:zeroon_mobile/locale/locale_controller.dart';
 import 'package:zeroon_mobile/locale/locale_preference.dart';
 import 'package:zeroon_mobile/locale/locale_preference_repository.dart';
 import 'package:zeroon_mobile/locale/locale_preference_store.dart';
+import 'package:zeroon_mobile/record/reset_draft_store.dart';
 
 void main() {
   test('logout revokes the remote session and clears local credentials',
       () async {
     final tokenStore = _MemoryTokenStore(_session);
     final authRepository = _FakeAuthRepository();
+    final draftStore = _MemoryResetDraftStore()..owners.add(_session.user.uid);
     final container = ProviderContainer(
       overrides: [
         evidenceRepositoryProvider.overrideWithValue(_NoopEvidenceRepository()),
         tokenStoreProvider.overrideWithValue(tokenStore),
         authRepositoryProvider.overrideWithValue(authRepository),
+        resetDraftStoreProvider.overrideWithValue(draftStore),
         initialLocaleStateProvider.overrideWithValue(
           const LocaleState(
             preference: LocalePreference.english,
@@ -45,6 +48,7 @@ void main() {
 
     expect(authRepository.loggedOutRefreshToken, 'refresh-token');
     expect(await tokenStore.read(), isNull);
+    expect(draftStore.owners, isEmpty);
     expect(container.read(authControllerProvider).valueOrNull, isNull);
     expect(container.read(accountDataEpochProvider), 1);
     expect(
@@ -57,11 +61,13 @@ void main() {
       () async {
     final tokenStore = _MemoryTokenStore(_session);
     final authRepository = _FakeAuthRepository(failLogout: true);
+    final draftStore = _MemoryResetDraftStore()..owners.add(_session.user.uid);
     final container = ProviderContainer(
       overrides: [
         evidenceRepositoryProvider.overrideWithValue(_NoopEvidenceRepository()),
         tokenStoreProvider.overrideWithValue(tokenStore),
         authRepositoryProvider.overrideWithValue(authRepository),
+        resetDraftStoreProvider.overrideWithValue(draftStore),
       ],
     );
     addTearDown(container.dispose);
@@ -70,6 +76,7 @@ void main() {
     await container.read(authControllerProvider.notifier).logout();
 
     expect(await tokenStore.read(), isNull);
+    expect(draftStore.owners, isEmpty);
     expect(container.read(authControllerProvider).valueOrNull, isNull);
     expect(container.read(accountDataEpochProvider), 1);
   });
@@ -77,11 +84,13 @@ void main() {
   test('successful account deletion clears the local session', () async {
     final tokenStore = _MemoryTokenStore(_session);
     final dataControlRepository = _FakeDataControlRepository();
+    final draftStore = _MemoryResetDraftStore()..owners.add(_session.user.uid);
     final container = ProviderContainer(
       overrides: [
         evidenceRepositoryProvider.overrideWithValue(_NoopEvidenceRepository()),
         tokenStoreProvider.overrideWithValue(tokenStore),
         dataControlRepositoryProvider.overrideWithValue(dataControlRepository),
+        resetDraftStoreProvider.overrideWithValue(draftStore),
       ],
     );
     addTearDown(container.dispose);
@@ -91,6 +100,7 @@ void main() {
 
     expect(dataControlRepository.deleted, isTrue);
     expect(await tokenStore.read(), isNull);
+    expect(draftStore.owners, isEmpty);
     expect(container.read(authControllerProvider).valueOrNull, isNull);
     expect(container.read(accountDataEpochProvider), 1);
   });
@@ -217,6 +227,21 @@ class _MemoryTokenStore implements TokenStore {
 
   @override
   Future<void> save(AuthSession value) async => session = value;
+}
+
+class _MemoryResetDraftStore implements ResetDraftStore {
+  final Set<String> owners = {};
+
+  @override
+  Future<void> clear(String ownerUid) async => owners.remove(ownerUid);
+
+  @override
+  Future<ResetDraft?> read(String ownerUid) async => null;
+
+  @override
+  Future<void> write(String ownerUid, ResetDraft draft) async {
+    owners.add(ownerUid);
+  }
 }
 
 class _FakeAuthRepository extends AuthRepository {

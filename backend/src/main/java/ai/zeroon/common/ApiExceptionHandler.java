@@ -18,6 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -63,6 +64,19 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     Map<String, String> unreadable(HttpMessageNotReadableException ex) {
         return Map.of("error", "bad_request", "message", "Invalid request body");
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    ResponseEntity<Map<String, String>> responseStatus(ResponseStatusException ex) {
+        String error = switch (ex.getStatusCode().value()) {
+            case 400 -> "bad_request";
+            case 404 -> "not_found";
+            case 409 -> "conflict";
+            default -> "request_failed";
+        };
+        String message = ex.getReason() == null ? "Request failed" : ex.getReason();
+        return ResponseEntity.status(ex.getStatusCode())
+                .body(Map.of("error", error, "message", message));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

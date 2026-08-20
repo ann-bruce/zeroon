@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_models.dart';
 import '../auth/token_store.dart';
 import '../locale/locale_controller.dart';
+import '../record/reset_draft_store.dart';
 
 const zeroonApiBaseUrl = String.fromEnvironment(
   'ZEROON_API_BASE_URL',
@@ -106,6 +107,11 @@ Future<AuthSession?> _tryRefresh(Ref ref) async {
     if (latest?.refreshToken == session.refreshToken) {
       final accountEpoch = ref.read(accountDataEpochProvider.notifier);
       final expiryEpoch = ref.read(sessionExpiryEpochProvider.notifier);
+      try {
+        await ref.read(resetDraftStoreProvider).clear(session.user.uid);
+      } catch (_) {
+        // Credential invalidation must continue even if local cleanup fails.
+      }
       await tokenStore.clear();
       accountEpoch.state += 1;
       expiryEpoch.state += 1;

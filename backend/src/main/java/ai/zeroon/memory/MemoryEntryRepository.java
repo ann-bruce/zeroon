@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -32,6 +33,18 @@ public interface MemoryEntryRepository extends JpaRepository<MemoryEntryEntity, 
     Page<MemoryEntryEntity> findByUserIdAndExpiresAtIsNullOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
     Optional<MemoryEntryEntity> findByIdAndUserIdAndExpiresAtIsNull(Long id, Long userId);
+
+    @Modifying
+    @Query("""
+            delete from MemoryEntryEntity entry
+            where entry.user.id = :userId
+              and entry.sourceType = :sourceType
+              and entry.sourceId = :sourceId
+            """)
+    int deleteByOwnedSource(
+            @Param("userId") Long userId,
+            @Param("sourceType") String sourceType,
+            @Param("sourceId") Long sourceId);
 
     @Query("""
             select e from MemoryEntryEntity e

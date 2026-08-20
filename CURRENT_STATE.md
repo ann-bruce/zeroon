@@ -1,5 +1,5 @@
 # ZEROON Current State
-Last verified: 2026-08-19
+Last verified: 2026-08-20
 
 This is the short, canonical entry point for a new Codex chat. Keep it factual,
 current, and at most 100 lines. Historical detail belongs in Sprint documents,
@@ -20,11 +20,11 @@ Never infer deployment state from a local commit alone.
 ## Execution Snapshot
 
 - Branch baseline: `main`
-- Verified planning baseline commit: `ebfa839`
+- Verified Sprint baseline commit: `9eabb14`
 - Active Sprint: Sprint 14 — Record Reliability And Ownership
-- Sprint status: started on 2026-08-19; `S14-01` draft, idempotency, and Record
-  deletion contracts are accepted; implementation has not started
-- Next gate: implement `S14-02` durable local Reset draft from
+- Sprint status: `S14-01` through `S14-05` are engineering complete; `S14-06` automated and PostgreSQL/API runtime gates pass, including a runtime error
+  boundary fix; real iOS process-restart draft acceptance remains open
+- Next gate: install the reviewed Sprint 14 build on an available iOS device, verify draft recovery after process restart, then close Sprint 14 before promoting Sprint 15 intake from
   `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md`
 
 Run `scripts/zeroon-context.sh` at the start of every takeover. A different

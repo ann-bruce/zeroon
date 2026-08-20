@@ -11,10 +11,12 @@ import java.time.ZoneId;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,8 +45,9 @@ public class RecordController {
     @ResponseStatus(HttpStatus.CREATED)
     ZeroRecord create(
             @AuthenticationPrincipal UserPrincipal principal,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody CreateRecordRequest request) {
-        return recordService.create(principal.userId(), request);
+        return recordService.create(principal.userId(), request, idempotencyKey);
     }
 
     @GetMapping("/{recordId}")
@@ -52,6 +55,14 @@ public class RecordController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long recordId) {
         return recordService.get(principal.userId(), recordId);
+    }
+
+    @DeleteMapping("/{recordId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void delete(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long recordId) {
+        recordService.delete(principal.userId(), recordId);
     }
 
     @GetMapping("/continuity-cue")

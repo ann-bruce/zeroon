@@ -13,10 +13,16 @@ class RecordRepository {
 
   final Dio _dio;
 
-  Future<ZeroRecord> create(CreateRecordRequest request) async {
+  Future<ZeroRecord> create(
+    CreateRecordRequest request, {
+    String? idempotencyKey,
+  }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/records',
       data: request.toJson(),
+      options: idempotencyKey == null
+          ? null
+          : Options(headers: {'Idempotency-Key': idempotencyKey}),
     );
     return ZeroRecord.fromJson(response.data!);
   }
@@ -32,6 +38,10 @@ class RecordRepository {
   Future<ZeroRecord> get(int recordId) async {
     final response = await _dio.get<Map<String, dynamic>>('/records/$recordId');
     return ZeroRecord.fromJson(response.data!);
+  }
+
+  Future<void> delete(int recordId) async {
+    await _dio.delete<void>('/records/$recordId');
   }
 
   Future<ContinuityCue?> continuityCue({required String timezone}) async {

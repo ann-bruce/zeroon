@@ -18,6 +18,11 @@ evolution.
 - `conversations`: user-owned AI conversations
 - `messages`: ordered user, assistant, and system messages
 - `memory_entries`: derived long-term memory summaries
+
+Record creation may persist a nullable user-scoped `idempotency_key` and its
+request fingerprint. Their pair is all-null or all-present, and
+`(user_id, idempotency_key)` is unique so a retried save intent cannot create a
+second Record. Neither value contains Record text.
 - `support_requests`: private owner-scoped requests with opaque public
   references, status, bounded diagnostics, and idempotent client submission id
 - `support_messages`: explicitly user-visible or internal human support text

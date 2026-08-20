@@ -43,6 +43,12 @@ public class ZeroRecordEntity {
     @Column(name = "state_session_id")
     private Long stateSessionId;
 
+    @Column(name = "idempotency_key", length = 64)
+    private String idempotencyKey;
+
+    @Column(name = "idempotency_fingerprint", length = 64)
+    private String idempotencyFingerprint;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -52,12 +58,25 @@ public class ZeroRecordEntity {
     protected ZeroRecordEntity() {
     }
 
-    public ZeroRecordEntity(UserEntity user, UserState state, String goal, String content, Long stateSessionId) {
+    public ZeroRecordEntity(
+            UserEntity user,
+            UserState state,
+            String goal,
+            String content,
+            Long stateSessionId,
+            String idempotencyKey,
+            String idempotencyFingerprint) {
         this.user = user;
         this.state = state;
         this.goal = goal;
         this.content = content;
         this.stateSessionId = stateSessionId;
+        this.idempotencyKey = idempotencyKey;
+        this.idempotencyFingerprint = idempotencyFingerprint;
+    }
+
+    public ZeroRecordEntity(UserEntity user, UserState state, String goal, String content, Long stateSessionId) {
+        this(user, state, goal, content, stateSessionId, null, null);
     }
 
     public ZeroRecordEntity(UserEntity user, UserState state, String goal, String content) {
@@ -97,6 +116,10 @@ public class ZeroRecordEntity {
 
     public Long getStateSessionId() {
         return stateSessionId;
+    }
+
+    public String getIdempotencyFingerprint() {
+        return idempotencyFingerprint;
     }
 
     public Instant getCreatedAt() {

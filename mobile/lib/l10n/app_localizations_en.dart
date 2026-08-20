@@ -431,6 +431,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'This Reset wasn\'t saved. Your draft is still here.';
 
   @override
+  String get recordDraftRestored => 'What you had not saved is still here.';
+
+  @override
+  String get recordDraftStorageFailed =>
+      'This device cannot hold the draft right now. Save before leaving.';
+
+  @override
+  String get discardRecordDraft => 'Clear draft';
+
+  @override
+  String get discardRecordDraftTitle => 'Clear this draft?';
+
+  @override
+  String get discardRecordDraftBody =>
+      'The unsaved words will be removed from this device.';
+
+  @override
+  String get recordDraftDiscarded => 'The draft has been cleared.';
+
+  @override
   String get resetCompleteTitle => 'Reset complete';
 
   @override
@@ -582,6 +602,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get writeNow => 'Write what is here now';
+
+  @override
+  String get deleteRecord => 'Delete this Record';
+
+  @override
+  String get deleteRecordTitle => 'Delete this Record?';
+
+  @override
+  String get deleteRecordBody =>
+      'This Record and the memory ZEROON kept from it will be permanently removed. This cannot be undone.';
+
+  @override
+  String get keepRecord => 'Keep this Record';
+
+  @override
+  String get deleteRecordConfirm => 'Delete permanently';
+
+  @override
+  String get deletingRecord => 'Deleting…';
+
+  @override
+  String get recordDeleteFailed =>
+      'This Record was not deleted. It is still here; you can try again.';
 
   @override
   String get memoryTitle => 'What ZEROON remembers';

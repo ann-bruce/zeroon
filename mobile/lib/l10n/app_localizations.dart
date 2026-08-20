@@ -819,6 +819,42 @@ abstract class AppLocalizations {
   /// **'这一次没有保存成功。你的草稿还在。'**
   String get recordSaveFailed;
 
+  /// No description provided for @recordDraftRestored.
+  ///
+  /// In zh, this message translates to:
+  /// **'刚才没有保存的内容，还在这里。'**
+  String get recordDraftRestored;
+
+  /// No description provided for @recordDraftStorageFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂时无法在这台设备上保留草稿。离开前请先保存。'**
+  String get recordDraftStorageFailed;
+
+  /// No description provided for @discardRecordDraft.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除草稿'**
+  String get discardRecordDraft;
+
+  /// No description provided for @discardRecordDraftTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除这份草稿？'**
+  String get discardRecordDraftTitle;
+
+  /// No description provided for @discardRecordDraftBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有保存的内容会从这台设备上移除。'**
+  String get discardRecordDraftBody;
+
+  /// No description provided for @recordDraftDiscarded.
+  ///
+  /// In zh, this message translates to:
+  /// **'草稿已经清除。'**
+  String get recordDraftDiscarded;
+
   /// No description provided for @resetCompleteTitle.
   ///
   /// In zh, this message translates to:
@@ -1088,6 +1124,48 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'写下现在'**
   String get writeNow;
+
+  /// No description provided for @deleteRecord.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除这条记录'**
+  String get deleteRecord;
+
+  /// No description provided for @deleteRecordTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除这条记录？'**
+  String get deleteRecordTitle;
+
+  /// No description provided for @deleteRecordBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'这条记录，以及 ZEROON 从它保存的记忆，都会被永久移除，无法恢复。'**
+  String get deleteRecordBody;
+
+  /// No description provided for @keepRecord.
+  ///
+  /// In zh, this message translates to:
+  /// **'先保留'**
+  String get keepRecord;
+
+  /// No description provided for @deleteRecordConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'永久删除'**
+  String get deleteRecordConfirm;
+
+  /// No description provided for @deletingRecord.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在删除…'**
+  String get deletingRecord;
+
+  /// No description provided for @recordDeleteFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'刚才没能删除。这条记录仍然在这里，可以稍后再试。'**
+  String get recordDeleteFailed;
 
   /// No description provided for @memoryTitle.
   ///

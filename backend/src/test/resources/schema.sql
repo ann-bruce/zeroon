@@ -178,8 +178,12 @@ CREATE TABLE zero_records (
     content CLOB,
     ai_summary CLOB,
     state_session_id BIGINT,
+    idempotency_key VARCHAR(64),
+    idempotency_fingerprint VARCHAR(64),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CHECK ((idempotency_key IS NULL) = (idempotency_fingerprint IS NULL)),
+    UNIQUE (user_id, idempotency_key)
 );
 
 CREATE TABLE state_sessions (

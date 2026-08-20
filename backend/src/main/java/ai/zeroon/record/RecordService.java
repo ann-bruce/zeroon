@@ -1,5 +1,6 @@
 package ai.zeroon.record;
 
+import ai.zeroon.memory.MemoryEntryRepository;
 import ai.zeroon.record.RecordDtos.CreateRecordRequest;
 import ai.zeroon.record.RecordDtos.RecordPage;
 import ai.zeroon.record.RecordDtos.ZeroRecord;
@@ -11,6 +12,9 @@ import ai.zeroon.user.UserState;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Duration;
 import java.time.Instant;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -22,31 +26,47 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class RecordService {
 
-    private static final Duration DUPLICATE_SAVE_WINDOW = Duration.ofSeconds(10);
-
     private final UserRepository userRepository;
     private final ZeroRecordRepository zeroRecordRepository;
     private final StateSessionRepository stateSessionRepository;
     private final StateService stateService;
     private final ApplicationEventPublisher eventPublisher;
+    private final MemoryEntryRepository memoryEntryRepository;
 
     public RecordService(
             UserRepository userRepository,
             ZeroRecordRepository zeroRecordRepository,
             StateSessionRepository stateSessionRepository,
             StateService stateService,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            MemoryEntryRepository memoryEntryRepository) {
         this.userRepository = userRepository;
         this.zeroRecordRepository = zeroRecordRepository;
         this.stateSessionRepository = stateSessionRepository;
         this.stateService = stateService;
         this.eventPublisher = eventPublisher;
+        this.memoryEntryRepository = memoryEntryRepository;
     }
 
     @Transactional
-    public ZeroRecord create(Long userId, CreateRecordRequest request) {
-        UserEntity user = userRepository.findById(userId)
+    public ZeroRecord create(Long userId, CreateRecordRequest request, String rawIdempotencyKey) {
+        String idempotencyKey = normalizeIdempotencyKey(rawIdempotencyKey);
+        String fingerprint = idempotencyKey == null ? null : fingerprint(request);
+        UserEntity user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        if (idempotencyKey != null) {
+            var existing = zeroRecordRepository.findByUserIdAndIdempotencyKey(userId, idempotencyKey);
+            if (existing.isPresent()) {
+                if (!fingerprint.equals(existing.get().getIdempotencyFingerprint())) {
+                    throw new ResponseStatusException(
+                            HttpStatus.CONFLICT,
+                            "Idempotency-Key was already used for a different record payload");
+                }
+                return toDto(existing.get());
+            }
+        }
+
         var activeSession = stateSessionRepository.findFirstByUserIdAndEndedAtIsNull(userId);
         UserState recordState = activeSession
                 .map(session -> session.getState())
@@ -57,26 +77,14 @@ public class RecordService {
                     "Choose a current state before saving a zero record");
         }
 
-        var duplicatedRecord = zeroRecordRepository
-                .findFirstByUserIdAndStateAndGoalAndContentOrderByCreatedAtDesc(
-                        userId,
-                        recordState,
-                        normalize(request.goal()),
-                        normalize(request.content()))
-                .filter(this::isRecentDuplicate);
-        if (duplicatedRecord.isPresent()) {
-            var record = duplicatedRecord.get();
-            activeSession.ifPresent(session -> stateService.endSessionWithRecord(session, record.getId()));
-            publishCommittedRecord(userId, record.getId());
-            return toDto(record);
-        }
-
         var record = zeroRecordRepository.save(new ZeroRecordEntity(
                 user,
                 recordState,
                 normalize(request.goal()),
                 normalize(request.content()),
-                activeSession.map(session -> session.getId()).orElse(null)));
+                activeSession.map(session -> session.getId()).orElse(null),
+                idempotencyKey,
+                fingerprint));
         activeSession.ifPresent(session -> stateService.endSessionWithRecord(session, record.getId()));
         publishCommittedRecord(userId, record.getId());
         return toDto(record);
@@ -102,8 +110,14 @@ public class RecordService {
                 .orElseThrow(() -> new EntityNotFoundException("Record not found"));
     }
 
-    private boolean isRecentDuplicate(ZeroRecordEntity record) {
-        return record.getCreatedAt().isAfter(Instant.now().minus(DUPLICATE_SAVE_WINDOW));
+    @Transactional
+    public void delete(Long userId, Long recordId) {
+        var record = zeroRecordRepository.findByIdAndUserId(recordId, userId)
+                .orElseThrow(() -> new EntityNotFoundException("Record not found"));
+        memoryEntryRepository.deleteByOwnedSource(userId, "ZERO_RECORD", recordId);
+        stateSessionRepository.detachOwnedRecord(userId, recordId);
+        zeroRecordRepository.delete(record);
+        zeroRecordRepository.flush();
     }
 
     private void publishCommittedRecord(Long userId, Long recordId) {
@@ -154,5 +168,35 @@ public class RecordService {
             return null;
         }
         return value.trim();
+    }
+
+    private String normalizeIdempotencyKey(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.trim();
+        if (normalized.length() > 64 || !normalized.matches("[A-Za-z0-9._~-]+")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Idempotency-Key must contain 1-64 URL-safe opaque characters");
+        }
+        return normalized;
+    }
+
+    private String fingerprint(CreateRecordRequest request) {
+        String canonical = component(request.state() == null ? null : request.state().name())
+                + component(normalize(request.goal()))
+                + component(normalize(request.content()));
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(canonical.getBytes(StandardCharsets.UTF_8));
+            return java.util.HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        }
+    }
+
+    private String component(String value) {
+        return value == null ? "-1:" : value.length() + ":" + value;
     }
 }

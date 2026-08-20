@@ -26,6 +26,8 @@ class RecordDetailScreen extends ConsumerStatefulWidget {
 
 class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
   bool _viewRecorded = false;
+  bool _deleting = false;
+  String? _deleteFailure;
 
   @override
   Widget build(BuildContext context) {
@@ -101,22 +103,57 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
                       content: item.aiSummary!),
                 const SizedBox(height: 4),
                 TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ResetScreen(
-                          entrySource: widget.openedFromContinuityCue
-                              ? 'RETURN_CUE'
-                              : 'RECORD_DETAIL',
-                          returnCueRecordAgeBucket:
-                              widget.openedFromContinuityCue
-                                  ? recordAgeBucket(item.createdAt)
-                                  : null,
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: _deleting
+                      ? null
+                      : () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ResetScreen(
+                                entrySource: widget.openedFromContinuityCue
+                                    ? 'RETURN_CUE'
+                                    : 'RECORD_DETAIL',
+                                returnCueRecordAgeBucket:
+                                    widget.openedFromContinuityCue
+                                        ? recordAgeBucket(item.createdAt)
+                                        : null,
+                              ),
+                            ),
+                          );
+                        },
                   child: Text(context.l10n.writeNow),
+                ),
+                const SizedBox(height: 8),
+                if (_deleteFailure != null) ...[
+                  Text(
+                    _deleteFailure!,
+                    key: const Key('record-delete-failure'),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                TextButton(
+                  key: const Key('delete-record'),
+                  onPressed: _deleting ? null : _confirmDelete,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  child: _deleting
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(context.l10n.deletingRecord),
+                          ],
+                        )
+                      : Text(context.l10n.deleteRecord),
                 ),
               ],
             );
@@ -124,6 +161,51 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.deleteRecordTitle),
+        content: Text(context.l10n.deleteRecordBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(context.l10n.keepRecord),
+          ),
+          TextButton(
+            key: const Key('confirm-delete-record'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(context.l10n.deleteRecordConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _deleting = true;
+      _deleteFailure = null;
+    });
+    try {
+      await ref.read(recordListProvider.notifier).deleteRecord(widget.recordId);
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _deleting = false;
+          _deleteFailure = context.l10n.recordDeleteFailed;
+        });
+      }
+    }
   }
 }
 
