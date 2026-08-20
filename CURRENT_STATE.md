@@ -20,7 +20,7 @@ Never infer deployment state from a local commit alone.
 ## Execution Snapshot
 
 - Branch baseline: `main`
-- Verified Sprint baseline commit: `9eabb14`
+- Verified Sprint implementation commit: `892af02`
 - Active Sprint: Sprint 14 — Record Reliability And Ownership
 - Sprint status: `S14-01` through `S14-05` are engineering complete; `S14-06` automated and PostgreSQL/API runtime gates pass, including a runtime error
   boundary fix; real iOS process-restart draft acceptance remains open
