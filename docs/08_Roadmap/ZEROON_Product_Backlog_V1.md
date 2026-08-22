@@ -1,7 +1,7 @@
 # ZEROON Product Optimization And Feature Backlog V1
 
-Status: Active Backlog — Sprint 14 items delivered; Sprint 15 items ready for
-bounded intake
+Status: Active Backlog — Sprint 14 items delivered; Sprint 15 items in active
+execution after bounded intake
 Prepared: 2026-08-18
 Last updated: 2026-08-22
 Owner: ZEROON
@@ -75,7 +75,8 @@ The current execution sequence is maintained separately in
 `Sprint_14_19_Execution_Roadmap_V1.md`:
 
 - Sprint 14 delivered and owner-accepted `ZPB-P0-01` and `ZPB-P0-02`;
-- Sprint 15 selects `ZPB-P0-03` and `ZPB-P0-04`;
+- Sprint 15 is implementing `ZPB-P0-03` and `ZPB-P0-04` after 2026-08-22
+  bounded intake;
 - Sprint 16 selects the release-bound portion of `ZPB-P1-04` and
   `ZPB-P1-05` together with production/App Store readiness;
 - Sprint 17 validates acquisition, activation, return, and trust after an
@@ -101,8 +102,8 @@ those Sprint records.
 
 Delivery status: `ZPB-P0-01` and `ZPB-P0-02` were completed and
 owner-accepted with Sprint 14 on 2026-08-22. They remain here for traceability
-and are no longer open Backlog work. `ZPB-P0-03` and `ZPB-P0-04` are the next
-accepted candidates, subject to Sprint 15 bounded intake.
+and are no longer open Backlog work. `ZPB-P0-03` and `ZPB-P0-04` entered
+Sprint 15 execution on 2026-08-22 after bounded intake.
 
 ### P0 planning notes
 

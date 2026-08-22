@@ -1,6 +1,6 @@
 # ZEROON Sprint 14-19 Execution Roadmap V1
 
-Status: Accepted sequence — Sprint 14 closed; Sprint 15 ready for bounded intake
+Status: Accepted sequence — Sprint 14 closed; Sprint 15 active after bounded intake
 Prepared: 2026-08-19
 Last updated: 2026-08-22
 Owner: ZEROON

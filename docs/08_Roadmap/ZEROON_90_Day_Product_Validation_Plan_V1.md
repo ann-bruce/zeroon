@@ -359,8 +359,8 @@ The accepted sequence is
 `docs/08_Roadmap/Sprint_14_19_Execution_Roadmap_V1.md`:
 
 Sprint 14 closed on 2026-08-22 after engineering, PostgreSQL-backed, and
-owner-confirmed real iOS acceptance. Sprint 15 is ready for bounded intake but
-is not automatically active.
+owner-confirmed real iOS acceptance. Sprint 15 entered active execution on
+2026-08-22 after bounded intake; `S15-01` is complete and `S15-02` is next.
 
 - Sprint 14: Record Reliability and Ownership —
   `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md`;

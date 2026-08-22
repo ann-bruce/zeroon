@@ -21,6 +21,7 @@ do not paste chat transcripts here.
 | D-010 | Sprint 13 established and owner-accepted an in-app, user-owned continuity cue together with Reset hierarchy and first-loop refinements; the Sprint is fully closed with no remaining validation or notification task. | `docs/07_Sprints/Sprint_13_Return_Loop_Foundation_And_Owner_Acceptance_V1.md` | Closed |
 | D-011 | ZEROON will complete bounded reliability, ownership, clarity, privacy, and release-readiness work in Sprints 14-16, validate acquisition/activation/return/trust after production and App Store release in Sprint 17, select Sprint 18 from evidence, and keep the physical entitlement pilot gated as Sprint 19. | `docs/08_Roadmap/Sprint_14_19_Execution_Roadmap_V1.md` | Active roadmap |
 | D-012 | Sprint 14 uses device-local, account-scoped, backup-excluded Reset drafts; stable per-intent idempotency replaces time-window content deduplication; deleting an owned Record hard-deletes its source-linked Memory and removes the Record from all live product and AI-context surfaces. | `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md` | Active — implemented and owner-accepted |
+| D-013 | Sprint 15 presents Growth as preserved time without streak pressure or fixed-state identity; Memory remains source-linked with separately understandable keep/pause and AI-use controls, reachable within two actions from Archive and Profile/Settings, and visible from Record Detail. | `docs/07_Sprints/Sprint_15_Growth_And_Memory_Clarity_V1.md` | Active |
 
 ## Change Rules
 

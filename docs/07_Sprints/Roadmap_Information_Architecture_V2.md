@@ -152,6 +152,7 @@ capability is validated.
 ### Sprint 15
 
 - Growth and Memory Clarity
+- Active on 2026-08-22 after bounded intake; `S15-01` accepted
 - Remove performance pressure and fixed-state implications
 - Make preservation, source, pause, delete, and AI-use controls understandable
 - Plan: `Sprint_15_Growth_And_Memory_Clarity_V1.md`

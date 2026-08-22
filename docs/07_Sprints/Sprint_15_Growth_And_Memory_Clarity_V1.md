@@ -1,8 +1,9 @@
 # Sprint 15 Growth And Memory Clarity V1
 
-Status: Ready for bounded intake — Sprint 14 acceptance complete; not active
+Status: Active — `S15-01` complete; `S15-02` next
 Prepared: 2026-08-19
 Unblocked: 2026-08-22
+Started: 2026-08-22
 Backlog sources: `ZPB-P0-03`, `ZPB-P0-04`
 
 ## Intake Decision
@@ -29,8 +30,10 @@ where it came from, and whether it may join future AI responses.
 
 ### 4. Roadmap decision
 
-Plan Sprint 15 after Sprint 14. Improve hierarchy, copy, and control discovery
-before adding Memory automation, new reflection, or historical scoring.
+Sprint 15 entered active execution on 2026-08-22. `S15-01` reconciled the
+current Growth metrics, state-pattern copy, Memory discovery paths, Record
+Detail surface, and control language, then accepted the clarity contract
+below.
 
 ### 5. Planning acceptance criteria
 
@@ -45,6 +48,91 @@ before adding Memory automation, new reflection, or historical scoring.
 
 Make Growth calm and non-evaluative, and make Memory understandable enough for
 a new user to control without reading technical documentation.
+
+## S15-01 Accepted Clarity Contract
+
+Accepted on 2026-08-22 after repository baseline reconciliation.
+
+### Verified baseline
+
+- Bottom navigation is Now, Archive, and Growth. Growth is a primary tab.
+  Memory is not a tab.
+- `GET /api/v1/growth/summary` returns `continuousResetDays`, `cachedEntries`,
+  `firstRecordDate`, and `companionDays`. Mobile shows consecutive days as the
+  first metric card, titled `连续归零` / `Reset rhythm`, with helper copy
+  `最近一次连续记录` / `Recent continuous`.
+- `continuousResetDays` counts consecutive local calendar days that contain at
+  least one owned Record, ending today or yesterday. If neither day has a
+  Record, the value is `0` and is still shown. Absence therefore already has a
+  numeric zero state, even without explicit "broken streak" copy.
+- The Growth orbit's large number is `companionDays`, which is account age
+  including the meeting day, not time since the first Record. The serif title
+  also uses that number.
+- `firstRecordDate` exists as a smaller card. `cachedEntries` is a neutral
+  owned-Record count labeled `累计缓存` / archive metric.
+- `GET /api/v1/growth/state-pattern` returns `dominantState`, `distribution`,
+  `sampleSize`, and a backend `observation` string hardcoded in Chinese.
+  Mobile does not render `observation`. It writes `你最常回到「{state}」` /
+  `You return most often to “{state}”`, with extra FOCUS coaching. Empty
+  samples use waiting copy without a penalty state.
+- The Growth info sheet already says ZEROON does not diagnose or apply a
+  fixed label. Growth load failure stays on the Growth tab and does not block
+  Archive, Record Detail, or account controls.
+- Memory is reached only from the Archive header button `记忆` / `Memory`.
+  Profile/Settings and Record Detail have no Memory navigation. From Now this
+  is two actions (Archive tab, then Memory). From Profile there is no path.
+- Each Memory card shows title, summary, source, keep/pause, AI-use
+  permission, and delete. Paused entries remain listed. Source
+  `ZERO_RECORD` can open Record Detail; other sources show unavailable copy.
+- Keep-control helper copy says a paused Memory "will not join future
+  responses", mixing preservation with AI-use. Introduction copy mentions
+  pause and delete but not the separate AI permission.
+- Record Detail always shows decorative `Archive 记忆` / `Archive memory`.
+  The Record DTO has no Memory id, presence, or control state, so the screen
+  cannot tell whether this Record currently has source-linked Memory.
+- `importance` remains on the Memory API and mobile model and is not shown.
+  OpenAPI already states that a disabled entry cannot join AI context even
+  when `aiContextEnabled` stays true, and that control changes apply on the
+  next companion request. Profile AI consent remains a separate gate.
+
+### Growth presentation contract
+
+- Do not lead Growth with consecutive-day count, rhythm, or any zero-as-loss
+  treatment of absence.
+- If a consecutive-day count remains at all, it is subordinate, non-goal, and
+  absence-neutral. `0` must not read as failure, broken rhythm, or a reason to
+  record today.
+- Lead with preserved moments, the first moment, and elapsed companionship.
+  Neutral counts may remain; they must not become grades, ranks, or targets.
+- Do not describe a dominant state as who the user is, what they are
+  learning, or a yearly identity. Optional observation must stay reversible,
+  non-diagnostic, and explicitly bounded to visible recent state history.
+- Do not display the unused backend `observation` string until `S15-03`
+  accepts a language-safe replacement or removal.
+- Do not add scores, levels, badges, streak rewards, or shame for absence.
+
+### Memory control and discovery contract
+
+- Keep preservation (`enabled`) and AI-use (`aiContextEnabled`) as separate
+  reversible controls. Copy must let a new user distinguish keep/pause,
+  allow-in-response, and delete without reading technical documentation.
+- Memory must be reachable within two intentional actions from Archive and
+  from Profile/Settings.
+- Record Detail must show whether this owned Record currently has
+  source-linked Memory and offer a path to that Memory's controls. Missing
+  Memory is not an error. This screen must not create Memory.
+- When a Memory source is `ZERO_RECORD`, the source Record remains visible
+  and reachable from Memory.
+- Do not surface `importance` as a user-facing score or ranking.
+- Pause, revoke, and delete continue to exclude the entry from the next
+  companion request. This Sprint must not weaken `D-004`.
+
+### Implementation boundary
+
+`S15-02` through `S15-07` may now implement this contract. Any need for
+Memory correction or manual creation, Archive search, automatic
+weekly/monthly summaries, new Memory extraction, or exposing `importance`
+requires a new owner decision rather than an implementation shortcut.
 
 ## Planned Work
 

@@ -20,10 +20,10 @@ Never infer deployment state from a local commit alone.
 ## Execution Snapshot
 
 - Branch baseline: `main`
-- Verified Sprint implementation commit: `892af02`
-- Active Sprint: None; Sprint 14 is closed
-- Sprint status: Sprint 14 engineering, PostgreSQL/API runtime, and owner-confirmed real iOS acceptance are complete
-- Next gate: conduct bounded Sprint 15 intake before activating `S15-01` from `docs/07_Sprints/Sprint_15_Growth_And_Memory_Clarity_V1.md`
+- Verified planning baseline commit: `fbc3bf8`
+- Active Sprint: Sprint 15 — Growth And Memory Clarity
+- Sprint status: started on 2026-08-22; `S15-01` Growth/Memory baseline and clarity contract are accepted; implementation has not started
+- Next gate: accept the Growth content hierarchy in `S15-02` from `docs/07_Sprints/Sprint_15_Growth_And_Memory_Clarity_V1.md`
 
 Run `scripts/zeroon-context.sh` at the start of every takeover. A different
 HEAD or a dirty working tree is new evidence that must be inspected, not
@@ -72,6 +72,7 @@ proven by Sprint closure.
 
 ## Canonical Sources
 
+- Active Sprint: `docs/07_Sprints/Sprint_15_Growth_And_Memory_Clarity_V1.md`
 - Latest closed Sprint: `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md`
 - Durable decision index: `DECISION_LOG.md`
 - Product validation roadmap: `docs/08_Roadmap/ZEROON_90_Day_Product_Validation_Plan_V1.md`
