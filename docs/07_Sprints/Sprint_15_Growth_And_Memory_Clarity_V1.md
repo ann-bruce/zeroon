@@ -1,6 +1,6 @@
 # Sprint 15 Growth And Memory Clarity V1
 
-Status: Active — `S15-01` complete; `S15-02` next
+Status: Active — `S15-01` and `S15-02` complete; `S15-03` next
 Prepared: 2026-08-19
 Unblocked: 2026-08-22
 Started: 2026-08-22
@@ -133,6 +133,111 @@ Accepted on 2026-08-22 after repository baseline reconciliation.
 Memory correction or manual creation, Archive search, automatic
 weekly/monthly summaries, new Memory extraction, or exposing `importance`
 requires a new owner decision rather than an implementation shortcut.
+
+## S15-02 Accepted Growth Content Hierarchy
+
+Accepted on 2026-08-22. This freezes presentation order, visual roles, and
+copy intent for Growth. `S15-03` aligns the data contract; `S15-04`
+implements the bilingual UI.
+
+### Decision
+
+The current 2x2 metric grid leads with consecutive Reset days and repeats
+companion days. That performance emphasis is rejected. Consecutive-day count
+is removed from the Growth surface, not demoted. A visible `0` after absence
+still reads as a broken rhythm even without "streak" wording.
+
+Growth now has three primary facts and one optional observation:
+
+1. Elapsed companionship — days since the user met ZEROON, including that
+   first day. This is time together, not a target.
+2. First moment — the date of the first owned Record, or a quiet "not yet"
+   if none exists.
+3. Preserved moments — the count of owned Records the user can still revisit.
+4. Optional recent-state note — a count inside a time window, or waiting
+   copy. It never names a dominant state, personality, lesson, or yearly
+   identity.
+
+### Page order
+
+1. Header `陪伴成长` / `Companion growth`, with the existing info control.
+2. Elapsed-companionship presence: the orbit may keep the large
+   `companionDays` number, labeled as days together. It must not show
+   consecutive days, progress toward a goal, or a filled/broken ring.
+3. Caption: companionship is counted from the meeting day, not from a
+   check-in streak.
+4. Title: time-together copy using elapsed companionship. Do not use
+   "time begins with the first record" as a substitute title when the user
+   has already met ZEROON but has no Record yet.
+5. Intro: keep the current calm line that not every day needs to leave
+   something behind.
+6. Supporting pair, equal weight, after the presence block:
+   - First moment
+   - Preserved moments
+7. Optional observation card.
+8. Info sheet: explain the three facts and the observation boundary; do not
+   mention Reset rhythm or consecutive recording.
+
+### Empty, loading, and error
+
+- `0` preserved moments is a quiet count, not a prompt to record today.
+- Missing first moment uses `还没有` / `Not yet`. It is not a failed start.
+- Observation with `sampleSize == 0` keeps waiting copy with no hurry.
+- Observation failure stays local: unavailable copy plus retry. It must not
+  hide the three primary facts.
+- Growth summary failure stays on this tab with retry. Archive, Record
+  Detail, Memory, and account controls remain usable.
+
+### Copy intent
+
+Replace, do not reuse, these meanings:
+
+- `连续归零` / `Reset rhythm` and `最近一次连续记录` / `Recent continuous`
+- `你最常回到「{state}」` / `You return most often to “{state}”`
+- FOCUS extra coaching that the user is learning to place unclear thoughts
+- Backend `observation` text, until `S15-03` accepts a language-safe field
+  or removal
+
+Required meanings:
+
+- Elapsed companionship: counted from the meeting day, not consecutive
+  check-ins.
+- First moment: when preserved time began, if it exists.
+- Preserved moments: owned Records that can be revisited, not an archive
+  score.
+- Observation, when present: `最近 N 天，你确认过 M 次状态变化。这只是次数，不是对你的判断。` /
+  `In the last N days, you confirmed M state changes. This is a count, not a
+  judgment about you.`
+- Info boundary: ZEROON does not diagnose, grade, or apply a fixed label.
+
+Exact ARB keys and 390-pixel layout belong to `S15-04`. This task accepts
+the hierarchy and meaning, not pixel implementation.
+
+### Data consequences for `S15-03`
+
+The accepted presentation needs:
+
+- `companionDays`
+- `firstRecordDate`
+- preserved-moment count (today's `cachedEntries`)
+- observation window length and `sampleSize`
+
+It does not need on the Growth surface:
+
+- `continuousResetDays`
+- `dominantState`
+- `distribution`
+- the current hardcoded `observation` string
+
+`S15-03` may keep unused fields internally only if removing them is riskier
+than ignoring them. It must not require the UI to keep reading them.
+
+### Implementation boundary
+
+`S15-04` may restyle the orbit and supporting cards to match this hierarchy,
+but must not restore consecutive days, dominant-state identity, or a fourth
+performance metric. New Growth charts, weekly summaries, or levels still
+require a new owner decision.
 
 ## Planned Work
 

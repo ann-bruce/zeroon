@@ -20,10 +20,10 @@ Never infer deployment state from a local commit alone.
 ## Execution Snapshot
 
 - Branch baseline: `main`
-- Verified planning baseline commit: `fbc3bf8`
+- Verified planning baseline commit: `f9ac91c`
 - Active Sprint: Sprint 15 — Growth And Memory Clarity
-- Sprint status: started on 2026-08-22; `S15-01` Growth/Memory baseline and clarity contract are accepted; implementation has not started
-- Next gate: accept the Growth content hierarchy in `S15-02` from `docs/07_Sprints/Sprint_15_Growth_And_Memory_Clarity_V1.md`
+- Sprint status: started on 2026-08-22; `S15-01` and `S15-02` are accepted; implementation has not started
+- Next gate: align the Growth data contract in `S15-03` from `docs/07_Sprints/Sprint_15_Growth_And_Memory_Clarity_V1.md`
 
 Run `scripts/zeroon-context.sh` at the start of every takeover. A different
 HEAD or a dirty working tree is new evidence that must be inspected, not
