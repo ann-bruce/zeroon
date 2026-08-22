@@ -1815,6 +1815,12 @@ abstract class AppLocalizations {
   /// **'ZEROON 还在安静等待更多记录。时间不急，能留下来的东西会慢慢出现。'**
   String get growthWaiting;
 
+  /// No description provided for @growthObservationCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近 {days} 天，你确认过 {count} 次状态变化。这只是次数，不是对你的判断。'**
+  String growthObservationCount(int days, int count);
+
   /// No description provided for @growthFocusNarrative.
   ///
   /// In zh, this message translates to:

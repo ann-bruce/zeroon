@@ -43,15 +43,14 @@ class GrowthServiceTest {
 
         var summary = growthService.summary(user.getId(), "Asia/Shanghai");
 
-        assertThat(summary.continuousResetDays()).isZero();
-        assertThat(summary.cachedEntries()).isZero();
+        assertThat(summary.preservedMoments()).isZero();
         assertThat(summary.firstRecordDate()).isNull();
         assertThat(summary.companionDays()).isEqualTo(1);
         assertThat(summary.timezone()).isEqualTo("Asia/Shanghai");
     }
 
     @Test
-    void calculatesCompanionDaysAndContinuousResetDaysByTimezone() {
+    void calculatesCompanionDaysAndFirstMomentByTimezone() {
         UserEntity user = userRepository.save(new UserEntity(
                 "growth_existing_user",
                 "13900000002",
@@ -78,14 +77,13 @@ class GrowthServiceTest {
         var summary = growthService.summary(user.getId(), "Asia/Shanghai");
 
         assertThat(summary.companionDays()).isEqualTo(365);
-        assertThat(summary.cachedEntries()).isEqualTo(3);
+        assertThat(summary.preservedMoments()).isEqualTo(3);
         assertThat(summary.firstRecordDate()).isEqualTo("2025-06-11");
-        assertThat(summary.continuousResetDays()).isEqualTo(2);
         assertThat(summary.calculatedAt()).isEqualTo(GrowthServiceTestConfig.FIXED_INSTANT);
     }
 
     @Test
-    void multipleRecordsOnSameCalendarDateCountOnce() {
+    void preservedMomentsCountEachOwnedRecord() {
         UserEntity user = userRepository.save(new UserEntity(
                 "growth_same_day_user",
                 "13900000005",
@@ -97,39 +95,7 @@ class GrowthServiceTest {
 
         var summary = growthService.summary(user.getId(), "Asia/Shanghai");
 
-        assertThat(summary.cachedEntries()).isEqualTo(4);
-        assertThat(summary.continuousResetDays()).isEqualTo(2);
-    }
-
-    @Test
-    void streakCanEndYesterdayWhenTodayHasNoRecord() {
-        UserEntity user = userRepository.save(new UserEntity(
-                "growth_yesterday_user",
-                "13900000006",
-                Instant.parse("2026-06-01T00:00:00Z")));
-        saveRecord(user, "2026-06-06T16:10:00Z");
-        saveRecord(user, "2026-06-07T16:10:00Z");
-        saveRecord(user, "2026-06-08T16:10:00Z");
-
-        var summary = growthService.summary(user.getId(), "Asia/Shanghai");
-
-        assertThat(summary.continuousResetDays()).isEqualTo(3);
-    }
-
-    @Test
-    void brokenStreakDoesNotCountOlderHistory() {
-        UserEntity user = userRepository.save(new UserEntity(
-                "growth_broken_user",
-                "13900000007",
-                Instant.parse("2026-06-01T00:00:00Z")));
-        saveRecord(user, "2026-06-04T16:10:00Z");
-        saveRecord(user, "2026-06-06T16:10:00Z");
-        saveRecord(user, "2026-06-09T16:10:00Z");
-
-        var summary = growthService.summary(user.getId(), "Asia/Shanghai");
-
-        assertThat(summary.continuousResetDays()).isEqualTo(1);
-        assertThat(summary.cachedEntries()).isEqualTo(3);
+        assertThat(summary.preservedMoments()).isEqualTo(4);
     }
 
     @Test
@@ -144,13 +110,13 @@ class GrowthServiceTest {
         var utcSummary = growthService.summary(user.getId(), "UTC");
 
         assertThat(shanghaiSummary.firstRecordDate()).isEqualTo("2026-06-10");
-        assertThat(shanghaiSummary.continuousResetDays()).isEqualTo(1);
         assertThat(utcSummary.firstRecordDate()).isEqualTo("2026-06-09");
-        assertThat(utcSummary.continuousResetDays()).isEqualTo(1);
+        assertThat(shanghaiSummary.preservedMoments()).isEqualTo(1);
+        assertThat(utcSummary.preservedMoments()).isEqualTo(1);
     }
 
     @Test
-    void staleRecordDoesNotCreateCurrentStreak() {
+    void olderRecordsRemainPreservedMoments() {
         UserEntity user = userRepository.save(new UserEntity(
                 "growth_stale_user",
                 "13900000009",
@@ -160,12 +126,12 @@ class GrowthServiceTest {
 
         var summary = growthService.summary(user.getId(), "Asia/Shanghai");
 
-        assertThat(summary.continuousResetDays()).isZero();
-        assertThat(summary.cachedEntries()).isEqualTo(2);
+        assertThat(summary.preservedMoments()).isEqualTo(2);
+        assertThat(summary.firstRecordDate()).isEqualTo("2026-06-06");
     }
 
     @Test
-    void statePatternSummarizesRecentUserVisibleStateHistory() {
+    void statePatternCountsRecentUserVisibleStateHistory() {
         UserEntity user = userRepository.save(new UserEntity(
                 "growth_pattern_user",
                 "13900000014",
@@ -179,16 +145,12 @@ class GrowthServiceTest {
 
         assertThat(summary.days()).isEqualTo(7);
         assertThat(summary.sampleSize()).isEqualTo(3);
-        assertThat(summary.dominantState()).isEqualTo(UserState.FOCUS);
-        assertThat(summary.distribution().get(UserState.FOCUS)).isEqualTo(2);
-        assertThat(summary.distribution().get(UserState.CALM)).isEqualTo(1);
-        assertThat(summary.distribution().get(UserState.TIRED)).isZero();
-        assertThat(summary.observation()).contains("不代表固定标签");
-        assertThat(summary.dataSources()).containsExactly("state_history.current_state", "state_history.created_at");
+        assertThat(summary.timezone()).isEqualTo("Asia/Shanghai");
+        assertThat(summary.calculatedAt()).isEqualTo(GrowthServiceTestConfig.FIXED_INSTANT);
     }
 
     @Test
-    void statePatternHasClearEmptyObservation() {
+    void statePatternHasZeroSampleWhenEmpty() {
         UserEntity user = userRepository.save(new UserEntity(
                 "growth_pattern_empty_user",
                 "13900000015",
@@ -196,9 +158,8 @@ class GrowthServiceTest {
 
         var summary = growthService.statePattern(user.getId(), "Asia/Shanghai", 14);
 
+        assertThat(summary.days()).isEqualTo(14);
         assertThat(summary.sampleSize()).isZero();
-        assertThat(summary.dominantState()).isNull();
-        assertThat(summary.observation()).contains("还没有足够的状态记录");
     }
 
     @Test
@@ -217,8 +178,7 @@ class GrowthServiceTest {
 
         var summary = growthService.summary(owner.getId(), "Asia/Shanghai");
 
-        assertThat(summary.cachedEntries()).isEqualTo(1);
-        assertThat(summary.continuousResetDays()).isEqualTo(1);
+        assertThat(summary.preservedMoments()).isEqualTo(1);
     }
 
     @Test
@@ -238,8 +198,6 @@ class GrowthServiceTest {
         var summary = growthService.statePattern(owner.getId(), "Asia/Shanghai", 14);
 
         assertThat(summary.sampleSize()).isEqualTo(1);
-        assertThat(summary.dominantState()).isEqualTo(UserState.CALM);
-        assertThat(summary.distribution().get(UserState.OVERLOAD)).isZero();
     }
 
     private void saveRecord(UserEntity user, String createdAt) {

@@ -170,9 +170,17 @@ GET /memory/{memoryId}
 
 GET /memory/summary
 
-### Recent State Pattern
+## Growth
+
+GET /growth/summary
+
+Returns elapsed companionship, first owned Record date, and the count of
+owned Records that can still be revisited.
 
 GET /growth/state-pattern
+
+Returns the count of visible state confirmations in a time window. It does
+not include a dominant state, distribution, or generated observation copy.
 
 ---
 

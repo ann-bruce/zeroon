@@ -8,7 +8,6 @@ import '../auth/auth_models.dart';
 import '../common/zeroon_design.dart';
 import '../evidence/evidence_models.dart';
 import '../evidence/evidence_repository.dart';
-import '../growth/growth_controller.dart';
 import '../l10n/l10n_extensions.dart';
 import '../profile/profile_controller.dart';
 import '../profile/profile_screen.dart';
@@ -112,7 +111,6 @@ class _StateHero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentState = ref.watch(currentStateProvider);
-    final growthSummary = ref.watch(growthSummaryProvider);
     final records = ref.watch(recordListProvider);
 
     return currentState.when(
@@ -122,7 +120,6 @@ class _StateHero extends ConsumerWidget {
       ),
       data: (snapshot) => _StatePanel(
         snapshot: snapshot,
-        continuousResetDays: growthSummary.valueOrNull?.continuousResetDays,
         recordPage: records.valueOrNull,
         latestTodayRecord: _latestTodayRecord(records.valueOrNull),
         userId: userId,
@@ -135,7 +132,6 @@ class _StateHero extends ConsumerWidget {
 class _StatePanel extends ConsumerWidget {
   const _StatePanel({
     required this.snapshot,
-    required this.continuousResetDays,
     required this.recordPage,
     required this.latestTodayRecord,
     required this.userId,
@@ -143,7 +139,6 @@ class _StatePanel extends ConsumerWidget {
   });
 
   final StateSnapshot snapshot;
-  final int? continuousResetDays;
   final RecordPage? recordPage;
   final ZeroRecord? latestTodayRecord;
   final String userId;
@@ -212,7 +207,6 @@ class _StatePanel extends ConsumerWidget {
           )
         else
           _ResetTrackCard(
-            continuousResetDays: continuousResetDays,
             records: recordPage?.items ?? const [],
           ),
         const SizedBox(height: 12),
@@ -445,11 +439,9 @@ enum _StateSwitchDecision { reset, switchDirectly }
 
 class _ResetTrackCard extends StatelessWidget {
   const _ResetTrackCard({
-    required this.continuousResetDays,
     required this.records,
   });
 
-  final int? continuousResetDays;
   final List<ZeroRecord> records;
 
   @override
@@ -467,26 +459,10 @@ class _ResetTrackCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.l10n.continuousReset,
-                      style: TextStyle(color: zeroonMuted, fontSize: 10),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      continuousResetDays == null
-                          ? '--'
-                          : context.l10n.dayCount(continuousResetDays!),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ],
+                child: Text(
+                  context.l10n.tapDateToReview,
+                  style: TextStyle(color: zeroonMuted, fontSize: 10),
                 ),
-              ),
-              Text(
-                context.l10n.tapDateToReview,
-                style: TextStyle(color: zeroonMuted, fontSize: 10),
               ),
             ],
           ),

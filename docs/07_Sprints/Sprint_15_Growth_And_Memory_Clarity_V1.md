@@ -1,6 +1,6 @@
 # Sprint 15 Growth And Memory Clarity V1
 
-Status: Active — `S15-01` and `S15-02` complete; `S15-03` next
+Status: Active — `S15-01` through `S15-03` complete; `S15-04` next
 Prepared: 2026-08-19
 Unblocked: 2026-08-22
 Started: 2026-08-22
@@ -238,6 +238,38 @@ than ignoring them. It must not require the UI to keep reading them.
 but must not restore consecutive days, dominant-state identity, or a fourth
 performance metric. New Growth charts, weekly summaries, or levels still
 require a new owner decision.
+
+## S15-03 Growth Data Contract
+
+Completed on 2026-08-22.
+
+`GET /api/v1/growth/summary` now returns only:
+
+- `preservedMoments`
+- `firstRecordDate`
+- `companionDays`
+- `timezone`
+- `calculatedAt`
+
+`GET /api/v1/growth/state-pattern` now returns only:
+
+- `days`
+- `sampleSize`
+- `timezone`
+- `calculatedAt`
+
+Removed from both responses: `continuousResetDays`, `cachedEntries`,
+`dominantState`, `distribution`, `observation`, and `dataSources`.
+Consecutive-day calculation was deleted from `GrowthService` rather than
+kept internally. Client observation copy is localized from `days` and
+`sampleSize`; the API no longer authors observation text.
+
+Now no longer reads Growth summary for a Reset-rhythm count. The seven-day
+review track remains a local Archive shortcut and is not a streak metric.
+
+`S15-04` still owns the bilingual Growth restyle, info-sheet copy, and
+390-pixel hierarchy. This task only stops the API and models from requiring
+rejected fields.
 
 ## Planned Work
 

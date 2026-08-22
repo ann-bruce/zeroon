@@ -1163,7 +1163,11 @@ paths:
     get:
       tags: [Growth]
       summary: Get companion growth metrics for the current user
-      description: Calendar calculations use the requested IANA timezone.
+      description: >-
+        Returns elapsed companionship, the first owned Record date, and the
+        count of owned Records that can still be revisited. Calendar
+        calculations use the requested IANA timezone. Consecutive-day counts
+        are not included.
       operationId: getGrowthSummary
       security:
         - bearerAuth: []
@@ -1189,8 +1193,11 @@ paths:
   /growth/state-pattern:
     get:
       tags: [Growth]
-      summary: Get recent state pattern summary
-      description: Non-diagnostic summary based only on visible state history.
+      summary: Get recent state confirmation count
+      description: >-
+        Returns the number of visible state-history confirmations in a time
+        window. The response does not include a dominant state, distribution,
+        or generated observation copy.
       operationId: getStatePattern
       security:
         - bearerAuth: []
@@ -3171,16 +3178,13 @@ components:
     GrowthSummary:
       type: object
       required:
-        [continuousResetDays, cachedEntries, companionDays, timezone, calculatedAt]
+        [preservedMoments, companionDays, timezone, calculatedAt]
       properties:
-        continuousResetDays:
-          type: integer
-          minimum: 0
-          example: 7
-        cachedEntries:
+        preservedMoments:
           type: integer
           format: int64
           minimum: 0
+          description: Count of owned Records the user can still revisit.
           example: 126
         firstRecordDate:
           type: string
@@ -3190,6 +3194,7 @@ components:
         companionDays:
           type: integer
           minimum: 1
+          description: Inclusive calendar days from the meeting date to today.
           example: 365
         timezone:
           type: string
@@ -3200,7 +3205,7 @@ components:
     StatePatternSummary:
       type: object
       required:
-        [days, sampleSize, distribution, observation, dataSources, timezone, calculatedAt]
+        [days, sampleSize, timezone, calculatedAt]
       properties:
         days:
           type: integer
@@ -3210,21 +3215,7 @@ components:
           type: integer
           format: int64
           minimum: 0
-        dominantState:
-          $ref: "#/components/schemas/State"
-          nullable: true
-        distribution:
-          type: object
-          additionalProperties:
-            type: integer
-            format: int64
-        observation:
-          type: string
-          description: Non-diagnostic user-facing explanation.
-        dataSources:
-          type: array
-          items:
-            type: string
+          description: Count of visible state confirmations in the window.
         timezone:
           type: string
           example: Asia/Shanghai

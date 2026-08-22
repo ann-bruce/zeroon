@@ -898,6 +898,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get growthWaiting => 'ZEROON 还在安静等待更多记录。时间不急，能留下来的东西会慢慢出现。';
 
   @override
+  String growthObservationCount(int days, int count) {
+    return '最近 $days 天，你确认过 $count 次状态变化。这只是次数，不是对你的判断。';
+  }
+
+  @override
   String growthFocusNarrative(String state) {
     return '你最常回到「$state」，也正在学会把模糊的想法，一点一点放进可以被看见的地方。';
   }

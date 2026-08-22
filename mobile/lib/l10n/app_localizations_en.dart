@@ -988,6 +988,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'ZEROON is quietly waiting for more records. There is no hurry; what stays will appear in time.';
 
   @override
+  String growthObservationCount(int days, int count) {
+    return 'In the last $days days, you confirmed $count state changes. This is a count, not a judgment about you.';
+  }
+
+  @override
   String growthFocusNarrative(String state) {
     return 'You return most often to “$state”, and are giving unclear thoughts a place where they can be seen, one small piece at a time.';
   }

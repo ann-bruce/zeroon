@@ -162,7 +162,6 @@ void main() {
     expect(find.text('见到你了'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('7 天'), findsOneWidget);
     expect(find.text('点亮日期可回看'), findsOneWidget);
   });
 
@@ -310,7 +309,7 @@ void main() {
 
     expect(find.text('和 ZEROON 回看一个此刻'), findsOneWidget);
     expect(find.text('今天我停下来了一会儿。'), findsOneWidget);
-    expect(find.text('连续归零'), findsNothing);
+    expect(find.text('点亮日期可回看'), findsNothing);
 
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
@@ -318,7 +317,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('和 ZEROON 回看一个此刻'), findsNothing);
-    expect(find.text('连续归零'), findsOneWidget);
+    expect(find.text('点亮日期可回看'), findsOneWidget);
   });
 
   testWidgets(
@@ -360,13 +359,13 @@ void main() {
     await tester.pump();
 
     expect(find.text('和 ZEROON 回看一个此刻'), findsNothing);
-    expect(find.text('连续归零'), findsOneWidget);
+    expect(find.text('点亮日期可回看'), findsOneWidget);
 
     refresh.completeError(StateError('cue refresh unavailable'));
     await tester.pumpAndSettle();
 
     expect(find.text('和 ZEROON 回看一个此刻'), findsNothing);
-    expect(find.text('连续归零'), findsOneWidget);
+    expect(find.text('点亮日期可回看'), findsOneWidget);
   });
 
   testWidgets('Now keeps its rhythm slot when the initial cue load fails',
@@ -393,12 +392,12 @@ void main() {
     );
     await tester.pump();
     expect(find.text('和 ZEROON 回看一个此刻'), findsNothing);
-    expect(find.text('连续归零'), findsOneWidget);
+    expect(find.text('点亮日期可回看'), findsOneWidget);
 
     pending.completeError(StateError('cue unavailable'));
     await tester.pumpAndSettle();
     expect(find.text('和 ZEROON 回看一个此刻'), findsNothing);
-    expect(find.text('连续归零'), findsOneWidget);
+    expect(find.text('点亮日期可回看'), findsOneWidget);
   });
 
   testWidgets('state switch after five minutes protects a pending Reset', (
@@ -679,7 +678,6 @@ void main() {
     expect(find.text('今天的 ZEROON'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('7 天'), findsOneWidget);
     expect(find.text('点亮日期可回看'), findsOneWidget);
 
     await tester.tap(find.text('${_testRecordCreatedAt.day}').first);
@@ -693,7 +691,7 @@ void main() {
     await tester.tap(find.text('成长'));
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.chevron_left), findsNothing);
-    expect(find.text('连续归零'), findsOneWidget);
+    expect(find.text('连续归零'), findsNothing);
     expect(find.text('累计缓存'), findsOneWidget);
     expect(find.text('第一次记录'), findsOneWidget);
     expect(find.text('陪伴天数'), findsOneWidget);
@@ -1887,8 +1885,7 @@ class _FakeGrowthRepository extends GrowthRepository {
   @override
   Future<GrowthSummary> getSummary({String timezone = 'Asia/Shanghai'}) async {
     return GrowthSummary(
-      continuousResetDays: 7,
-      cachedEntries: 126,
+      preservedMoments: 126,
       firstRecordDate: DateTime.parse('2026-06-01'),
       companionDays: 365,
       timezone: timezone,
@@ -1904,13 +1901,6 @@ class _FakeGrowthRepository extends GrowthRepository {
     return StatePatternSummary(
       days: days,
       sampleSize: 3,
-      dominantState: 'FOCUS',
-      distribution: const {'CALM': 1, 'FOCUS': 2},
-      observation: '最近 14 天，FOCUS 出现较多。这只是近期记录的分布，不代表固定标签。',
-      dataSources: const [
-        'state_history.current_state',
-        'state_history.created_at'
-      ],
       timezone: timezone,
       calculatedAt: DateTime.parse('2026-06-20T00:00:00Z'),
     );

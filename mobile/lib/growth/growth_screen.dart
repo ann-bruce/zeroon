@@ -101,14 +101,8 @@ class _GrowthContent extends StatelessWidget {
           childAspectRatio: 1.5,
           children: [
             _GrowthMetricCard(
-              title: context.l10n.metricContinuous,
-              value: '${summary.continuousResetDays}',
-              unit: context.l10n.unitDays,
-              description: context.l10n.metricRecentContinuous,
-            ),
-            _GrowthMetricCard(
               title: context.l10n.metricArchive,
-              value: '${summary.cachedEntries}',
+              value: '${summary.preservedMoments}',
               unit: context.l10n.unitRecords,
               description: context.l10n.metricPrivate,
             ),
@@ -222,14 +216,10 @@ class _StatePatternCard extends StatelessWidget {
   }
 
   String _yearlyZeroonCopy(BuildContext context, StatePatternSummary data) {
-    if (data.dominantState == null) {
+    if (data.sampleSize == 0) {
       return context.l10n.growthWaiting;
     }
-    final label = localizedStateLabel(context, data.dominantState!);
-    if (data.dominantState == 'FOCUS') {
-      return context.l10n.growthFocusNarrative(label);
-    }
-    return context.l10n.growthStateNarrative(label);
+    return context.l10n.growthObservationCount(data.days, data.sampleSize);
   }
 }
 

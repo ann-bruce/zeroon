@@ -34,8 +34,9 @@ class GrowthControllerTest {
                         .header("Authorization", "Bearer " + token)
                         .param("timezone", "Asia/Shanghai"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.continuousResetDays").value(0))
-                .andExpect(jsonPath("$.cachedEntries").value(0))
+                .andExpect(jsonPath("$.preservedMoments").value(0))
+                .andExpect(jsonPath("$.continuousResetDays").doesNotExist())
+                .andExpect(jsonPath("$.cachedEntries").doesNotExist())
                 .andExpect(jsonPath("$.firstRecordDate").doesNotExist())
                 .andExpect(jsonPath("$.companionDays").value(1))
                 .andExpect(jsonPath("$.timezone").value("Asia/Shanghai"));
@@ -62,8 +63,10 @@ class GrowthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.days").value(14))
                 .andExpect(jsonPath("$.sampleSize").value(0))
-                .andExpect(jsonPath("$.observation").value(org.hamcrest.Matchers.containsString("状态记录")))
-                .andExpect(jsonPath("$.dataSources[0]").value("state_history.current_state"));
+                .andExpect(jsonPath("$.dominantState").doesNotExist())
+                .andExpect(jsonPath("$.distribution").doesNotExist())
+                .andExpect(jsonPath("$.observation").doesNotExist())
+                .andExpect(jsonPath("$.dataSources").doesNotExist());
     }
 
     private String login(String mobile) throws Exception {

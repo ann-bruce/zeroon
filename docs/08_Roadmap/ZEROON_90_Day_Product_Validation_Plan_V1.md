@@ -360,8 +360,8 @@ The accepted sequence is
 
 Sprint 14 closed on 2026-08-22 after engineering, PostgreSQL-backed, and
 owner-confirmed real iOS acceptance. Sprint 15 entered active execution on
-2026-08-22 after bounded intake; `S15-01` and `S15-02` are complete and
-`S15-03` is next.
+2026-08-22 after bounded intake; `S15-01` through `S15-03` are complete and
+`S15-04` is next.
 
 - Sprint 14: Record Reliability and Ownership —
   `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md`;

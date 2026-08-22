@@ -320,6 +320,13 @@
   "growthObservationUnavailable": "近期状态观察暂时不可用。",
   "growthRetryObservation": "重试观察",
   "growthWaiting": "ZEROON 还在安静等待更多记录。时间不急，能留下来的东西会慢慢出现。",
+  "growthObservationCount": "最近 {days} 天，你确认过 {count} 次状态变化。这只是次数，不是对你的判断。",
+  "@growthObservationCount": {
+    "placeholders": {
+      "days": {"type": "int"},
+      "count": {"type": "int"}
+    }
+  },
   "growthFocusNarrative": "你最常回到「{state}」，也正在学会把模糊的想法，一点一点放进可以被看见的地方。",
   "@growthFocusNarrative": {"placeholders": {"state": {"type": "String"}}},
   "growthStateNarrative": "你最常回到「{state}」。ZEROON 会记得这些微小的变化，也陪你慢慢看见它们。",

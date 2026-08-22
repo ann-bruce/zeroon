@@ -2,9 +2,6 @@ package ai.zeroon.growth;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import ai.zeroon.user.UserState;
 
 public final class GrowthDtos {
 
@@ -12,8 +9,7 @@ public final class GrowthDtos {
     }
 
     public record GrowthSummary(
-            int continuousResetDays,
-            long cachedEntries,
+            long preservedMoments,
             LocalDate firstRecordDate,
             long companionDays,
             String timezone,
@@ -23,10 +19,6 @@ public final class GrowthDtos {
     public record StatePatternSummary(
             int days,
             long sampleSize,
-            UserState dominantState,
-            Map<UserState, Long> distribution,
-            String observation,
-            List<String> dataSources,
             String timezone,
             Instant calculatedAt) {
     }
