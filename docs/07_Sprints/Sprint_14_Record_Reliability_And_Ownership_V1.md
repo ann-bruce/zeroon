@@ -1,9 +1,10 @@
 # Sprint 14 Record Reliability And Ownership V1
 
-Status: Active — `S14-06` automated and PostgreSQL runtime gates complete;
-real iOS process-restart acceptance pending
+Status: Closed — engineering delivery, runtime verification, and owner
+acceptance complete
 Prepared: 2026-08-19
 Started: 2026-08-19
+Closed: 2026-08-22
 Backlog sources: `ZPB-P0-01`, `ZPB-P0-02`
 
 ## Intake Decision
@@ -51,6 +52,19 @@ accepted the lifecycle contract below.
 Make the core Record lifecycle trustworthy before public release: unfinished
 input is recoverable, saved input is idempotent, and one owned Record can be
 removed completely and predictably.
+
+## Closure Outcome — 2026-08-22
+
+Sprint 14 is closed. The accepted lifecycle is implemented on the verified
+Sprint implementation commit `892af02`, automated and PostgreSQL-backed gates
+pass, and the owner confirmed completion of the final real iOS acceptance on
+2026-08-22. Durable Reset draft recovery, idempotent save retry, owner-only
+Record deletion, linked-Memory removal, and all reviewed live-surface updates
+therefore have no remaining Sprint 14 acceptance task.
+
+This closure records product and engineering acceptance only. It does not by
+itself prove a production deployment, App Store submission, or real-user
+retention value.
 
 ## S14-01 Accepted Lifecycle Contract
 
@@ -242,7 +256,7 @@ retention requires a new owner decision rather than an implementation shortcut.
   passed 82 tests. Real service, PostgreSQL, export, cue, Growth, Memory, and AI
   context lifecycle acceptance remains consolidated in `S14-06`.
 
-### S14-06 Lifecycle verification — runtime gate partially complete 2026-08-20
+### S14-06 Lifecycle verification — complete 2026-08-22
 
 - PostgreSQL 16.14 accepted a clean Flyway migration from V1 through V20 and a
   second startup validated the schema at V20 without further migration.
@@ -271,11 +285,9 @@ retention requires a new owner decision rather than an implementation shortcut.
   tests passed, OpenAPI remained valid with the same 24 existing warnings, and
   whitespace validation is clean.
 - Draft recovery, account isolation, discard, logout, failed remote logout,
-  and deletion cleanup remain covered by automated mobile tests. A truthful
-  real iOS process-restart acceptance cannot run yet: no iOS device or
-  simulator is currently available, and this uncommitted build is not
-  installed. Sprint 14 remains active until that final device check passes or
-  the owner explicitly accepts automated recovery evidence instead.
+  and deletion cleanup remain covered by automated mobile tests. On
+  2026-08-22 the owner additionally confirmed that the real iOS acceptance was
+  completed, closing the final process-restart device gate.
 
 ## Affected Surfaces
 

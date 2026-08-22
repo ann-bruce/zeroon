@@ -1,7 +1,8 @@
 # Sprint 15 Growth And Memory Clarity V1
 
-Status: Planned sequence — blocked by Sprint 14 acceptance
+Status: Ready for bounded intake — Sprint 14 acceptance complete; not active
 Prepared: 2026-08-19
+Unblocked: 2026-08-22
 Backlog sources: `ZPB-P0-03`, `ZPB-P0-04`
 
 ## Intake Decision

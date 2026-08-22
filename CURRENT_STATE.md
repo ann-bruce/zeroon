@@ -1,5 +1,5 @@
 # ZEROON Current State
-Last verified: 2026-08-20
+Last verified: 2026-08-22
 
 This is the short, canonical entry point for a new Codex chat. Keep it factual,
 current, and at most 100 lines. Historical detail belongs in Sprint documents,
@@ -21,11 +21,9 @@ Never infer deployment state from a local commit alone.
 
 - Branch baseline: `main`
 - Verified Sprint implementation commit: `892af02`
-- Active Sprint: Sprint 14 — Record Reliability And Ownership
-- Sprint status: `S14-01` through `S14-05` are engineering complete; `S14-06` automated and PostgreSQL/API runtime gates pass, including a runtime error
-  boundary fix; real iOS process-restart draft acceptance remains open
-- Next gate: install the reviewed Sprint 14 build on an available iOS device, verify draft recovery after process restart, then close Sprint 14 before promoting Sprint 15 intake from
-  `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md`
+- Active Sprint: None; Sprint 14 is closed
+- Sprint status: Sprint 14 engineering, PostgreSQL/API runtime, and owner-confirmed real iOS acceptance are complete
+- Next gate: conduct bounded Sprint 15 intake before activating `S15-01` from `docs/07_Sprints/Sprint_15_Growth_And_Memory_Clarity_V1.md`
 
 Run `scripts/zeroon-context.sh` at the start of every takeover. A different
 HEAD or a dirty working tree is new evidence that must be inspected, not
@@ -35,7 +33,7 @@ silently folded into this snapshot.
 
 - The backend has previously run on Alibaba Cloud with the production profile
   and email verification.
-- The owner installed the iOS app and passed the core business regression.
+- The owner completed Sprint 14 real iOS acceptance on 2026-08-22.
 - Android validation is explicitly deferred until after the iOS validation
   phase.
 - Persona V2 is production-active through the recorded owner-risk exception;
@@ -48,19 +46,18 @@ or send external communications without explicit user authorization.
 
 ## Latest Product Outcome
 
-Sprint 13 delivered one quiet, private, user-owned continuity cue. The cue:
+Sprint 14 delivered a reliable, user-owned Record lifecycle:
 
-- uses only the authenticated user's eligible Record;
-- does not classify private text or infer emotion, importance, or unfinished
-  work;
-- replaces the existing Now rhythm-card slot instead of adding page density;
-- can be ignored or dismissed without penalty;
-- never changes Memory or AI consent;
-- keeps evidence content-free.
+- unfinished Reset input is device-local, account-scoped, and recoverable;
+- stable save intent prevents duplicate Records across retries;
+- one owned Record can be hard-deleted without disclosing cross-user existence;
+- linked Memory and live Archive, cue, Growth, export, and AI-context surfaces
+  reflect deletion;
+- private content remains absent from evidence and administrative surfaces.
 
-Owner acceptance passed. Broader acquisition, activation, return, retention,
-and trust value remains unproven and is scheduled only after bounded
-optimization and an explicitly authorized production/App Store release.
+Automated, PostgreSQL-backed, and owner real-iOS acceptance passed. Production
+deployment and broader acquisition, return, retention, and trust value are not
+proven by Sprint closure.
 
 ## Durable Guardrails
 
@@ -75,7 +72,7 @@ optimization and an explicitly authorized production/App Store release.
 
 ## Canonical Sources
 
-- Latest closed Sprint: `docs/07_Sprints/Sprint_13_Return_Loop_Foundation_And_Owner_Acceptance_V1.md`
+- Latest closed Sprint: `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md`
 - Durable decision index: `DECISION_LOG.md`
 - Product validation roadmap: `docs/08_Roadmap/ZEROON_90_Day_Product_Validation_Plan_V1.md`
 - Product optimization and feature Backlog: `docs/08_Roadmap/ZEROON_Product_Backlog_V1.md`
