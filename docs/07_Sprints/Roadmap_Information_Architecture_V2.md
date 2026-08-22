@@ -143,6 +143,8 @@ capability is validated.
 ### Sprint 14
 
 - Record Reliability and Ownership
+- Closed on 2026-08-22 after engineering, PostgreSQL-backed, and real iOS
+  owner acceptance
 - Durable Reset drafts and one-owned-Record deletion
 - Linked Memory, cue, Archive, Growth, export, and AI lifecycle closure
 - Plan: `Sprint_14_Record_Reliability_And_Ownership_V1.md`

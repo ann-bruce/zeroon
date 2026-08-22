@@ -1,6 +1,6 @@
 # ZEROON Durable Decision Index
 
-Last reviewed: 2026-08-19
+Last reviewed: 2026-08-22
 
 This file indexes accepted decisions that a new project chat must not
 re-litigate without new evidence. Detailed rationale and acceptance criteria
@@ -20,7 +20,7 @@ do not paste chat transcripts here.
 | D-009 | Sprint 13 originally coupled the in-app continuity cue to later cohort and notification gates. | Superseded by `D-010` | Superseded by D-010 |
 | D-010 | Sprint 13 established and owner-accepted an in-app, user-owned continuity cue together with Reset hierarchy and first-loop refinements; the Sprint is fully closed with no remaining validation or notification task. | `docs/07_Sprints/Sprint_13_Return_Loop_Foundation_And_Owner_Acceptance_V1.md` | Closed |
 | D-011 | ZEROON will complete bounded reliability, ownership, clarity, privacy, and release-readiness work in Sprints 14-16, validate acquisition/activation/return/trust after production and App Store release in Sprint 17, select Sprint 18 from evidence, and keep the physical entitlement pilot gated as Sprint 19. | `docs/08_Roadmap/Sprint_14_19_Execution_Roadmap_V1.md` | Active roadmap |
-| D-012 | Sprint 14 uses device-local, account-scoped, backup-excluded Reset drafts; stable per-intent idempotency replaces time-window content deduplication; deleting an owned Record hard-deletes its source-linked Memory and removes the Record from all live product and AI-context surfaces. | `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md` | Active |
+| D-012 | Sprint 14 uses device-local, account-scoped, backup-excluded Reset drafts; stable per-intent idempotency replaces time-window content deduplication; deleting an owned Record hard-deletes its source-linked Memory and removes the Record from all live product and AI-context surfaces. | `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md` | Active — implemented and owner-accepted |
 
 ## Change Rules
 

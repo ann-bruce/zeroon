@@ -1,7 +1,8 @@
 # ZEROON Sprint 14-19 Execution Roadmap V1
 
-Status: Accepted sequence — each Sprint still requires bounded intake approval
+Status: Accepted sequence — Sprint 14 closed; Sprint 15 ready for bounded intake
 Prepared: 2026-08-19
+Last updated: 2026-08-22
 Owner: ZEROON
 
 ## 1. Decision
@@ -56,10 +57,11 @@ The roadmap defines sequence and dependencies. These six files are the
 canonical Sprint-level scope records; a planned file does not make its Sprint
 active or authorize implementation, release, recruitment, or fulfillment.
 
-## 4. Sprint 14 Boundary
+## 4. Sprint 14 Closure And Boundary
 
-Sprint 14 is the next planning candidate, not automatically active. Its intake
-must define:
+Sprint 14 closed on 2026-08-22 after engineering, automated,
+PostgreSQL-backed, and owner-confirmed real iOS acceptance. It delivered
+`ZPB-P0-01` and `ZPB-P0-02`; its accepted intake boundary defined:
 
 - account-scoped local draft behavior across logout, restart, locale change,
   shared devices, and backup;
@@ -70,7 +72,7 @@ must define:
 - migration, OpenAPI, mobile, evidence, and test surfaces;
 - failure, retry, cross-user, and recovery acceptance.
 
-Sprint 14 excludes Archive search, new reflection, templates, media,
+Sprint 14 excluded Archive search, new reflection, templates, media,
 notification, payment, physical delivery, and public release.
 
 ## 5. Sprint 16 Release Boundary

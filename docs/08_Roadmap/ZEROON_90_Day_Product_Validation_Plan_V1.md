@@ -3,6 +3,7 @@
 Status: Active  
 Start date: 2026-07-14  
 Target review date: 2026-10-12  
+Last updated: 2026-08-22
 Owner: ZEROON  
 
 ## 1. Objective
@@ -356,6 +357,10 @@ record is
 
 The accepted sequence is
 `docs/08_Roadmap/Sprint_14_19_Execution_Roadmap_V1.md`:
+
+Sprint 14 closed on 2026-08-22 after engineering, PostgreSQL-backed, and
+owner-confirmed real iOS acceptance. Sprint 15 is ready for bounded intake but
+is not automatically active.
 
 - Sprint 14: Record Reliability and Ownership —
   `docs/07_Sprints/Sprint_14_Record_Reliability_And_Ownership_V1.md`;

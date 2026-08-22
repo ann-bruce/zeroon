@@ -1,7 +1,8 @@
 # Sprint 16 Privacy And Release Readiness V1
 
-Status: Planned sequence — blocked by Sprint 14 and Sprint 15 acceptance
+Status: Planned sequence — blocked by Sprint 15 acceptance
 Prepared: 2026-08-19
+Dependency updated: 2026-08-22
 Backlog sources: release-bound `ZPB-P1-04`, `ZPB-P1-05`
 
 ## Intake Decision

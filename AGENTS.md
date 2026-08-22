@@ -135,6 +135,24 @@ When behavior changes cross module boundaries:
 - Update database docs or migrations for persistence changes.
 - Update sprint or acceptance docs when completing scoped sprint work.
 
+When a Sprint or Backlog item starts, completes, closes, becomes blocked, or
+unblocks another item, update the complete status chain in the same scoped
+change:
+
+- `CURRENT_STATE.md` for the active Sprint and next gate;
+- the affected Sprint plan and dependent future Sprint statuses;
+- `DECISION_LOG.md` when a durable decision is accepted, implemented,
+  superseded, or closed;
+- `docs/08_Roadmap/ZEROON_Product_Backlog_V1.md` for item delivery state;
+- `docs/08_Roadmap/Sprint_14_19_Execution_Roadmap_V1.md` and the 90-day plan
+  when sequence or dependency state changes;
+- any other canonical roadmap or information-architecture index that repeats
+  the changed status.
+
+Before reporting the status update complete, use `rg` to find stale references
+to the old Sprint, dependency, blocking condition, or Backlog state and run
+`git diff --check`. A partial status update is not complete.
+
 Definition of done for non-trivial changes:
 - Implementation and migrations are present.
 - Relevant unit or integration tests pass.
